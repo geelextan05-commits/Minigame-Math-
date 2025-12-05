@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Place Value Chest Code</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body { font-family: 'Inter', sans-serif; background-color: #f7f9f9; }
+.chest-icon { font-size: 80px; }
+.input-group { display: flex; justify-content: center; align-items: center; gap: 1rem; }
+.code-input { width: 70px; height: 70px; font-size: 32px; text-align: center; border: 4px solid #6366f1; border-radius: 12px; font-weight: 700; }
+.correct-animation { animation: pulse-green 1s; }
+@keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+@keyframes shake { 0%,100%{transform: translateX(0);} 20%,60%{transform: translateX(-5px);} 40%,80%{transform: translateX(5px);} }
+</style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+<div id="game-container" class="w-full max-w-md bg-white rounded-xl p-8 text-center shadow-2xl">
+    <h1 class="text-3xl font-extrabold text-indigo-700 mb-6">🔒 Place Value Chest Code</h1>
+    <div class="chest-icon mb-4">🔑</div>
+
+    <div id="problem-box" class="bg-indigo-100 p-4 rounded-lg shadow-md mb-8">
+        <p class="text-xl font-medium text-indigo-800 mb-2">Code Hint:</p>
+        <p id="tens-hint" class="text-2xl font-bold text-gray-900"></p>
+        <p id="ones-hint" class="text-2xl font-bold text-gray-900"></p>
+    </div>
+
+    <p class="text-xl font-semibold text-gray-700 mb-4">Enter the 2-digit Code:</p>
+    
+    <div class="input-group">
+        <input type="number" id="tens-input" class="code-input text-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300" placeholder="T" min="1" max="9" maxlength="1">
+        <input type="number" id="ones-input" class="code-input text-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300" placeholder="O" min="0" max="9" maxlength="1">
+    </div>
+
+    <div id="feedback-box" class="mt-6 h-8 text-xl font-bold text-gray-800"></div>
+    <button id="unlock-button" class="mt-6 px-8 py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition duration-150">Unlock Chest</button>
+</div>
+
+<script>
+let correctCode = 0;
+let correctCount = 0; // Track correct answers
+const maxCorrect = 5; // 5 correct answers to proceed
+const tensHint = document.getElementById('tens-hint');
+const onesHint = document.getElementById('ones-hint');
+const tensInput = document.getElementById('tens-input');
+const onesInput = document.getElementById('ones-input');
+const feedbackBox = document.getElementById('feedback-box');
+const unlockButton = document.getElementById('unlock-button');
+const chestIcon = document.querySelector('.chest-icon');
+
+const generateProblem = () => {
+    const totalNumber = Math.floor(Math.random() * 90) + 10;
+    const tensValue = Math.floor(totalNumber / 10);
+    const onesValue = totalNumber % 10;
+
+    correctCode = totalNumber;
+
+    tensHint.textContent = `The value of the TENS digit is ${tensValue * 10}`;
+    onesHint.textContent = `The digit in the ONES place is ${onesValue}`;
+
+    tensInput.dataset.value = tensValue;
+    onesInput.dataset.value = onesValue;
+
+    tensInput.value = '';
+    onesInput.value = '';
+    feedbackBox.textContent = 'Enter the code.';
+    feedbackBox.className = 'mt-6 h-8 text-xl font-bold text-gray-800';
+    unlockButton.disabled = false;
+    chestIcon.textContent = '🔒';
+}
+
+const handleUnlock = () => {
+    const tensDigit = parseInt(tensInput.value);
+    const onesDigit = parseInt(onesInput.value);
+
+    if (isNaN(tensDigit) || isNaN(onesDigit)) {
+        feedbackBox.textContent = 'Please enter both digits.';
+        feedbackBox.classList.add('text-red-600');
+        return;
+    }
+
+    const submittedCode = tensDigit * 10 + onesDigit;
+
+    if (submittedCode === correctCode) {
+        feedbackBox.textContent = `🎉 Correct! Code ${correctCode} unlocked!`;
+        feedbackBox.classList.add('text-green-600');
+        chestIcon.textContent = '🔓';
+        tensInput.classList.add('correct-animation');
+        onesInput.classList.add('correct-animation');
+        unlockButton.disabled = true;
+
+        correctCount++;
+
+        setTimeout(() => {
+            tensInput.classList.remove('correct-animation');
+            onesInput.classList.remove('correct-animation');
+            if(correctCount >= maxCorrect){
+                feedbackBox.textContent = `🏆 Level Passed! 5 correct codes entered.`;
+                // Notify parent
+                window.parent.postMessage({ type:'levelResult', success:true }, '*');
+            } else {
+                generateProblem();
+            }
+        }, 1500);
+    } else {
+        feedbackBox.textContent = `❌ Wrong code! You entered ${submittedCode}. Try again.`;
+        feedbackBox.classList.add('text-red-600');
+        tensInput.style.animation = 'shake 0.5s';
+        onesInput.style.animation = 'shake 0.5s';
+        setTimeout(() => {
+            tensInput.style.animation = 'none';
+            onesInput.style.animation = 'none';
+        }, 500);
+    }
+}
+
+unlockButton.addEventListener('click', handleUnlock);
+tensInput.addEventListener('keydown', e => { if(e.key==='Enter') onesInput.focus(); });
+onesInput.addEventListener('keydown', e => { if(e.key==='Enter') handleUnlock(); });
+
+generateProblem();
+</script>
+</body>
+</html>
