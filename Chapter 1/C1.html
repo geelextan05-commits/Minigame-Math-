@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Chapter 1 – Level Mode (Sequential)</title>
+<style>
+/* --- 🎨 Enhanced Global Styles --- */
+body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    background: linear-gradient(135deg, #eef8ff 0%, #d8eaff 100%); 
+    padding: 20px; 
+    color: #333;
+    min-height: 100vh;
+}
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+h1 { 
+    color: #007bb5; 
+    border-bottom: 3px solid #0099cc; 
+    padding-bottom: 10px; 
+    margin-top: 0;
+    font-size: 2em;
+}
+
+h3 {
+    color: #555;
+    margin-top: 25px;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed #ccc;
+}
+
+iframe { 
+    width: 100%; 
+    height: 530px; 
+    border: none;
+    border-radius: 10px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.hidden { display: none !important; }
+
+button { 
+    padding: 12px 25px; 
+    border: none; 
+    background: #0099cc; 
+    color: white; 
+    border-radius: 8px; 
+    font-size: 17px; 
+    cursor: pointer; 
+    margin-right: 10px; 
+    transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+button:hover:not(:disabled) {
+    background: #0077a3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+button:active:not(:disabled) {
+    transform: translateY(0);
+}
+button:disabled { 
+    opacity: 0.4; 
+    cursor: not-allowed; 
+}
+
+#results-screen {
+    background: #f7f9fc;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+    border: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+    animation: fadeIn 0.5s ease-out;
+}
+#results-screen h2 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+.success h2 { color: #4CAF50; }
+.failure h2 { color: #cc3300; }
+
+#levels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 0;
+}
+.level-button-passed {
+    background: #4CAF50; 
+    box-shadow: 0 3px 0 #388E3C;
+}
+.level-button-passed:hover:not(:disabled) {
+    background: #43A047;
+}
+
+#controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding: 15px;
+    background: #f0f8ff;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.score-display {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #007bb5;
+}
+#score {
+    color: #cc3300;
+    font-size: 1.1em;
+}
+
+/* --- BACK BUTTON --- */
+#backToMainBtn {
+    padding: 10px 20px;
+    background: #FF6F00;
+    color: white;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+#backToMainBtn:hover {
+    background: #e65c00;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <!-- BACK TO MAIN BUTTON -->
+    <button id="backToMainBtn">⬅️ Back to Main Menu</button>
+
+    <h1 id="main-heading">📘 Chapter 1 – Sequential Level Mode</h1>
+    <p>You must **pass** the current minigame to unlock and proceed to the next one.</p>
+
+    <div id="game-area"></div>
+    <div id="results-screen" class="hidden"></div> 
+    
+    <div id="controls">
+        <div id="button-group">
+            <button id="startBtn">▶️ Start Chapter 1</button>
+            <button id="nextLevelBtn" class="hidden" disabled></button>
+        </div>
+        <span class="score-display">Score: <b id="score">0</b> / 19</span>
+    </div>
+
+    <h3>✨ Levels Passed (Click to Replay):</h3>
+    <div id="levels"></div>
+</div>
+
+<script>
+// --- BACK TO MAIN MENU ---
+document.getElementById('backToMainBtn').addEventListener('click', () => {
+    window.location.href = "../index.html"; // go back to main index
+});
+
+// === ✅ Corrected Game List ===
+const gameList = [
+    "1_NumbersUpTo100.html",
+    "2_ManyAndFew.html",
+    "3_Recognise1to10.html",
+    "4_RecogniseZero.html",
+    "5_Write0to10.html",
+    "6_SmartFun.html",
+    "7_CombinationOfNumbers.html",
+    "8_Recognise11to20.html",
+    "9_Write11to20.html",
+    "10_Recognise21to100.html",
+    "11_RecognisePlaceValueAndDigitValue.html",
+    "12_MoreOrLess.html",
+    "13_NumbersArrangement.html",
+    "14_NumberPatterns.html",
+    "15_RecogniseEstimation.html",
+    "16_RecogniseRoundOff.html",
+    "17_Solve.html",
+    "18_MyProjects.html",
+    "19_SmartFun.html"
+];
+
+const totalGames = gameList.length;
+
+// --- STATE VARIABLES ---
+let currentLevelIndex = 0;
+let highestLevelPassed = -1;
+let score = 0;
+
+// --- DOM ELEMENTS ---
+const gameArea = document.getElementById("game-area");
+const scoreEl = document.getElementById("score");
+const startBtn = document.getElementById("startBtn");
+const nextLevelBtn = document.getElementById("nextLevelBtn");
+const levelsDiv = document.getElementById("levels");
+const resultsScreen = document.getElementById("results-screen");
+const controlsDiv = document.getElementById("controls");
+const mainHeading = document.getElementById('main-heading');
+
+// --- HELPER FUNCTION TO CHECK IF FILE EXISTS ---
+async function checkFileExists(url) {
+    try {
+        const res = await fetch(url, { method: 'HEAD' });
+        return res.ok;
+    } catch {
+        return false;
+    }
+}
+
+// --- LOAD LEVEL ---
+async function loadLevel(i) {
+    if (i >= totalGames) return showFinalScore();
+
+    const fileExists = await checkFileExists(gameList[i]);
+    if (!fileExists) {
+        alert(`⚠️ Level file missing: ${gameList[i]}`);
+        return showFailure(i);
+    }
+
+    resultsScreen.classList.add("hidden");
+    nextLevelBtn.classList.add("hidden");
+
+    currentLevelIndex = i;
+
+    gameArea.innerHTML = "";
+    const frame = document.createElement("iframe");
+    frame.src = gameList[i];
+    frame.id = "gameFrame";
+    gameArea.appendChild(frame);
+
+    mainHeading.innerHTML = `🎮 Chapter 1 – Level ${i + 1}: ${gameList[i].replace('.html', '').replace(/_/g, ' ')}`;
+}
+
+// --- FINAL SCORE ---
+function showFinalScore() {
+    gameArea.innerHTML = "";
+    controlsDiv.classList.add("hidden");
+
+    resultsScreen.className = 'success';
+    resultsScreen.innerHTML = `
+        <h2>🚀 Mission Complete!</h2>
+        <p>You have successfully conquered all ${totalGames} challenges!</p>
+        <p style="font-size: 1.5em; margin-top: 15px;">Your final score is: ${score} / ${totalGames}</p>
+    `;
+    resultsScreen.classList.remove("hidden");
+    mainHeading.innerHTML = `🏆 Chapter 1 Completed!`;
+}
+
+// --- FAILURE SCREEN ---
+function showFailure(levelIndex) {
+    gameArea.innerHTML = "";
+
+    resultsScreen.className = 'failure';
+    resultsScreen.innerHTML = `
+        <h2>🛑 Level Failed!</h2>
+        <p>You failed Level ${levelIndex + 1}. You must pass this level before moving on.</p>
+        <button onclick="loadLevel(${levelIndex})" style="background:#cc3300; margin-top: 15px;">🔄 Retry Level ${levelIndex + 1}</button>
+    `;
+    resultsScreen.classList.remove("hidden");
+
+    nextLevelBtn.classList.add("hidden");
+    startBtn.classList.add("hidden");
+}
+
+// --- UPDATE LEVEL BUTTONS ---
+function updateLevelButtons() {
+    levelsDiv.innerHTML = "";
+    for (let i = 0; i <= highestLevelPassed; i++) {
+        let b = document.createElement("button");
+        b.textContent = "Level " + (i + 1);
+        b.classList.add("level-button-passed");
+        b.onclick = () => loadLevel(i);
+        levelsDiv.appendChild(b);
+    }
+}
+
+// --- POST MESSAGE LISTENER ---
+window.addEventListener("message", (event) => {
+    const msg = event.data;
+    if (msg.type !== "levelResult" || !('success' in msg)) return;
+
+    if (msg.success) {
+        if (currentLevelIndex === totalGames - 1) {
+            highestLevelPassed = totalGames - 1;
+            score = totalGames;
+        } else {
+            if (currentLevelIndex > highestLevelPassed) {
+                highestLevelPassed = currentLevelIndex;
+                score++;
+            }
+        }
+
+        scoreEl.textContent = `${score} / ${totalGames}`;
+        updateLevelButtons();
+
+        if (currentLevelIndex + 1 >= totalGames) {
+            showFinalScore();
+        } else {
+            gameArea.innerHTML = "";
+            resultsScreen.className = 'success';
+            resultsScreen.innerHTML = `
+                <h2>⭐ Level ${currentLevelIndex + 1} Cleared!</h2>
+                <p>Great job! You've unlocked the next challenge.</p>
+            `;
+            resultsScreen.classList.remove("hidden");
+
+            nextLevelBtn.textContent = `➡️ Continue to Level ${currentLevelIndex + 2}`;
+            nextLevelBtn.disabled = false;
+            nextLevelBtn.onclick = () => loadLevel(currentLevelIndex + 1);
+            nextLevelBtn.classList.remove("hidden");
+            mainHeading.innerHTML = `Level Cleared!`;
+        }
+    } else {
+        showFailure(currentLevelIndex);
+    }
+});
+
+// --- START BUTTON ---
+startBtn.onclick = () => {
+    startBtn.classList.add("hidden");
+    loadLevel(0);
+};
+
+// --- INITIALIZE ---
+scoreEl.textContent = `${score} / ${totalGames}`;
+updateLevelButtons();
+</script>
+
+</body>
+</html>

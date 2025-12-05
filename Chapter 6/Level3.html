@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 6 – Level 3: Recognise Mass</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+
+<style>
+    /* --- General Body & Background --- */
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #a7d9ff, #e3faff); /* Brighter, more vibrant blue */
+        padding: 20px;
+        text-align: center;
+        min-height: 100vh;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* --- Header & Progress --- */
+    h1 {
+        font-size: 40px;
+        font-weight: 900;
+        /* Updated gradient for better contrast */
+        background: linear-gradient(45deg, #0056b3, #00aaff); 
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.8);
+        margin-bottom: 5px;
+        margin-top: 20px;
+    }
+
+    #progress {
+        font-size: 18px;
+        color: #007bbd;
+        font-weight: 700;
+        margin-bottom: 30px;
+    }
+
+    /* --- Main Card (Object Display) --- */
+    .card {
+        background: linear-gradient(145deg, #f7faff, #d5e9f8); /* Light blue gradient */
+        width: 90%;
+        max-width: 400px;
+        padding: 25px;
+        border-radius: 25px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 0 0 4px #c2e0ff; /* Subtle double shadow */
+        margin: 0 auto 30px;
+        position: relative;
+    }
+    
+    .mass-label {
+        font-size: 24px;
+        font-weight: 800;
+        color: #e65100;
+        text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
+        margin-top: 15px;
+    }
+
+    /* --- Image Container (Added Padding/Border) --- */
+    #imageContainer {
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #eaf5ff;
+        border-radius: 15px;
+        padding: 10px;
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    #objectImage {
+        max-width: 90%;
+        max-height: 180px;
+        width: auto;
+        height: auto;
+        display: block;
+        transition: transform 0.2s;
+    }
+
+    /* --- Comparison & Button Layout --- */
+    #choiceArea {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 30px;
+    }
+
+    .choice-column {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 45%;
+    }
+
+    .choice-column h2 {
+        font-size: 28px;
+        margin-bottom: 15px;
+        font-weight: 800;
+    }
+    
+    .light-column h2 { color: #29B6F6; }
+    .heavy-column h2 { color: #EF5350; }
+
+    /* --- Button Styling (3D Press Effect) --- */
+    .btn {
+        padding: 18px 30px;
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        border: none;
+        border-radius: 18px;
+        cursor: pointer;
+        color: white;
+        transition: all 0.1s ease;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        width: 100%;
+        max-width: 200px;
+    }
+    
+    /* 3D effect base */
+    .light-btn { 
+        background: #4fc3f7; /* Lighter top color */
+        box-shadow: 0 7px 0 #039be5; /* Darker bottom color for depth */
+    }
+    .heavy-btn { 
+        background: #ff7f77; /* Lighter top color */
+        box-shadow: 0 7px 0 #e53935; /* Darker bottom color for depth */
+    }
+    
+    /* Pressed state */
+    .btn:active {
+        transform: translateY(7px);
+        box-shadow: 0 0 0; /* Shadow disappears when pressed */
+    }
+
+    /* --- Animation & Feedback --- */
+    .shake {
+        animation: shake 0.3s;
+        box-shadow: 0 0 15px rgba(255, 0, 0, 0.7); /* Red glow on wrong answer */
+    }
+
+    @keyframes shake {
+        25% { transform: translateX(-10px); }
+        50% { transform: translateX(10px); }
+        75% { transform: translateX(-10px); }
+        100% { transform: translateX(0); }
+    }
+
+    #resultMessage {
+        font-size: 28px;
+        font-weight: 800;
+        margin-top: 30px;
+        padding: 10px;
+        border-radius: 10px;
+    }
+    
+    .result-correct { 
+        color: #2e7d32; 
+        background: #e8f5e9; 
+    }
+    
+    .result-incorrect {
+        color: #d32f2f;
+        background: #ffebee;
+    }
+
+    /* Level Complete Screen */
+    #completeBox {
+        display: none;
+        font-size: 32px;
+        color: #2E7D32;
+        font-weight: 900;
+        margin-top: 40px;
+        text-shadow: 1px 1px 1px #fff;
+    }
+</style>
+</head>
+<body>
+
+<h1>⚖️ Level 3: Recognise Mass</h1>
+<p id="progress"></p>
+
+<div class="card">
+    <div id="imageContainer">
+        <img id="objectImage" src="" alt="object">
+    </div>
+    <p class="mass-label" id="massText"></p>
+</div>
+
+<div id="choiceArea">
+    <div class="choice-column light-column">
+        <h2>Light</h2>
+        <button class="btn light-btn" onclick="checkAnswer('light')">Is Light</button>
+    </div>
+    
+    <div class="choice-column heavy-column">
+        <h2>Heavy</h2>
+        <button class="btn heavy-btn" onclick="checkAnswer('heavy')">Is Heavy</button>
+    </div>
+</div>
+
+<p id="resultMessage"></p>
+
+<div id="completeBox">🎉 Level Complete! Returning to main page... 🎉</div>
+
+<script>
+let objects = [
+    { img: "images/screw.png", mass: "15 g", ans: "light" },
+    { img: "images/ruler.png", mass: "10 g", ans: "light" },
+    { img: "images/pencil.png", mass: "12 g", ans: "light" },
+    { img: "images/phone.png", mass: "350 g", ans: "heavy" }
+];
+
+let index = 0;
+const resultMessage = document.getElementById("resultMessage");
+const objectImage = document.getElementById("objectImage");
+
+function loadObject() {
+    objectImage.src = objects[index].img;
+    document.getElementById("massText").innerHTML = "Mass: " + objects[index].mass;
+    document.getElementById("progress").innerHTML = 
+        "Object " + (index + 1) + " of " + objects.length;
+        
+    resultMessage.innerHTML = "";
+    resultMessage.classList.remove("result-correct", "result-incorrect");
+}
+
+function checkAnswer(choice) {
+    let correct = objects[index].ans;
+
+    if (choice === correct) {
+        resultMessage.classList.add("result-correct");
+        resultMessage.classList.remove("result-incorrect");
+        resultMessage.innerHTML = "Correct! Moving to next object...";
+
+        setTimeout(() => {
+            index++;
+            if (index < objects.length) {
+                loadObject();
+            } else {
+                // Level Complete Logic
+                document.getElementById("choiceArea").style.display = "none";
+                resultMessage.style.display = "none";
+                document.getElementById("completeBox").style.display = "block";
+                localStorage.setItem("C6_Level3", "completed");
+
+                // Auto-return to main page after 2 seconds
+                setTimeout(() => {
+                    window.location.href = "C6.html";
+                }, 2000);
+            }
+        }, 800);
+
+    } else {
+        resultMessage.classList.add("result-incorrect");
+        resultMessage.classList.remove("result-correct");
+        resultMessage.innerHTML = "Try again!";
+        
+        // Apply shake animation to the image only
+        objectImage.classList.add("shake");
+
+        setTimeout(() => {
+            objectImage.classList.remove("shake");
+        }, 400);
+    }
+}
+
+loadObject();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Magic Ladder Level 5</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;800&display=swap');
+body { font-family: 'Inter', sans-serif; background-color: #fdf2f8; }
+.game-card { border: 4px solid #db2777; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+.platform { background-color: #db2777; color: white; border-radius: 0.5rem; padding: 10px 20px; }
+.ladder-block { transition: all 0.1s; box-shadow: 0 4px 0 0 #9d174d; }
+.ladder-block:active { transform: translateY(2px); box-shadow: 0 2px 0 0 #9d174d; }
+</style>
+</head>
+<body class="p-4 md:p-8 flex items-center justify-center min-h-screen bg-pink-50">
+
+<div id="app" class="game-card w-full max-w-lg p-6 md:p-10 text-center rounded-2xl bg-white">
+    <h1 class="text-3xl font-extrabold text-pink-700 mb-4">🪜 Magic Ladder Level 5</h1>
+    <p class="text-gray-600 mb-6">Build the ladder! Which number completes the sum? (Sum ≤ 20)</p>
+    
+    <div class="flex flex-col items-center mb-8">
+        <div class="platform mb-2 text-2xl font-bold">Target: <span id="target-number">?</span></div>
+        <div class="w-1 bg-pink-300 h-20"></div>
+        <div id="current-sum" class="text-4xl font-black text-pink-700 bg-pink-100 p-3 rounded-lg border border-pink-400">? + ? = ?</div>
+        <div class="w-1 bg-pink-300 h-20"></div>
+        <div class="platform text-2xl font-bold">Start: <span id="start-number">?</span></div>
+    </div>
+
+    <div id="question-text" class="text-xl font-bold text-gray-700 mb-6">What number must be added to reach the Target?</div>
+
+    <div id="choices-container" class="grid grid-cols-3 gap-3"></div>
+
+    <div id="feedback" class="h-8 mt-6 text-lg font-bold"></div>
+    <div class="mt-4 text-lg">Score: <span id="score">0</span> / 5</div>
+
+    <button id="start-button" onclick="startGame()" class="mt-6 px-8 py-3 bg-pink-600 text-white font-bold rounded-xl ladder-block">Start Building</button>
+</div>
+
+<script>
+let score = 0;
+let correctAnswer = 0;
+let questionCount = 0;
+const REQUIRED_SCORE = 5;
+
+const scoreEl = document.getElementById('score');
+const targetEl = document.getElementById('target-number');
+const startEl = document.getElementById('start-number');
+const currentSumEl = document.getElementById('current-sum');
+const questionTextEl = document.getElementById('question-text');
+const choicesContainer = document.getElementById('choices-container');
+const feedbackEl = document.getElementById('feedback');
+const startBtn = document.getElementById('start-button');
+
+const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+function notifyLevelComplete() {
+    window.parent.postMessage({ type: "levelResult", success: true }, "*");
+}
+
+function generateQuestion() {
+    let startNum = getRandomInt(1, 10);
+    let addAmount = getRandomInt(1, 10);
+    let targetNum = startNum + addAmount;
+    
+    if (targetNum > 20) {
+        const maxAdd = 20 - startNum;
+        addAmount = getRandomInt(1, maxAdd);
+        targetNum = startNum + addAmount;
+    }
+
+    correctAnswer = addAmount;
+
+    startEl.textContent = startNum;
+    targetEl.textContent = targetNum;
+    currentSumEl.textContent = `${startNum} + ? = ${targetNum}`;
+
+    // Generate 3 choices
+    const choices = [correctAnswer];
+    while (choices.length < 3) {
+        let choice = getRandomInt(Math.max(1, correctAnswer-3), Math.min(10, correctAnswer+3));
+        if (!choices.includes(choice)) choices.push(choice);
+    }
+    choices.sort(() => Math.random() - 0.5);
+
+    choicesContainer.innerHTML = choices.map(c => `
+        <button onclick="checkAnswer(${c})" class="ladder-block w-full bg-pink-500 text-white text-3xl font-bold py-4 rounded-xl hover:bg-pink-600">
+            +${c}
+        </button>
+    `).join('');
+}
+
+function checkAnswer(selected) {
+    choicesContainer.style.pointerEvents = 'none';
+
+    if (selected === correctAnswer) {
+        score++;
+        scoreEl.textContent = score;
+        feedbackEl.className = 'h-8 mt-6 text-lg font-bold text-green-600';
+        feedbackEl.textContent = 'Great! Ladder complete!';
+        currentSumEl.textContent = `${startEl.textContent} + ${selected} = ${targetEl.textContent}`;
+
+        if (score >= REQUIRED_SCORE) {
+            feedbackEl.textContent = '🎉 Level Completed!';
+            notifyLevelComplete();
+            return; // stop generating new questions
+        }
+    } else {
+        feedbackEl.className = 'h-8 mt-6 text-lg font-bold text-red-600';
+        feedbackEl.textContent = `Wrong! The missing block was +${correctAnswer}.`;
+    }
+
+    setTimeout(() => {
+        feedbackEl.textContent = '';
+        choicesContainer.style.pointerEvents = 'auto';
+        if (score < REQUIRED_SCORE) generateQuestion();
+    }, 1500);
+}
+
+function startGame() {
+    score = 0;
+    questionCount = 0;
+    scoreEl.textContent = score;
+    startBtn.classList.add('hidden');
+    feedbackEl.textContent = '';
+    generateQuestion();
+}
+
+window.startGame = startGame;
+window.checkAnswer = checkAnswer;
+</script>
+</body>
+</html>

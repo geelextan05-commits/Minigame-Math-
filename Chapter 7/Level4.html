@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 7 - Level 4: Shape Friends</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Bungee+Inline&family=Kalam:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 1. THEME & BACKGROUND (Inspired by Mr. Square's World) --- */
+        body {
+            /* Playful sky landscape with green ground */
+            font-family: 'Fredoka', sans-serif; 
+            background-color: #87CEEB;
+            background-image: 
+                radial-gradient(circle at 15% 15%, white 8%, transparent 10%),
+                radial-gradient(circle at 85% 20%, white 10%, transparent 12%),
+                radial-gradient(circle at 40% 90%, #f1c40f 15%, transparent 18%), /* Sun/Star icon */
+                linear-gradient(to bottom, #87CEEB 0%, #E0F7FA 60%, #8bc34a 60%, #689f38 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+        
+        /* --- 2. HEADER & TITLE STYLING --- */
+        
+        .level-header {
+            /* Starry, chunky style for the main title */
+            font-size: clamp(3rem, 7vw, 5rem);
+            color: #ff4757; /* Mr. Square's Red */
+            text-shadow: 
+                -3px -3px 0px #2f3542, /* Dark outline */
+                3px 3px 0px #ffa502, /* Orange pop */
+                0 0 10px rgba(0, 0, 0, 0.3);
+            letter-spacing: 2px;
+            -webkit-text-stroke: 1px #2f3542; /* Extra outline for Fredoka */
+        }
+        .quiz-title-kalam {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            color: #2f3542; /* Dark Color */
+            text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.9);
+        }
+
+        /* Progress Display (Bubble/Tag Style) */
+        #progressDisplay {
+            border: 4px solid #2f3542; /* Dark Border */
+            box-shadow: 0 4px 0px #ffa502; /* Orange Shadow */
+        }
+
+        /* --- 3. QUIZ CARD STYLING (The Magical Cloud/Platform) --- */
+        .quiz-card {
+            background: #ffffff;
+            border: 8px solid #ff4757; /* Red Border */
+            box-shadow: 0 10px 0px 0px #2f3542, 0 15px 30px rgba(0,0,0,0.2);
+            position: relative;
+            padding: 30px;
+            /* Simple, friendly rounded corners */
+            border-radius: 30px; 
+        }
+        
+        /* --- 4. SHAPE OPTION CONTAINERS (The Shape Friends) --- */
+        .shape-container {
+            /* Button background: Light blue/sky theme */
+            background-color: #e0f2fe; /* Light Blue */
+            border: 4px solid #1e90ff; /* Blue for the Shape */
+            border-radius: 20px;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            box-shadow: 0 4px 0px 0px #1e40ff; /* Darker blue shadow */
+            padding: 15px; /* Increased padding */
+        }
+        .shape-container:hover:not([data-locked]) {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 7px 0px 0px #1e40ff, 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+            border-color: #ff4757; /* Red hover for focus */
+        }
+        
+        /* Question Prompt Styling */
+        #questionPrompt {
+            color: #2f3542; /* Dark color for readability */
+            font-weight: 700;
+            text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.8);
+            font-size: 2rem; /* Ensure it's big */
+        }
+
+        /* Result Message Styling */
+        #resultMessage {
+            font-family: 'Fredoka', sans-serif; /* Use Fredoka for the main message */
+            font-weight: 700;
+        }
+
+        /* --- 5. ACTION BUTTON STYLING (Chunky & Fun) --- */
+        .action-btn {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border: 4px solid white; /* White outline on all buttons */
+            border-bottom: 6px solid; /* Thicker bottom for 3D press effect */
+            box-shadow: 0 6px 0px 0px;
+            transition: all 0.2s;
+            padding: 15px 35px;
+            border-radius: 50px; /* Pill shape */
+            color: white; /* All button text is white */
+        }
+        .action-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0px 0px;
+            border-bottom-width: 2px;
+        }
+
+        /* Specific styles for Start/Continue Button (Green Success Theme) */
+        .start-btn, .continue-btn {
+            background-color: #2ed573; /* Green Success Color */
+            border-color: white; 
+            border-bottom-color: #218c74; /* Darker Green for shadow base */
+            box-shadow: 0 6px 0px 0px #218c74;
+        }
+        .start-btn:active, .continue-btn:active {
+            box-shadow: 0 2px 0px 0px #218c74;
+        }
+
+        /* Specific styles for Retry Button (Orange Theme) */
+        .retry-btn {
+            background-color: #ffa502; /* Orange for Try Again */
+            border-color: white; 
+            border-bottom-color: #cc8400; /* Darker Orange for shadow base */
+            box-shadow: 0 6px 0px 0px #cc8400;
+        }
+        .retry-btn:active {
+            box-shadow: 0 2px 0px 0px #cc8400;
+        }
+
+        /* Feedback Animations - Colors adjusted for theme */
+        .correct-answer {
+            animation: pulse-success 0.5s 2;
+            border-color: #2ed573 !important; /* Green */
+        }
+        .wrong-answer {
+            animation: shake 0.5s;
+            border-color: #ff4757 !important; /* Mr. Square Red */
+        }
+
+        /* Keyframes are kept but should be outside <style> for production, 
+           or defined here for single-file HTML */
+        @keyframes pulse-success {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 0 10px #2ed573; }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4">
+
+        <header class="w-full max-w-xl text-center mb-8">
+            <h1 class="level-header">⭐ Level 4 Unlocked! ⭐</h1>
+            <p class="quiz-title-kalam mb-4">Help Mr. Square find his 2-D Shape Friends!</p>
+            <div id="progressDisplay" class="mt-4 text-xl font-extrabold text-gray-800 bg-white p-3 rounded-xl shadow-lg inline-block">
+                Quest <span id="currentQ">1</span> of 4
+            </div>
+        </header>
+
+        <main class="w-full max-w-xl quiz-card">
+
+            <div id="questionContainer" class="mb-8 min-h-[4rem] flex items-center justify-center">
+                <p id="questionPrompt" class="text-3xl font-bold text-center text-gray-900">
+                    Ready to start the adventure?
+                </p>
+            </div>
+
+            <div id="optionsGrid" class="grid grid-cols-2 gap-6">
+                </div>
+
+            <div id="resultMessage" class="mt-8 text-center text-xl font-extrabold min-h-12 flex items-center justify-center">
+                </div>
+
+            <div class="mt-8 text-center">
+                <button id="actionButton" onclick="startQuiz()"
+                    class="action-btn start-btn text-white">
+                    Start Level 4
+                </button>
+            </div>
+        </main>
+
+    </div>
+
+    <script>
+        // --- JAVASCRIPT LOGIC (UNCHANGED AS REQUESTED) ---
+        // Global state
+        const SHAPES = ['square', 'circle', 'triangle', 'rectangle'];
+        const TOTAL_QUESTIONS = 4; // Changed from 5 to 4
+        let quizData = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let isWaitingForNext = false;
+        let currentCorrectShape = '';
+
+        // DOM elements
+        const currentQEl = document.getElementById('currentQ');
+        const questionPromptEl = document.getElementById('questionPrompt');
+        const optionsGridEl = document.getElementById('optionsGrid');
+        const resultMessageEl = document.getElementById('resultMessage');
+        const actionButtonEl = document.getElementById('actionButton');
+
+        // --- Utility Functions ---
+
+        // Helper to shuffle an array
+        const shuffleArray = (array) => {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        };
+
+        // Generates an SVG for a given shape name
+        const generateShapeSVG = (shapeName) => {
+            const size = 80;
+            // Generate a distinct color for each shape type
+            let color = '';
+            // Icons adapted for Standard 1 kids (Colors remain distinct for recognition)
+            switch (shapeName) {
+                case 'square': color = '#3498db'; break; // Blue
+                case 'circle': color = '#e74c3c'; break; // Red
+                case 'triangle': color = '#2ecc71'; break; // Green
+                case 'rectangle': color = '#f1c40f'; break; // Yellow
+                default: color = '#95a5a6';
+            }
+
+            let pathData = '';
+            const center = 50;
+            switch (shapeName) {
+                case 'square':
+                    pathData = `<rect x="10" y="10" width="${size}" height="${size}" fill="${color}" stroke="#333" stroke-width="3" rx="8" ry="8" />`;
+                    break;
+                case 'circle':
+                    pathData = `<circle cx="${center}" cy="${center}" r="${size / 2}" fill="${color}" stroke="#333" stroke-width="3" />`;
+                    break;
+                case 'triangle':
+                    // Equilateral triangle
+                    const h = size * Math.sqrt(3) / 2;
+                    pathData = `<polygon points="${center},10 10,${10 + h} ${size},${10 + h}" fill="${color}" stroke="#333" stroke-width="3" />`;
+                    break;
+                case 'rectangle':
+                    pathData = `<rect x="10" y="20" width="${size}" height="${size * 0.6}" fill="${color}" stroke="#333" stroke-width="3" rx="4" ry="4" />`;
+                    break;
+                default:
+                    return '';
+            }
+            // Removed the shape label text as requested for a challenge
+            const shapeLabel = ''; // This line has been modified to remove the label
+            
+            return `<svg viewBox="0 0 ${size + 20} ${size + 30}" class="w-24 h-28">${pathData}${shapeLabel}</svg>`;
+        };
+
+        // --- Quiz Logic ---
+
+        // Generates a question based on a mandated target shape
+        const createQuestion = (targetShape) => {
+            // Determine distractors (the other 3 shapes)
+            const incorrectShapesPool = SHAPES.filter(s => s !== targetShape);
+            let distractors = shuffleArray([...incorrectShapesPool]);
+            
+            // Combine and shuffle the 4 options
+            const options = shuffleArray([targetShape, ...distractors]);
+
+            return {
+                prompt: `Find the <span class="text-[#ff4757] underline uppercase">${targetShape}</span> friend! 🕵️`, // Themed Prompt
+                correctAnswer: targetShape,
+                options: options
+            };
+        }
+
+        const generateQuiz = () => {
+            quizData = [];
+            // Guarantee one question for each of the 4 shapes, shuffled
+            const targetShapes = shuffleArray([...SHAPES]);
+            
+            for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+                const targetShape = targetShapes[i];
+                quizData.push(createQuestion(targetShape));
+            }
+        };
+
+        const displayQuestion = (qIndex) => {
+            const q = quizData[qIndex];
+            currentCorrectShape = q.correctAnswer;
+            
+            // Update UI elements
+            currentQEl.textContent = qIndex + 1;
+            questionPromptEl.innerHTML = q.prompt;
+            resultMessageEl.textContent = '';
+            optionsGridEl.innerHTML = '';
+            actionButtonEl.classList.add('hidden');
+            isWaitingForNext = false;
+
+            // Render shape options
+            q.options.forEach((shapeName, index) => {
+                const shapeSvg = generateShapeSVG(shapeName);
+                const button = document.createElement('div');
+                // Use the new CSS class for themed styling
+                button.className = 'shape-container flex flex-col items-center justify-center p-2 rounded-xl shadow-md'; 
+                button.setAttribute('data-shape', shapeName);
+                button.innerHTML = shapeSvg;
+
+                // Attach click handler
+                button.onclick = () => checkAnswer(button, shapeName);
+                optionsGridEl.appendChild(button);
+            });
+        };
+
+        const checkAnswer = (selectedElement, selectedShape) => {
+            if (isWaitingForNext) return; // Prevent double clicking
+
+            isWaitingForNext = true;
+            const isCorrect = selectedShape === currentCorrectShape;
+
+            // Find all option elements to disable clicks
+            const allOptions = document.querySelectorAll('.shape-container');
+            allOptions.forEach(el => {
+                el.onclick = null;
+                el.classList.add('pointer-events-none'); // Disable clicking via CSS class
+            });
+
+            if (isCorrect) {
+                score++;
+                currentQuestionIndex++;
+                selectedElement.classList.add('correct-answer', 'bg-green-100');
+                resultMessageEl.innerHTML = `<span class="text-3xl text-green-600">YES! You found a friend! 🎉</span>`;
+            } else {
+                currentQuestionIndex++;
+                selectedElement.classList.add('wrong-answer', 'bg-red-100');
+                // The next line has been MODIFIED to remove the shape name from the message
+                resultMessageEl.innerHTML = `<span class="text-3xl text-red-600">WHOOPS! 🙁 Keep trying!</span>`;
+                
+                // Show the correct answer as well
+                const correctEl = document.querySelector(`[data-shape="${currentCorrectShape}"]`);
+                if(correctEl) {
+                    correctEl.classList.add('bg-green-100', 'border-green-500', 'correct-answer');
+                }
+            }
+            // Update score display immediately after answer
+            document.getElementById('progressDisplay').querySelector('span').textContent = currentQuestionIndex;
+
+            // Wait a moment then move to the next step
+            setTimeout(() => {
+                // Check against the new total question count
+                if (currentQuestionIndex < TOTAL_QUESTIONS) {
+                    displayQuestion(currentQuestionIndex);
+                } else {
+                    endQuiz();
+                }
+            }, 1800); // Wait 1.8 seconds for animation and message to sink in
+        };
+
+        const endQuiz = () => {
+            optionsGridEl.innerHTML = ''; // Clear shapes
+            questionPromptEl.textContent = 'Adventure Complete!';
+
+            if (score === TOTAL_QUESTIONS) { // Check if 4/4 correct
+                // Success path: Unlock Level 5
+                localStorage.setItem('C7_Level4', 'completed');
+
+                resultMessageEl.innerHTML = `<span class="text-3xl text-green-700">🏆 PERFECT SCORE! Level Cleared! 🏆</span>`;
+                actionButtonEl.textContent = 'Continue to Level 5';
+                
+                // Set Continue Button Class
+                actionButtonEl.className = 'action-btn continue-btn';
+                actionButtonEl.onclick = () => window.location.href = 'C7.html';
+
+            } else {
+                // Failure/Retry path
+                localStorage.removeItem('C7_Level4'); // Ensure it's not accidentally unlocked
+
+                resultMessageEl.innerHTML = `<span class="text-3xl text-red-700">Keep Exploring!</span> You found ${score} out of ${TOTAL_QUESTIONS} friends.`;
+                actionButtonEl.textContent = 'Try Again! (New Quest)';
+                actionButtonEl.onclick = startQuiz;
+                
+                // Set Retry Button Class
+                actionButtonEl.className = 'action-btn retry-btn';
+            }
+            actionButtonEl.classList.remove('hidden');
+        };
+
+        const startQuiz = () => {
+            currentQuestionIndex = 0;
+            score = 0;
+            generateQuiz(); // Generate new set of 4 unique questions every time
+            displayQuestion(currentQuestionIndex);
+        };
+
+        // Initialize the app on load
+        document.addEventListener('DOMContentLoaded', () => {
+            actionButtonEl.classList.remove('hidden');
+            questionPromptEl.textContent = `Ready to start the shape recognition challenge? You need ${TOTAL_QUESTIONS}/${TOTAL_QUESTIONS} correct to proceed!`;
+            actionButtonEl.textContent = 'Start Level 4';
+        });
+
+    </script>
+</body>
+</html>

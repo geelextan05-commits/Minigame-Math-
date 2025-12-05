@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Catch (1 to 10)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7fee7; overflow: hidden; }
+        .game-container {
+            max-width: 600px;
+            height: 400px;
+            border: 4px solid #84cc16;
+            background-color: #d9f99d;
+            position: relative;
+            overflow: hidden;
+            touch-action: none; /* Disable default touch actions */
+        }
+        #basket {
+            position: absolute;
+            bottom: 0;
+            width: 80px;
+            height: 40px;
+            line-height: 40px;
+            background-color: #4ade80;
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.2);
+            transition: left 0.1s linear;
+            user-select: none;
+            cursor: grab;
+        }
+        .falling-number {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            text-align: center;
+            border-radius: 50%;
+            background-color: #fcd34d;
+            color: #b45309;
+            font-weight: 700;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="w-full max-w-xl text-center">
+        <h1 class="text-3xl font-extrabold text-lime-600 mb-4">🔢 Number Catch (1 to 10)</h1>
+        <div id="target-box" class="text-2xl font-semibold mb-4 p-3 bg-white rounded-lg text-lime-800 shadow-md">
+            Target: <span id="target-number" class="text-red-500 font-bold">?</span>
+        </div>
+
+        <div id="game-container" class="game-container mx-auto rounded-xl">
+            <div id="basket">🧺</div>
+        </div>
+
+        <div id="message-box" class="mt-4 h-8 text-xl font-bold text-gray-800"></div>
+        <div class="mt-4 flex justify-center space-x-4">
+            <div class="p-3 bg-gray-100 rounded-lg shadow-inner">Score: <span id="score" class="font-bold text-lg text-green-600">0</span></div>
+            <div class="p-3 bg-gray-100 rounded-lg shadow-inner">Misses: <span id="misses" class="font-bold text-lg text-red-600">0</span></div>
+        </div>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('game-container');
+        const basket = document.getElementById('basket');
+        const targetNumberSpan = document.getElementById('target-number');
+        const messageBox = document.getElementById('message-box');
+        const scoreElement = document.getElementById('score');
+        const missesElement = document.getElementById('misses');
+
+        let score = 0;
+        let misses = 0;
+        const MAX_SCORE = 5;   // pass after 5 correct
+        const MAX_MISSES = 5;  // fail after 5 misses
+        let targetNumber = 0;
+        let gameInterval;
+        let fallingNumbers = [];
+        const NUMBERS_RANGE = Array.from({ length: 10 }, (_, i) => i + 1);
+
+        const updateScore = (delta) => {
+            score += delta;
+            scoreElement.textContent = score;
+            if(score >= MAX_SCORE) {
+                endGame(true);
+            }
+        }
+
+        const updateMisses = (delta) => {
+            misses += delta;
+            missesElement.textContent = misses;
+            if(misses >= MAX_MISSES) {
+                endGame(false);
+            }
+        }
+
+        const setTarget = () => {
+            targetNumber = NUMBERS_RANGE[Math.floor(Math.random() * NUMBERS_RANGE.length)];
+            targetNumberSpan.textContent = targetNumber;
+        }
+
+        const createFallingNumber = (value) => {
+            const numElement = document.createElement('div');
+            numElement.className = 'falling-number';
+            numElement.textContent = value;
+            numElement.dataset.value = value;
+            numElement.style.left = `${Math.random() * (gameContainer.clientWidth - 40)}px`;
+            numElement.style.top = `-40px`;
+            gameContainer.appendChild(numElement);
+            fallingNumbers.push(numElement);
+        }
+
+        const gameLoop = () => {
+            fallingNumbers = fallingNumbers.filter(numElement => {
+                let top = parseInt(numElement.style.top) || 0;
+                top += 2;
+                numElement.style.top = `${top}px`;
+
+                const basketRect = basket.getBoundingClientRect();
+                const numRect = numElement.getBoundingClientRect();
+
+                // Catch logic
+                if(top + numRect.height >= gameContainer.clientHeight - basketRect.height &&
+                   numRect.left < basketRect.right &&
+                   numRect.right > basketRect.left &&
+                   top < gameContainer.clientHeight) {
+
+                    const value = parseInt(numElement.dataset.value);
+                    numElement.remove();
+
+                    if(value === targetNumber){
+                        messageBox.textContent = '✅ Caught it!';
+                        updateScore(1);
+                        setTarget();
+                    } else {
+                        messageBox.textContent = '❌ Wrong number! Keep catching the target.';
+                        updateMisses(1);
+                    }
+                    return false;
+                }
+
+                // Missed number
+                if(top > gameContainer.clientHeight) {
+                    const value = parseInt(numElement.dataset.value);
+                    if(value === targetNumber){
+                        messageBox.textContent = '❗ Missed the target!';
+                        updateMisses(1);
+                    }
+                    numElement.remove();
+                    return false;
+                }
+
+                return true;
+            });
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        const spawnNumber = () => {
+            const randValue = NUMBERS_RANGE[Math.floor(Math.random() * NUMBERS_RANGE.length)];
+            createFallingNumber(randValue);
+        }
+
+        const startGame = () => {
+            score = 0;
+            misses = 0;
+            scoreElement.textContent = score;
+            missesElement.textContent = misses;
+            messageBox.textContent = 'Start Catching!';
+            
+            fallingNumbers.forEach(n => n.remove());
+            fallingNumbers = [];
+            clearInterval(gameInterval);
+
+            setTarget();
+            gameInterval = setInterval(spawnNumber, 1500);
+            requestAnimationFrame(gameLoop);
+        }
+
+        const endGame = (success) => {
+            clearInterval(gameInterval);
+            fallingNumbers.forEach(n => n.remove());
+            fallingNumbers = [];
+            targetNumberSpan.textContent = success ? '✔' : '❌';
+            messageBox.textContent = success ? 'Level Passed! 🎉' : 'Level Failed! ❌';
+            
+            // Send result to parent sequential loader
+            window.parent.postMessage({type:'levelResult', success: success}, '*');
+        }
+
+        // Basket movement
+        let isDragging = false, offsetX = 0;
+
+        basket.addEventListener('mousedown', e => {
+            isDragging = true;
+            offsetX = e.clientX - basket.getBoundingClientRect().left;
+            basket.style.cursor = 'grabbing';
+        });
+
+        document.addEventListener('mousemove', e => {
+            if(!isDragging) return;
+            let newX = e.clientX - gameContainer.getBoundingClientRect().left - offsetX;
+            newX = Math.max(0, Math.min(newX, gameContainer.clientWidth - basket.offsetWidth));
+            basket.style.left = `${newX}px`;
+        });
+
+        document.addEventListener('mouseup', () => { isDragging = false; basket.style.cursor = 'grab'; });
+
+        // Touch support
+        basket.addEventListener('touchstart', e => {
+            isDragging = true;
+            offsetX = e.touches[0].clientX - basket.getBoundingClientRect().left;
+            basket.style.cursor = 'grabbing';
+        });
+
+        document.addEventListener('touchmove', e => {
+            if(!isDragging) return;
+            let newX = e.touches[0].clientX - gameContainer.getBoundingClientRect().left - offsetX;
+            newX = Math.max(0, Math.min(newX, gameContainer.clientWidth - basket.offsetWidth));
+            basket.style.left = `${newX}px`;
+        });
+
+        document.addEventListener('touchend', () => { isDragging = false; basket.style.cursor = 'grab'; });
+
+        startGame();
+    </script>
+</body>
+</html>

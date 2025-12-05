@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pattern Train Builder</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body { font-family: 'Inter', sans-serif; background-color: #f0f4f8; }
+.game-container { max-width: 700px; background-color: #fff; border: 4px solid #f97316; }
+.train-car {
+    min-width: 80px;
+    height: 60px;
+    background-color: #f97316;
+    color: white;
+    font-size: 24px;
+    font-weight: 700;
+    border-radius: 8px;
+    box-shadow: 0 4px 0 #ea580c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.missing-car {
+    background-color: #fef3c7;
+    border: 3px dashed #f97316;
+    color: #ea580c;
+}
+.choice-button {
+    transition: all 0.1s;
+    user-select: none;
+}
+.choice-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.correct { background-color: #10b981; border-color: #059669; color: white; }
+.wrong { background-color: #ef4444; border-color: #dc2626; color: white; }
+.connector { width: 20px; height: 4px; background-color: #4b5563; }
+</style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+<div id="game-container" class="game-container w-full rounded-xl p-6 md:p-8 text-center shadow-2xl">
+    <h1 class="text-3xl font-extrabold text-orange-600 mb-4">🚂 Pattern Train Builder</h1>
+    <p class="text-gray-600 mb-6">Click the missing number to complete the train's pattern!</p>
+
+    <div id="train-track" class="flex justify-center items-center mb-10"></div>
+
+    <div id="feedback-box" class="h-8 text-xl font-bold text-gray-800 mb-6">Choose the missing number below.</div>
+
+    <div id="choices-container" class="grid grid-cols-4 gap-4 mb-6"></div>
+
+    <button id="next-button" class="mt-4 px-6 py-3 bg-blue-500 text-white font-bold rounded-lg shadow-md hover:bg-blue-600 transition duration-150" disabled>Next Train</button>
+</div>
+
+<script>
+let correctNumber = 0;
+let gameActive = true;
+let correctCount = 0;
+const maxCorrect = 5;
+const trainTrack = document.getElementById('train-track');
+const choicesContainer = document.getElementById('choices-container');
+const feedbackBox = document.getElementById('feedback-box');
+const nextButton = document.getElementById('next-button');
+const STEP_OPTIONS = [1, 2, 5, 10];
+
+const generatePattern = () => {
+    const step = STEP_OPTIONS[Math.floor(Math.random() * STEP_OPTIONS.length)];
+    const patternLength = 4;
+    let start = Math.floor(Math.random() * 50) + 1;
+    while (start + (patternLength - 1) * step > 100) {
+        start = Math.floor(Math.random() * 50) + 1;
+    }
+    const numbers = Array.from({ length: patternLength }, (_, i) => start + i * step);
+    const missingIndex = Math.floor(Math.random() * 2) + 1;
+    correctNumber = numbers[missingIndex];
+    return { numbers, missingIndex, step };
+}
+
+const setupGame = () => {
+    gameActive = true;
+    feedbackBox.textContent = 'Choose the missing number below.';
+    feedbackBox.classList.remove('text-green-600', 'text-red-600');
+    nextButton.disabled = true;
+
+    const { numbers, missingIndex } = generatePattern();
+    renderTrain(numbers, missingIndex);
+    generateChoices(correctNumber);
+}
+
+const renderTrain = (numbers, missingIndex) => {
+    trainTrack.innerHTML = '';
+    numbers.forEach((num, index) => {
+        const car = document.createElement('div');
+        car.className = `train-car w-20 rounded-lg shadow-xl`;
+        if (index === missingIndex) {
+            car.classList.add('missing-car');
+            car.textContent = '?';
+            car.dataset.number = correctNumber;
+        } else {
+            car.textContent = num;
+        }
+        if (index > 0) {
+            const connector = document.createElement('div');
+            connector.className = 'connector';
+            trainTrack.appendChild(connector);
+        }
+        trainTrack.appendChild(car);
+    });
+}
+
+const generateChoices = (answer) => {
+    let choices = new Set();
+    choices.add(answer);
+    while (choices.size < 4) {
+        let decoy;
+        do {
+            decoy = answer + Math.floor(Math.random() * 7) - 3;
+        } while (choices.has(decoy) || decoy < 1 || decoy > 100);
+        choices.add(decoy);
+    }
+    const shuffledChoices = Array.from(choices).sort(() => Math.random() - 0.5);
+    renderChoices(shuffledChoices);
+}
+
+const renderChoices = (choices) => {
+    choicesContainer.innerHTML = '';
+    choices.forEach(choice => {
+        const button = document.createElement('button');
+        button.className = 'choice-button p-4 bg-orange-300 text-orange-900 font-bold text-2xl rounded-lg shadow-xl border-b-4 border-orange-500 hover:bg-orange-400';
+        button.textContent = choice;
+        button.dataset.value = choice;
+        button.addEventListener('click', handleChoiceClick);
+        choicesContainer.appendChild(button);
+    });
+}
+
+const handleChoiceClick = (event) => {
+    if (!gameActive) return;
+    gameActive = false;
+    const clickedValue = parseInt(event.currentTarget.dataset.value);
+    const isCorrect = clickedValue === correctNumber;
+
+    document.querySelectorAll('.choice-button').forEach(btn => {
+        btn.disabled = true;
+        btn.classList.remove('hover:bg-orange-400');
+        if (parseInt(btn.dataset.value) === correctNumber) {
+            btn.classList.add('correct');
+        } else if (parseInt(btn.dataset.value) === clickedValue) {
+            btn.classList.add('wrong');
+        }
+    });
+
+    const missingCar = trainTrack.querySelector('.missing-car');
+    if (missingCar) missingCar.textContent = clickedValue;
+
+    if (isCorrect) {
+        feedbackBox.textContent = 'Awesome! The train is complete!';
+        feedbackBox.className = 'h-8 text-xl font-bold text-green-600 mb-6';
+        if (missingCar) {
+            missingCar.classList.remove('missing-car');
+            missingCar.classList.add('train-car', 'correct');
+        }
+        correctCount++;
+    } else {
+        feedbackBox.textContent = `Whoops! The correct number was ${correctNumber}.`;
+        feedbackBox.className = 'h-8 text-xl font-bold text-red-600 mb-6';
+    }
+
+    nextButton.disabled = false;
+
+    if (correctCount >= maxCorrect) {
+        feedbackBox.textContent = `🏆 Level Passed! 5 correct trains.`;
+        window.parent.postMessage({ type:'levelResult', success:true }, '*');
+        nextButton.disabled = true;
+    }
+}
+
+nextButton.addEventListener('click', () => {
+    setupGame();
+});
+
+// Initial setup
+setupGame();
+</script>
+</body>
+</html>

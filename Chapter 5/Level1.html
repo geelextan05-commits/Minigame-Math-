@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chapter 5 – Level 1: Time of Day</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to bottom, #a0e9fd, #f0f9ff);
+            text-align: center;
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        h1 {
+            font-size: 36px;
+            color: #004d7f;
+            margin-bottom: 20px;
+            font-weight: 800;
+        }
+
+        /* --- SCENE CONTAINER / WINDOW BOX --- */
+        #timeSceneContainer {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            max-width: 500px;
+            margin: auto;
+        }
+
+        /* The actual viewport for the time scene (the "window") */
+        #timeScene {
+            width: 100%;
+            max-width: 460px;
+            height: 250px;
+            border-radius: 15px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+            /* Inner shadow for window effect */
+            margin: 0 auto 25px auto;
+            overflow: hidden;
+            position: relative;
+            transition: background 1.5s ease-in-out;
+            /* Slower, smoother transitions */
+        }
+
+        /* --- CSS GRAPHICS: Shared Elements --- */
+        .sky-object {
+            position: absolute;
+            border-radius: 50%;
+            transition: all 1.5s ease-in-out;
+        }
+
+        /* Sun Styling */
+        .sun {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #ffde54 0%, #ffb703 100%);
+            box-shadow: 0 0 20px #ffb703;
+        }
+
+        /* Moon Styling */
+        .moon {
+            width: 70px;
+            height: 70px;
+            background: #f0f0f0;
+            box-shadow: 0 0 10px #fff;
+            overflow: hidden;
+        }
+
+        .moon::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: inherit;
+            transition: background 1.5s ease-in-out;
+        }
+
+        /* Star Styling */
+        .star {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #fff;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 1.5s;
+        }
+
+        /* --- NEW: Cloud Animation --- */
+        .cloud {
+            position: absolute;
+            background: #fff;
+            border-radius: 50px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+            opacity: 0.8;
+            transition: opacity 1.5s;
+        }
+
+        .cloud::before,
+        .cloud::after {
+            content: '';
+            position: absolute;
+            background: inherit;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+        }
+
+        .cloud::before {
+            top: -20px;
+            left: 10px;
+        }
+
+        .cloud::after {
+            top: -10px;
+            right: 10px;
+        }
+
+        /* --- NEW: Ground/Horizon --- */
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 50px;
+            background: #4a6829;
+            /* Dark green */
+            transition: background 1.5s ease-in-out;
+        }
+
+        /* --- NEW: Tree Silhouettes (Only visible at Night/Evening) --- */
+        .tree-silhouettes {
+            position: absolute;
+            bottom: 45px;
+            /* Above the ground */
+            width: 100%;
+            height: 50px;
+            background: none;
+            transition: background 1.5s;
+            z-index: 2;
+            /* Above the sun/moon if they are low */
+        }
+
+        /* Creating the 'tree' shape using box-shadow (complex, but avoids extra divs) */
+        .tree-silhouettes::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: none;
+            box-shadow:
+                /* Cluster 1 */
+                10px 0px 0 10px, 40px -10px 0 15px, 60px 5px 0 10px,
+                /* Cluster 2 */
+                150px -5px 0 12px, 180px -15px 0 18px, 200px 0px 0 10px,
+                /* Cluster 3 */
+                300px -10px 0 15px, 330px 5px 0 10px, 360px -5px 0 12px;
+            border-radius: 50%;
+            /* To make the shadows round like treetops */
+            transform: scaleY(0.7);
+            transition: background 1.5s;
+        }
+
+        /* --- SCENE STATES (Controlling the appearance) --- */
+
+        /* Default (Morning) */
+        #timeScene.morning {
+            background: linear-gradient(to top, #66ccee 0%, #f0f9ff 80%);
+            /* Light blue sky */
+        }
+
+        #timeScene.morning .sun {
+            top: 30px;
+            left: 30px;
+        }
+
+        #timeScene.morning .moon,
+        #timeScene.morning .star {
+            opacity: 0;
+        }
+
+        #timeScene.morning .ground {
+            background: #6b8e23;
+        }
+
+        /* Lighter green */
+        #timeScene.morning .cloud {
+            opacity: 1;
+            background: #fff;
+        }
+
+        #timeScene.morning .tree-silhouettes::before {
+            box-shadow: none;
+        }
+
+        /* Hide silhouettes */
+
+
+        /* Afternoon */
+        #timeScene.afternoon {
+            background: linear-gradient(to top, #00bfff 0%, #4db8ff 70%);
+            /* Deep blue sky */
+        }
+
+        #timeScene.afternoon .sun {
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #timeScene.afternoon .moon,
+        #timeScene.afternoon .star {
+            opacity: 0;
+        }
+
+        #timeScene.afternoon .ground {
+            background: #556b2f;
+        }
+
+        #timeScene.afternoon .cloud {
+            opacity: 1;
+            background: #fff;
+        }
+
+        #timeScene.afternoon .tree-silhouettes::before {
+            box-shadow: none;
+        }
+
+
+        /* Evening (Sunset) */
+        #timeScene.evening {
+            background: linear-gradient(to top, #ff7f50 0%, #ffb703 60%, #ffd700 80%);
+            /* Dramatic sunset colors */
+        }
+
+        #timeScene.evening .sun {
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%) scale(1.5);
+            opacity: 0.8;
+        }
+
+        #timeScene.evening .moon,
+        #timeScene.evening .star {
+            opacity: 0;
+        }
+
+        #timeScene.evening .ground {
+            background: #333333;
+        }
+
+        /* Dark grey/brown */
+        #timeScene.evening .cloud {
+            opacity: 0.5;
+            background: #ffaa80;
+        }
+
+        /* Pinkish clouds */
+        #timeScene.evening .tree-silhouettes::before {
+            color: #000000;
+            box-shadow:
+                /* Re-enable silhouettes with black color */
+                10px 0px 0 10px #000, 40px -10px 0 15px #000, 60px 5px 0 10px #000,
+                150px -5px 0 12px #000, 180px -15px 0 18px #000, 200px 0px 0 10px #000,
+                300px -10px 0 15px #000, 330px 5px 0 10px #000, 360px -5px 0 12px #000;
+        }
+
+
+        /* Night */
+        #timeScene.night {
+            background: linear-gradient(to top, #0a1931 0%, #333366 70%);
+            /* Dark blue/purple */
+        }
+
+        #timeScene.night .sun {
+            top: 150px;
+            left: -50px;
+        }
+
+        #timeScene.night .moon {
+            top: 20px;
+            right: 20px;
+            left: unset;
+            background: #fffbe6;
+            opacity: 1;
+        }
+
+        #timeScene.night .moon::after {
+            background: #0a1931;
+        }
+
+        #timeScene.night .star {
+            opacity: 1;
+        }
+
+        #timeScene.night .ground {
+            background: #000000;
+        }
+
+        /* Pure black ground */
+        #timeScene.night .cloud {
+            opacity: 0;
+        }
+
+        /* Hide clouds */
+        #timeScene.night .tree-silhouettes::before {
+            color: #000000;
+            box-shadow:
+                /* Re-enable silhouettes with black color */
+                10px 0px 0 10px #000, 40px -10px 0 15px #000, 60px 5px 0 10px #000,
+                150px -5px 0 12px #000, 180px -15px 0 18px #000, 200px 0px 0 10px #000,
+                300px -10px 0 15px #000, 330px 5px 0 10px #000, 360px -5px 0 12px #000;
+        }
+
+        /* --- OPTIONS AND BUTTONS (Unchanged) --- */
+        button.option {
+            display: block;
+            width: 80%;
+            max-width: 250px;
+            margin: 10px auto;
+            padding: 14px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #004d7f;
+            background: #66ccff;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #0080ff;
+            transition: 0.2s;
+        }
+
+        button.option:hover {
+            transform: translateY(-2px);
+            background: #4db8ff;
+            box-shadow: 0 6px 0 #0080ff;
+        }
+
+        button.option:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #0080ff;
+        }
+
+        #feedback {
+            font-size: 24px;
+            font-weight: 700;
+            height: 40px;
+            margin-top: 15px;
+            color: #e63946;
+        }
+
+        #nextBtn {
+            padding: 12px 28px;
+            font-size: 20px;
+            border: none;
+            border-radius: 12px;
+            background: #00b894;
+            color: #fff;
+            cursor: pointer;
+            margin-top: 20px;
+            display: none;
+            box-shadow: 0 4px 0 #007a5e;
+            transition: 0.2s;
+        }
+
+        #nextBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #007a5e;
+        }
+
+        #nextBtn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #007a5e;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🌞 Level 1 – Recognise Time of the Day</h1>
+
+    <div id="timeSceneContainer">
+           
+        <div id="timeScene">
+            <div class="sky-object sun"></div>
+            <div class="sky-object moon"></div>
+            <div class="cloud" style="width: 80px; height: 35px; top: 70px; left: 100px;"></div>
+            <div class="cloud" style="width: 120px; height: 45px; top: 40px; right: 80px;"></div>
+            <div class="star" style="top: 10px; left: 150px;"></div>
+            <div class="star" style="top: 30px; left: 350px;"></div>
+            <div class="star" style="top: 80px; left: 400px;"></div>
+            <div class="star" style="top: 150px; left: 50px;"></div>
+            <div class="star" style="top: 190px; left: 220px;"></div>
+
+            <div class="tree-silhouettes"></div>
+            <div class="ground"></div>
+        </div>
+
+            <div id="options"></div>
+            <div id="feedback"></div>
+            <button id="nextBtn" onclick="nextQuestion()">Next</button>
+    </div>
+
+    <script>
+        let questions = [
+            { time: 'morning', answer: 'Morning' },
+            { time: 'afternoon', answer: 'Afternoon' },
+            { time: 'evening', answer: 'Evening' },
+            { time: 'night', answer: 'Night' },
+            { time: 'morning', answer: 'Morning' },
+            { time: 'afternoon', answer: 'Afternoon' },
+            { time: 'evening', answer: 'Evening' },
+            { time: 'night', answer: 'Night' }
+        ];
+
+        // Shuffle questions and select 5
+        questions = questions.sort(() => 0.5 - Math.random()).slice(0, 5);
+
+        let current = 0;
+        let score = 0;
+
+        function loadQuestion() {
+            let q = questions[current];
+            const timeScene = document.getElementById('timeScene');
+
+            // Reset all time classes and set the new one
+            timeScene.className = '';
+            timeScene.classList.add(q.time);
+
+            let options = ['Morning', 'Afternoon', 'Evening', 'Night'].sort(() => 0.5 - Math.random());
+
+            // Ensure the correct answer is always one of the options
+            if (!options.includes(q.answer)) {
+                options.pop();
+                options.push(q.answer);
+                options.sort(() => 0.5 - Math.random());
+            }
+
+            let optHTML = '';
+            options.forEach(opt => {
+                optHTML += `<button class="option" onclick="checkAnswer('${opt}')">${opt}</button>`;
+            });
+            document.getElementById('options').innerHTML = optHTML;
+            document.getElementById('feedback').innerText = '';
+            document.getElementById('nextBtn').style.display = 'none';
+
+            // Re-enable buttons
+            Array.from(document.getElementsByClassName('option')).forEach(btn => btn.disabled = false);
+        }
+
+        function checkAnswer(selected) {
+            let q = questions[current];
+            let feedback = document.getElementById('feedback');
+
+            if (selected === q.answer) {
+                feedback.style.color = '#00b894';
+                feedback.innerText = '✅ Correct!';
+                score++;
+            } else {
+                feedback.style.color = '#e63946';
+                feedback.innerText = `❌ Wrong! Correct: ${q.answer}`;
+            }
+
+            document.getElementById('nextBtn').style.display = 'inline-block';
+            Array.from(document.getElementsByClassName('option')).forEach(btn => btn.disabled = true);
+        }
+
+        function nextQuestion() {
+            current++;
+            if (current >= questions.length) {
+                alert(`🎉 Level 1 Completed!\nYour score: ${score}/${questions.length}`);
+                localStorage.setItem("C5_Level1", "completed");
+                window.location.href = "C5.html"; // Return to chapter main page
+            } else {
+                loadQuestion();
+            }
+        }
+
+        window.onload = loadQuestion;
+    </script>
+
+</body>
+
+</html>

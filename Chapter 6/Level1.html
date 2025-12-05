@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chapter 6 – Level 1: Recognise Length</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to bottom, #6ec6ff 0%, #e3f5ff 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-top: 30px;
+            font-size: 38px;
+            font-weight: 800;
+            color: #004d7a;
+            background: linear-gradient(45deg, #004d7a, #0096d2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 1px 1px 4px rgba(255, 255, 255, 0.9);
+        }
+
+        #instruction {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a5a87;
+            margin-top: 10px;
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+        }
+
+        #gameArea {
+            margin-top: 35px;
+            width: 90%;
+            max-width: 850px;
+            display: flex;
+            justify-content: space-around;
+            gap: 30px;
+        }
+
+        .box {
+            width: 45%;
+            min-height: 280px;
+            background: #ffffff;
+            border-radius: 20px;
+            border: 4px dashed #93c5fd;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 15px;
+            transition: 0.3s;
+        }
+
+        .box * {
+            pointer-events: none;
+        }
+
+        .box[ondragover]:hover {
+            border-color: #0096d2;
+            box-shadow: 0 10px 25px rgba(0, 150, 210, 0.2);
+        }
+
+        .box h2 {
+            font-size: 28px;
+            color: #004d7a;
+            margin-top: 5px; 
+        }
+
+        #objects {
+            margin-top: 40px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+            max-width: 900px;
+            padding-bottom: 20px;
+        }
+
+        .item {
+            width: 140px;
+            padding: 15px 10px;
+            background: #f7faff;
+            border-radius: 16px;
+            border: 3px solid #cfeaff;
+            cursor: grab;
+            text-align: center;
+            transition: 0.2s;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .item img {
+            width: 100px;
+            height: auto;
+            margin-bottom: 5px;
+            pointer-events: none; 
+        }
+
+        #feedback {
+            margin-top: 25px;
+            padding: 10px 20px;
+            font-size: 24px;
+            font-weight: 800;
+            color: #06d6a0;
+            background: #e6fffa;
+            border-radius: 12px;
+            display: none;
+        }
+
+        .correct {
+            border-color: #06d6a0 !important;
+            background: #eefffb !important;
+        }
+
+        .incorrect {
+            border-color: #e63946 !important;
+            background: #ffeeee !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Level 1 – Recognise Length</h1>
+    <div id="instruction">Drag the objects into the correct box!</div>
+
+    <div id="gameArea">
+        <div class="box" id="shortBox" ondrop="drop(event,'short')" ondragover="allowDrop(event)" data-type="short">
+            <h2>SHORT</h2>
+        </div>
+
+        <div class="box" id="longBox" ondrop="drop(event,'long')" ondragover="allowDrop(event)" data-type="long">
+            <h2>LONG</h2>
+        </div>
+    </div>
+
+    <div id="objects"></div>
+
+    <div id="feedback"></div>
+
+<script>
+const items = [
+    { name: "Pencil <br> (8cm)", img: "images/pencil.png", type: "short" },
+    { name: "Toothbrush <br> (7cm)", img: "images/toothbrush.png", type: "short" },
+    { name: "Straw <br> (6cm)", img: "images/straw.png", type: "short" },
+
+    { name: "Rope <br> (120cm)", img: "images/rope.png", type: "long" },
+    { name: "Snake <br> (90cm)", img: "images/snake.png", type: "long" },
+    { name: "Shoelace <br> (40cm)", img: "images/shoelace.png", type: "long" }
+];
+
+let total = items.length;
+let droppedCount = 0;
+let correctCount = 0;
+const objectContainer = document.getElementById("objects");
+
+function loadObjects() {
+    items.sort(() => Math.random() - 0.5);
+
+    items.forEach((obj, index) => {
+        let div = document.createElement("div");
+        div.className = "item";
+        div.id = "item" + index;
+        div.setAttribute("data-type", obj.type);
+        div.draggable = true;
+        div.ondragstart = (e) => drag(e);
+
+        // Use the actual image
+        let imageHtml = `<img src="${obj.img}" alt="${obj.name}">`;
+
+        div.innerHTML = `${imageHtml}<br>${obj.name}`;
+        objectContainer.appendChild(div);
+    });
+}
+
+function allowDrop(ev) {
+    ev.preventDefault();
+}
+
+function drag(ev) {
+    ev.dataTransfer.setData("text", ev.target.id);
+}
+
+function drop(ev, targetType) {
+    ev.preventDefault();
+    let id = ev.dataTransfer.getData("text");
+    let element = document.getElementById(id);
+    let box = ev.target.closest(".box");
+
+    if (element.parentElement.classList.contains("box")) return;
+    if (!box) return;
+
+    const correctType = element.getAttribute("data-type");
+
+    box.appendChild(element);
+
+    if (correctType === targetType) {
+        element.classList.add("correct");
+        element.classList.remove("incorrect");
+        correctCount++;
+    } else {
+        element.classList.add("incorrect");
+        element.classList.remove("correct");
+    }
+
+    element.draggable = false;
+    element.ondragstart = null;
+    droppedCount++;
+
+    checkFinish();
+}
+
+function checkFinish() {
+    if (droppedCount === total) {
+        let feedback = document.getElementById("feedback");
+        feedback.style.display = "block";
+
+        if (correctCount === total) {
+            feedback.innerHTML = "🎉 Excellent! Level 1 Complete!";
+
+            localStorage.setItem("C6_Level1", "completed");
+
+            setTimeout(() => {
+                // Auto return to Chapter 6 main page
+                window.location.href = "C6.html";
+            }, 2000);
+        } else {
+            feedback.innerHTML = `Try again! You got ${correctCount} of ${total} correct.`;
+        }
+    }
+}
+
+window.onload = loadObjects;
+</script>
+
+</body>
+</html>

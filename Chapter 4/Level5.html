@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Level 5 – My Shopping List</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* 1. Global & Theme Styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f0fff4;
+            /* Soft Mint Background */
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 34px;
+            color: #008060;
+            /* Dark Emerald Green */
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .instruction {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        /* 2. Project/Receipt Box */
+        #projectBox {
+            margin-top: 30px;
+            padding: 30px;
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 550px;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 3. Item List Display (The Receipt) */
+        #itemList {
+            border: 2px dashed #ccc;
+            /* Receipt look */
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            background: #f7fffb;
+        }
+
+        .item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 5px;
+            font-size: 17px;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+
+        .item:last-child {
+            border-bottom: none;
+        }
+
+        /* 4. Option Button Styles (Gold/Premium Look) */
+        .option {
+            display: block;
+            width: 90%;
+            margin: 15px auto;
+            padding: 18px;
+            border-radius: 15px;
+            border: none;
+            font-size: 24px;
+            font-weight: 700;
+            cursor: pointer;
+            background: linear-gradient(180deg, #ffde54, #ffc820);
+            /* Shiny Gold */
+            color: #8a6d00;
+            transition: 0.2s;
+            box-shadow: 0 6px 0 #cc9a00;
+        }
+
+        .option:hover {
+            transform: translateY(-3px);
+            background: linear-gradient(180deg, #ffe57f, #ffd140);
+            box-shadow: 0 8px 0 #cc9a00;
+        }
+
+        .option:active {
+            transform: translateY(2px);
+            box-shadow: 0 3px 0 #cc9a00;
+        }
+
+        /* 5. Feedback and Score */
+        #feedback {
+            height: 40px;
+            font-size: 26px;
+            font-weight: 800;
+            margin-top: 15px;
+        }
+
+        #scoreTracker {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #008060;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🛒 Level 5 – My Shopping List</h1>
+    <p class="instruction">Calculate the total cost of the items to complete your budget:</p>
+
+    <div id="projectBox">
+        <div id="itemListHeader"
+            style="display:flex; justify-content:space-between; font-weight:bold; padding:0 5px 5px 5px; border-bottom: 2px solid #ccc; color:#008060;">
+            <span>Item (Qty)</span>
+            <span>Price (RM)</span>
+        </div>
+            <div id="itemList"></div>
+        <p style="font-weight:700; font-size:18px; color:#333;">Total Cost:</p>
+            <div id="options"></div>
+            <div id="feedback"></div>
+        <div id="scoreTracker">Score: 0/5</div>
+    </div>
+
+    <script>
+        let projects = [
+            {
+                items: [
+                    { name: 'Milk 🥛', price: 3.50, qty: 2 },
+                    { name: 'Chocolate 🍫', price: 2.00, qty: 1 }
+                ],
+                total: 9.00
+            },
+
+            {
+                items: [
+                    { name: 'Sandwich 🥪', price: 4.20, qty: 1 },
+                    { name: 'Candy 🍬', price: 0.80, qty: 3 }
+                ],
+                total: 6.60
+            },
+
+            {
+                items: [
+                    { name: 'Book 📚', price: 15.00, qty: 1 },
+                    { name: 'Ruler 📏', price: 2.50, qty: 2 }
+                ],
+                total: 20.00
+            },
+
+            {
+                items: [
+                    { name: 'Bun 🍞', price: 2.10, qty: 2 },
+                    { name: 'Juice 🧃', price: 3.40, qty: 1 }
+                ],
+                total: 7.60
+            },
+
+            {
+                items: [
+                    { name: 'Toy Car 🚗', price: 6.90, qty: 1 },
+                    { name: 'Stickers 🏷️', price: 1.50, qty: 2 }
+                ],
+                total: 9.90
+            }
+        ];
+
+        // Randomly pick 5
+        projects = projects.sort(() => 0.5 - Math.random()).slice(0, 5);
+
+        let current = 0;
+        let score = 0;
+
+        function updateScoreTracker() {
+            document.getElementById('scoreTracker').innerHTML = `Score: ${score}/${projects.length}`;
+        }
+
+        function loadProject() {
+            let p = projects[current];
+
+            // Show item list
+            let html = '';
+            p.items.forEach(x => {
+                html += `<div class="item">
+                    <span>${x.name} (${x.qty} pcs)</span>
+                    <span>${x.price.toFixed(2)}</span>
+                 </div>`;
+            });
+            document.getElementById('itemList').innerHTML = html;
+
+            // Generate answers
+            let correct = p.total;
+            // Generate wrong answers that are slightly off, ensuring they are unique and formatted
+            let wrongOptions = new Set();
+            while (wrongOptions.size < 2) {
+                let offset = Math.round(Math.random() * 50) / 100; // Random offset up to 0.50
+                if (Math.random() > 0.5) offset *= -1;
+
+                // Try simple addition/subtraction, avoiding the exact correct answer
+                let newWrong = correct + offset + (Math.random() > 0.5 ? 1 : 0);
+                if (newWrong !== correct) {
+                    // Ensure it's formatted to two decimal places for consistency
+                    wrongOptions.add(parseFloat(newWrong.toFixed(2)));
+                }
+            }
+
+            let options = [correct, ...Array.from(wrongOptions)].sort(() => 0.5 - Math.random());
+
+            let optHTML = '';
+            options.forEach(o => {
+                optHTML += `<button class="option" onclick="checkAnswer(${o}, ${correct})">RM${o.toFixed(2)}</button>`;
+            });
+
+            document.getElementById('options').innerHTML = optHTML;
+            document.getElementById('feedback').innerHTML = "";
+        }
+
+        function checkAnswer(ans, correct) {
+            let fb = document.getElementById('feedback');
+            document.querySelectorAll('.option').forEach(btn => btn.disabled = true); // Disable during check
+
+            // Using Math.abs to account for potential floating point minor differences
+            if (Math.abs(ans - correct) < 0.001) {
+                fb.style.color = '#52c41a';
+                fb.innerHTML = '🎉 Bingo! Correct Total! ✔';
+                score++;
+                updateScoreTracker();
+                current++;
+            } else {
+                fb.style.color = '#ff4d4f';
+                fb.innerHTML = '❌ Keep Calculating! Try again.';
+                document.querySelectorAll('.option').forEach(btn => btn.disabled = false); // Re-enable if wrong
+                return; // do not advance on incorrect answer
+            }
+
+            setTimeout(() => {
+                if (current >= projects.length) finishLevel();
+                else loadProject();
+                document.querySelectorAll('.option').forEach(btn => btn.disabled = false); // Re-enable for next question
+            }, 1500);
+        }
+
+        function finishLevel() {
+            if (score >= 4) {
+                localStorage.setItem("C4_Level5", "completed");
+                alert(`Level 5 Completed with ${score}/${projects.length} correct answers!\nLevel 6 is now unlocked!`);
+                window.location.href = "C4.html";
+            } else {
+                alert(`❌ You scored ${score}/${projects.length}. You need at least 4 correct answers.\nTry again!`);
+                window.location.reload();
+            }
+        }
+
+        updateScoreTracker();
+        loadProject();
+    </script>
+
+</body>
+
+</html>

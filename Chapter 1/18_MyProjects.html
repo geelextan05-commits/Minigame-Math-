@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Exhibition</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #f0fdf4; }
+    .card { 
+        background-color: #ffffff; 
+        border-radius: 1.5rem; 
+        box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.2); 
+        border: 4px solid #059669;
+    }
+    .item-card {
+        cursor: grab;
+        transition: transform 0.15s ease, background-color 0.15s ease;
+        user-select: none;
+        box-shadow: 0 4px 0 0 #047857;
+        background-color: #34d399;
+        color: white;
+    }
+    .item-card:active { cursor: grabbing; box-shadow: 0 2px 0 0 #047857; transform: translateY(2px); }
+    .drop-target {
+        min-height: 6rem;
+        border: 3px dashed #34d399;
+        border-radius: 0.75rem;
+        background-color: #ecfdf5;
+        transition: background-color 0.3s;
+    }
+    .drop-target.drag-over { background-color: #d1fae5; border-color: #059669; }
+    .placeholder {
+        border: 2px dashed #9ca3af;
+        background-color: #f3f4f6;
+    }
+</style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex flex-col items-center justify-center">
+
+<div id="app" class="card w-full max-w-2xl p-6 md:p-10 text-center">
+    <h1 class="text-4xl font-extrabold text-teal-700 mb-2">🏛️ Mini Exhibition</h1>
+    <p class="text-gray-500 mb-6">Drag the cards below onto the platform in **Ascending Order**.</p>
+    
+    <div id="game-area">
+        <p class="text-xl font-semibold text-teal-800 mb-4">The Display Platform:</p>
+        <div id="drop-zone" class="drop-target flex justify-center items-center p-4 mb-6 space-x-2"></div>
+        
+        <div id="feedback-message" class="h-8 mb-4 text-lg font-bold"></div>
+
+        <p class="text-lg font-medium text-gray-700 mb-4">Available Number Cards:</p>
+        <div id="draggable-items-container" class="flex justify-center items-center flex-wrap gap-4 mb-8"></div>
+        
+        <button id="check-button" onclick="checkOrder()" class="item-card bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg">
+            Check Arrangement
+        </button>
+        <button id="next-button" onclick="nextLevel()" class="item-card bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg ml-4" style="display:none;">
+            Next Level
+        </button>
+    </div>
+    <div class="mt-6 text-xl">Score: <span id="score" class="font-bold text-green-600">0</span> / 5</div>
+</div>
+
+<script>
+let correctSequence = [];
+let numbers = [];
+const numItems = 4;
+let isLocked = false;
+let score = 0;          // Tracks correct answers
+const maxScore = 5;     // Must reach this to proceed
+
+const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+// --- Setup a new question ---
+const setupGame = () => {
+    const numSet = new Set();
+    while (numSet.size < numItems) {
+        numSet.add(getRandomInt(10, 99));
+    }
+    numbers = Array.from(numSet);
+    correctSequence = [...numbers].sort((a,b)=>a-b);
+
+    numbers.sort(() => Math.random() - 0.5); // Shuffle for display
+    isLocked = false;
+    document.getElementById('check-button').disabled = false;
+    document.getElementById('next-button').style.display = 'none';
+    renderCards();
+};
+
+// --- Render cards and slots ---
+const renderCards = () => {
+    const dropZone = document.getElementById('drop-zone');
+    const itemsContainer = document.getElementById('draggable-items-container');
+    dropZone.innerHTML = '';
+    itemsContainer.innerHTML = '';
+
+    for (let i = 0; i < numItems; i++) {
+        dropZone.innerHTML += `
+            <div id="slot-${i}" class="w-20 h-20 placeholder rounded-lg flex items-center justify-center text-gray-500 font-bold" data-index="${i}" 
+                ondragover="allowDrop(event)" ondrop="drop(event, ${i})">
+                Slot ${i+1}
+            </div>
+        `;
+    }
+
+    itemsContainer.innerHTML = numbers.map(num => `
+        <div id="card-${num}" draggable="${!isLocked}" data-value="${num}" 
+            class="item-card text-3xl font-bold w-20 h-20 rounded-xl flex items-center justify-center ${isLocked?'opacity-70 cursor-not-allowed':''}" 
+            ondragstart="drag(event)">
+            ${num}
+        </div>
+    `).join('');
+};
+
+// --- Drag & Drop ---
+const allowDrop = (ev) => { if(!isLocked) ev.preventDefault(); };
+const drag = (ev) => { 
+    ev.dataTransfer.setData("text", ev.target.dataset.value); 
+    ev.dataTransfer.setData("sourceId", ev.target.id); 
+};
+const drop = (ev, targetIndex) => {
+    ev.preventDefault();
+    if (isLocked) return;
+    const value = ev.dataTransfer.getData("text");
+    const sourceId = ev.dataTransfer.getData("sourceId");
+    const draggedElement = document.getElementById(sourceId);
+    const targetSlot = document.getElementById(`slot-${targetIndex}`);
+    if (targetSlot.childElementCount > 0) return;
+
+    if (draggedElement.parentNode.id === 'draggable-items-container') numbers = numbers.filter(n => n !== parseInt(value));
+    targetSlot.innerHTML = '';
+    draggedElement.className = 'item-card bg-teal-600 text-white text-3xl font-bold w-20 h-20 rounded-xl flex items-center justify-center shadow-none cursor-default';
+    draggedElement.draggable = false;
+    targetSlot.appendChild(draggedElement);
+};
+
+// --- Check the arrangement ---
+const checkOrder = () => {
+    if (isLocked) return;
+    const feedback = document.getElementById('feedback-message');
+    let currentOrder = [];
+    let allFilled = true;
+
+    for(let i=0;i<numItems;i++){
+        const slot = document.getElementById(`slot-${i}`);
+        if(slot.childElementCount>0) currentOrder.push(parseInt(slot.firstElementChild.dataset.value));
+        else allFilled=false;
+    }
+    if(!allFilled){
+        feedback.className='text-red-600';
+        feedback.textContent='Please fill all slots!';
+        return;
+    }
+
+    const isCorrect = currentOrder.every((val,i)=>val===correctSequence[i]);
+    isLocked = true;
+    document.getElementById('check-button').disabled = true;
+
+    if(isCorrect){
+        feedback.className='text-green-600';
+        feedback.textContent='Correct! Perfect order!';
+        score++;
+        document.getElementById('next-button').style.display='inline-block';
+    } else {
+        feedback.className='text-red-600';
+        feedback.textContent=`Wrong! Correct order: ${correctSequence.join(', ')}`;
+        document.getElementById('next-button').style.display='inline-block';
+    }
+    document.getElementById('score').textContent=`${score} / ${maxScore}`;
+};
+
+// --- Next level / next question ---
+const nextLevel = () => {
+    if(score >= maxScore){
+        // Only proceed to parent when score = 5
+        window.parent.postMessage({type:'levelResult', success:true}, '*');
+        document.getElementById('game-area').innerHTML=`
+            <h2 class="text-3xl font-bold text-teal-700 mb-4">Exhibition Complete!</h2>
+            <p class="text-2xl text-gray-700 mb-8">Your final score: <span class="font-bold text-green-600">${score} / ${maxScore}</span></p>
+            <button onclick="restartGame()" class="item-card bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg">Restart Exhibition</button>
+        `;
+    } else {
+        setupGame(); // Otherwise, just show next random question
+    }
+};
+
+// --- Restart game ---
+const restartGame = () => {
+    score=0;
+    document.getElementById('score').textContent=`${score} / ${maxScore}`;
+    setupGame();
+};
+
+window.startGame=setupGame;
+window.checkOrder=checkOrder;
+window.allowDrop=allowDrop;
+window.drag=drag;
+window.drop=drop;
+window.nextLevel=nextLevel;
+window.restartGame=restartGame;
+
+document.addEventListener('DOMContentLoaded', setupGame);
+</script>
+</body>
+</html>

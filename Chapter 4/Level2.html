@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Level 2 – Value of Money</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: #f0fff4;
+        text-align: center;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 32px;
+        color: #008060;
+        font-weight: 800;
+        margin-bottom: 15px;
+    }
+
+    #questionBox {
+        margin-top: 30px;
+        padding: 30px;
+        background: white;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+
+    .money-item img {
+        width: 80px;
+        margin: 10px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+
+    button.option {
+        display: block;
+        width: 90%;
+        margin: 12px auto;
+        padding: 16px;
+        border-radius: 15px;
+        border: none;
+        font-size: 20px;
+        font-weight: 600;
+        cursor: pointer;
+        background: #66cc99;
+        color: #004d33;
+        transition: 0.2s;
+        box-shadow: 0 4px 0 #008040;
+    }
+
+    button.option:hover {
+        transform: translateY(-2px);
+        background: #4dffa6;
+        box-shadow: 0 6px 0 #008040;
+    }
+
+    button.option:active {
+        transform: translateY(2px);
+        box-shadow: 0 2px 0 #008040;
+    }
+
+    #feedback {
+        font-size: 24px;
+        font-weight: 700;
+        height: 40px;
+        margin-top: 15px;
+    }
+
+</style>
+</head>
+<body>
+
+<h1>💰 Level 2 – Value of Money</h1>
+<p style="color:#333; font-weight:600;">Click the total value of the money shown below:</p>
+
+<div id="questionBox">
+    <div id="moneyDisplay" class="money-item"></div>
+    <div id="options"></div>
+    <div id="feedback"></div>
+</div>
+
+<script>
+let questions = [
+    { money: ['images/5sen.png', 'images/10sen.png'], answer: '15 sen' },
+    { money: ['images/10sen.png', 'images/10sen.png'], answer: '20 sen' },
+    { money: ['images/20sen.png', 'images/20sen.png', 'images/10sen.png'], answer: '50 sen' },
+    { money: ['images/50sen.png', 'images/50sen.png'], answer: 'RM1' },
+    { money: ['images/RM1.png', 'images/50sen.png'], answer: 'RM1.50' },
+    { money: ['images/RM1.png', 'images/RM1.png'], answer: 'RM2' },
+    { money: ['images/RM5.png', 'images/RM1.png'], answer: 'RM6' },
+    { money: ['images/RM5.png', 'images/50sen.png', 'images/20sen.png'], answer: 'RM5.70' },
+    { money: ['images/RM10.png', 'images/RM20.png'], answer: 'RM30' },
+    { money: ['images/RM50.png', 'images/RM20.png', 'images/RM10.png'], answer: 'RM80' },
+    { money: ['images/RM100.png', 'images/RM50.png'], answer: 'RM150' },
+    { money: ['images/RM20.png', 'images/RM10.png', 'images/RM5.png'], answer: 'RM35' },
+    { money: ['images/10sen.png', 'images/20sen.png', 'images/50sen.png'], answer: '80 sen' },
+    { money: ['images/RM100.png', 'images/RM20.png', 'images/RM10.png'], answer: 'RM130' },
+    { money: ['images/RM50.png', 'images/RM10.png', 'images/RM5.png'], answer: 'RM65' }
+];
+
+// Shuffle questions → take 5
+questions = questions.sort(() => 0.5 - Math.random()).slice(0, 5);
+
+let current = 0;
+let score = 0;       // Track correct answers
+let minScore = 3;    // Must get at least 3 correct
+
+function loadQuestion() {
+    let q = questions[current];
+
+    // Display money images
+    let html = '';
+    q.money.forEach(src => {
+        html += `<img src="${src}" alt="coin/note">`;
+    });
+    document.getElementById('moneyDisplay').innerHTML = html;
+
+    // Generate 3 options
+    let allOptions = [
+        '5 sen','10 sen','20 sen','30 sen','50 sen','80 sen',
+        'RM1','RM1.50','RM2','RM5','RM6','RM10','RM20','RM50','RM100','RM150','RM130','RM65'
+    ];
+
+    let wrongOptions = allOptions.filter(x => x !== q.answer)
+                                 .sort(() => 0.5 - Math.random())
+                                 .slice(0, 2);
+
+    let options = [q.answer, ...wrongOptions].sort(() => 0.5 - Math.random());
+
+    let optHTML = '';
+    options.forEach(opt => {
+        optHTML += `<button class="option" onclick="checkAnswer('${opt}', '${q.answer}')">${opt}</button>`;
+    });
+    document.getElementById('options').innerHTML = optHTML;
+
+    document.getElementById('feedback').innerHTML = '';
+}
+
+function checkAnswer(ans, correct) {
+    let fb = document.getElementById('feedback');
+
+    if(ans === correct){
+        fb.style.color = '#008060';
+        fb.innerHTML = '✨ Correct! ✔';
+        score++;
+    } else {
+        fb.style.color = '#e63946';
+        fb.innerHTML = 'Try Again! ❌';
+    }
+
+    setTimeout(() => {
+        current++;
+        if(current >= questions.length) finishLevel();
+        else loadQuestion();
+    }, 1000);
+}
+
+function finishLevel() {
+    if(score >= minScore){
+        // PASS
+        localStorage.setItem("C4_Level2", "completed");
+        alert("🎉 Level 2 Passed! Level 3 is now unlocked.");
+        window.location.href = "C4.html";
+    } else {
+        // FAIL
+        alert("❌ Not enough correct answers.\nTry again!");
+        window.location.reload();
+    }
+}
+
+loadQuestion();
+</script>
+
+</body>
+</html>

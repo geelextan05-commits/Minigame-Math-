@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 7 - Level 2: 3-D Shape Patterns</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Load Playtime Font - Using Inter and Bungee for a clean, modern playful look */
+        @import url('https://fonts.googleapis.com/css2?family=Bungee+Inline&family=Inter:wght@400;600;700;800&display=swap');
+        
+        body {
+            /* Fun, sky/grass background with a map feel */
+            background: linear-gradient(to bottom, #87ceeb 0%, #a2d2ff 50%, #70e000 100%);
+            font-family: 'Inter', sans-serif; /* Changed to Inter for cleaner look */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Custom Styles to enhance Tailwind defaults */
+        .quiz-title {
+            font-family: 'Bungee Inline', cursive; /* Big, blocky title */
+            font-size: clamp(2rem, 6vw, 4rem);
+            font-weight: 700;
+            /* Comic Book / Star Shape Title */
+            color: #ffcc00; /* Yellow star fill */
+            text-shadow: 
+                -3px -3px 0px #ff3300, /* Red top-left shadow */
+                3px 3px 0px #a44a00, /* Dark orange bottom-right shadow */
+                0 0 10px rgba(0, 0, 0, 0.3);
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border-radius: 15px;
+            background-color: #ff7a00; /* Orange background for contrast */
+            border: 5px solid #a44a00; /* Darker orange border */
+        }
+        
+        .quiz-card {
+             /* Big, friendly cloud shape for the main quiz box */
+            background: #ffffff;
+            border: 8px solid #3b82f6; /* Blue border for a sky/cloud theme */
+            box-shadow: 0 10px 0px 0px #1e40af, 0 15px 30px rgba(0,0,0,0.2);
+            position: relative;
+            padding: 30px;
+            border-radius: 50px 50px 50px 50px / 30px 30px 30px 30px; /* Cloud-like rounded corners */
+        }
+
+        .question-text {
+            /* Enhanced question text for visibility */
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            color: #1e40af; /* Dark Blue */
+            font-weight: 700;
+            text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.8); /* Stronger white shadow */
+            border-bottom: 2px dashed #a2d2ff;
+            padding-bottom: 10px;
+        }
+
+        .answer-btn {
+            /* Custom styling for answer buttons: Big, soft, playful buttons */
+            font-family: 'Inter', sans-serif; 
+            font-weight: 800;
+            font-size: clamp(1.2rem, 3vw, 1.75rem) !important;
+            transition: all 0.2s ease-in-out;
+            border-bottom: 6px solid #14532d; /* Darker green */
+            box-shadow: 0 6px 0px 0px #34d399; /* Bright green shadow */
+            border-radius: 20px;
+            background-color: #6ee7b7; /* Light green */
+            color: #14532d;
+            height: 80px; /* Uniform height for better look */
+        }
+
+        .answer-btn:hover {
+            transform: translateY(-3px);
+            border-bottom: 8px solid #065f46;
+            box-shadow: 0 8px 0px 0px #10b981;
+        }
+
+        .answer-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+            border-bottom: 6px solid #14532d;
+        }
+
+        .feedback-correct {
+            font-family: 'Bungee Inline', cursive;
+            animation: pulse-success 0.5s;
+            color: #10b981 !important; /* Tailwind Green-500 */
+        }
+        .feedback-wrong {
+            font-family: 'Bungee Inline', cursive;
+            animation: shake 0.5s;
+            color: #ef4444 !important; /* Tailwind Red-500 */
+        }
+
+        /* Animation keys remain the same */
+        @keyframes pulse-success {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        
+        /* New Styles for the Pattern Display */
+        .pattern-container {
+            border: 6px solid #f97316; /* Stronger Orange border */
+            background-color: #fffbeb; /* Creamy yellow background */
+            border-radius: 25px;
+            padding: 10px 0;
+            overflow-x: auto; /* Ensure scroll if pattern is long */
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+        }
+
+        /* Styling for the shapes within the pattern */
+        .pattern-shape {
+            font-size: 4rem; /* Big shapes! */
+            line-height: 1;
+            display: inline-block;
+            margin: 0 8px; /* Slightly closer for pattern flow */
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .action-btn {
+            font-family: 'Inter', sans-serif; /* Changed to Inter */
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-bottom: 4px solid;
+            box-shadow: 0 4px 0px 0px;
+            transition: all 0.2s;
+            padding: 12px 32px;
+            border-radius: 9999px; /* Full circle for pill shape */
+            color: white; /* Ensure text is white */
+        }
+        .action-btn:hover {
+              transform: translateY(-2px);
+              border-bottom-width: 6px;
+              box-shadow: 0 6px 0px 0px;
+        }
+
+        /* Specific styles for Next/Retry */
+        #finish-btn {
+            background-color: #10b981; /* Green */
+            border-color: #047857;
+            box-shadow: 0 4px 0px 0px #34d399;
+        }
+        #finish-btn:hover {
+            border-bottom-color: #065f46;
+            box-shadow: 0 6px 0px 0px #10b981;
+        }
+
+        #retry-btn {
+            background-color: #f59e0b; /* Amber/Orange */
+            border-color: #b45309;
+            box-shadow: 0 4px 0px 0px #fcd34d;
+        }
+        #retry-btn:hover {
+            border-bottom-color: #92400e;
+            box-shadow: 0 6px 0px 0px #f59e0b;
+        }
+
+        .ring-red-500 {
+            animation: heartbeat 1s infinite;
+        }
+
+        @keyframes heartbeat {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        
+    </style>
+</head>
+
+<body>
+    <h1 class="quiz-title">⭐ Mr. Square's Shape Adventure! ⭐</h1>
+
+    <div id="question-box" class="quiz-card w-full max-w-3xl text-center">
+        
+        <div id="question" class="question-text mb-6 min-h-[4rem]">Loading question...</div>
+        
+        <div id="pattern-display" class="pattern-container text-7xl my-6 flex justify-center items-center">
+            </div>
+        
+        <div id="answers" class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        </div>
+        
+        <div id="feedback" class="mt-10 text-3xl md:text-4xl font-extrabold min-h-[2.5rem]"></div>
+        
+        <div class="mt-8 flex justify-center space-x-6">
+            <button id="retry-btn" onclick="retry()"
+                class="action-btn hidden">
+                Start Over! 🔄
+            </button>
+            <button id="finish-btn" onclick="finishLevel()"
+                class="action-btn hidden">
+                Way to Go! Next! 🚀
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- LOGIC CODE STARTS HERE (UNCHANGED) ---
+        const shapes = [
+            { name: "Cube", icons: ["🧊", "🎲"] },
+            { name: "Cuboid", icons: ["📘","📕","📗"] },
+            { name: "Sphere", icons: ["⚽", "🔵", "🏀"] },
+            { name: "Cylinder", icons: ["🥫", "🛢","🛢️"] },
+            { name: "Cone", icons: ["🍦", "𓉴"] },
+            { name: "Pyramid", icons: ["⛰️", "🛕"] }
+        ];
+
+        let currentQuestion = 0;
+        let correct = 0;
+        let wrong = 0;
+        let questions = [];
+
+        function generateRandomPattern() {
+            let pattern = [];
+            let patternLength = Math.floor(Math.random() * 4) + 4; // length 4–7
+
+            for (let i = 0; i < patternLength; i++) {
+                let s = shapes[Math.floor(Math.random() * shapes.length)];
+                let icon = s.icons[Math.floor(Math.random() * s.icons.length)];
+                pattern.push({ icon, shape: s.name });
+            }
+            return pattern;
+        }
+
+        // Corrected Implementation:
+        function isPatternRepeated(pattern) {
+            const shapesArray = pattern.map(p => p.shape);
+            const n = shapesArray.length;
+
+            // A pattern must have at least one repeated unit, so max size is n/2
+            for (let size = 1; size <= Math.floor(n / 2); size++) {
+                let isMatch = true;
+                // Check if the pattern of size 'size' repeats across the entire array
+                for (let i = 0; i < n; i++) {
+                    // Check if the shape at 'i' is the same as the shape at the base period 'i % size'
+                    if (shapesArray[i] !== shapesArray[i % size]) {
+                        isMatch = false;
+                        break;
+                    }
+                }
+                if (isMatch) {
+                    return true; // Found a repeating pattern of length 'size'
+                }
+            }
+            return false; // No repeating pattern found
+        }
+
+        function generateQuestions() {
+            questions = [];
+            for (let i = 1; i <= 5; i++) {
+                let pattern = generateRandomPattern();
+                let targetIndex = Math.floor(Math.random() * pattern.length);
+                let repeatedCheck = Math.random() < 0.5; // 50% of questions ask repeat
+
+                if (repeatedCheck) {
+                    // create a repeated pattern
+                    let base = pattern.slice(0, Math.floor(pattern.length/2));
+                    pattern = [];
+                    while (pattern.length < base.length*2) pattern.push(...base);
+                    pattern = pattern.slice(0, base.length*2);
+                }
+
+                let q = {
+                    pattern,
+                    askIndex: targetIndex,
+                    answer: pattern[targetIndex].shape,
+                    checkRepeat: repeatedCheck
+                };
+                questions.push(q);
+            }
+        }
+
+        function loadQuestion() {
+            if (currentQuestion >= 5) {
+                showResult();
+                return;
+            }
+
+            const q = questions[currentQuestion];
+
+            document.getElementById("answers").innerHTML = '';
+            document.getElementById("feedback").className = '';
+            document.getElementById("feedback").innerHTML = '';
+
+            if (q.checkRepeat) {
+                document.getElementById("question").innerHTML = `Question ${currentQuestion+1}:<br>Does this trail have a repeating pattern? 🤔`;
+                document.getElementById("pattern-display").innerHTML = q.pattern.map(p => `<span class="pattern-shape">${p.icon}</span>`).join(''); // Using the new class
+
+                // Buttons for Yes/No
+                document.getElementById("answers").innerHTML = `
+                    <button class='answer-btn px-6 py-4 text-xl md:text-2xl' onclick='checkRepeat(true)'>YES! 👍</button>
+                    <button class='answer-btn px-6 py-4 text-xl md:text-2xl' onclick='checkRepeat(false)'>NOPE! 👎</button>
+                `;
+                // Adjust layout for 2 buttons
+                document.getElementById("answers").classList.remove('md:grid-cols-3');
+                document.getElementById("answers").classList.add('md:grid-cols-2');
+                
+            } else {
+                document.getElementById("question").innerHTML = `Question ${currentQuestion + 1}:<br>Which shape is the <b class="text-red-600">${q.askIndex + 1}th</b> friend in the line? 🧐`;
+                document.getElementById("pattern-display").innerHTML = q.pattern.map((p, index) => 
+                    `<span class="pattern-shape ${index === q.askIndex ? 'ring-8 ring-red-500 rounded-full p-1 transition-all duration-300' : ''}">${p.icon}</span>`
+                ).join(''); // Highlight the question mark shape
+
+                let correctShape = shapes.find(s => s.name === q.answer);
+                // Ensure unique wrong choices, up to 2
+                let wrongChoices = shapes.filter(s => s.name !== correctShape.name).sort(() => Math.random() - 0.5).slice(0, 2);
+                let answers = [correctShape, ...wrongChoices].sort(() => Math.random() - 0.5);
+
+                let answerHTML = '';
+                answers.forEach(a => {
+                    answerHTML += `<button class='answer-btn px-6 py-4 text-xl md:text-2xl' onclick=checkAnswer("${a.name}")>${a.name}</button>`;
+                });
+                document.getElementById("answers").innerHTML = answerHTML;
+                document.getElementById("answers").classList.remove('md:grid-cols-2');
+                document.getElementById("answers").classList.add('md:grid-cols-3');
+            }
+            
+            // Hide action buttons when loading a new question
+            document.getElementById("retry-btn").classList.add('hidden');
+            document.getElementById("finish-btn").classList.add('hidden');
+        }
+
+        function checkRepeat(ans) {
+            const q = questions[currentQuestion];
+            const repeated = isPatternRepeated(q.pattern);
+            const feedbackEl = document.getElementById("feedback");
+            
+            // Disable all buttons immediately after an answer is chosen
+            document.querySelectorAll('.answer-btn').forEach(btn => btn.disabled = true);
+
+            if (ans === repeated) {
+                correct++;
+                feedbackEl.innerHTML = '✔ Correct! Great Job, Adventurer!';
+                feedbackEl.classList.add('feedback-correct');
+            } else {
+                wrong++;
+                feedbackEl.innerHTML = `✘ Not quite! The correct answer is: <b>${repeated ? 'YES!':'NOPE!'}</b>`;
+                feedbackEl.classList.add('feedback-wrong');
+            }
+            
+            setTimeout(()=>{
+                currentQuestion++;
+                loadQuestion();
+            },1500); // Increased delay for better feedback visibility
+        }
+
+        function checkAnswer(ans) {
+            const correctShape = questions[currentQuestion].answer;
+            const feedbackEl = document.getElementById("feedback");
+            
+            // Highlight the correct button temporarily (optional, but good for learning)
+            document.querySelectorAll('.answer-btn').forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent === correctShape) {
+                    btn.classList.add('bg-green-400', 'border-green-600', 'shadow-lg');
+                    btn.style.color = '#059669';
+                }
+            });
+
+            if (ans === correctShape) {
+                correct++;
+                feedbackEl.innerHTML = '✔ You found the friend! Correct!';
+                feedbackEl.classList.add('feedback-correct');
+            } else {
+                wrong++;
+                feedbackEl.innerHTML = `✘ Oh no! The friend is a <b>${correctShape}</b>. Keep trying!`;
+                feedbackEl.classList.add('feedback-wrong');
+            }
+            
+            setTimeout(()=>{
+                currentQuestion++;
+                loadQuestion();
+            },1500); // Increased delay for better feedback visibility
+        }
+
+        function showResult() {
+            document.getElementById("question").innerHTML = `Adventure Complete! You scored <b>${correct}</b> out of 5 friends found! 🏆`;
+            document.getElementById("answers").innerHTML = '';
+            document.getElementById("pattern-display").innerHTML = '';
+            
+            document.getElementById("retry-btn").classList.add('hidden');
+            document.getElementById("finish-btn").classList.add('hidden');
+            
+            // Use Inter font for result numbers for clarity
+            document.getElementById("question").style.fontFamily = 'Inter, sans-serif'; 
+
+
+            if (wrong === 0) {
+                document.getElementById("feedback").innerHTML = '🎉 Level Cleared! All 5 Correct! You are a Shape Master! 🎉';
+                document.getElementById("feedback").classList.add('feedback-correct');
+                document.getElementById("finish-btn").classList.remove('hidden');
+            } else {
+                document.getElementById("feedback").innerHTML = `Almost there! You need ${5 - correct} more correct answers to pass.`;
+                document.getElementById("feedback").style.color = '#f59e0b'; // Amber
+                document.getElementById("retry-btn").classList.remove('hidden');
+            }
+        }
+
+        function retry() {
+            currentQuestion = 0;
+            correct = 0;
+            wrong = 0;
+            document.getElementById("retry-btn").classList.add('hidden');
+            document.getElementById("question").style.fontFamily = 'Inter, sans-serif'; // Reset font
+            generateQuestions();
+            loadQuestion();
+        }
+
+        function finishLevel() {
+            localStorage.setItem('C7_Level2','completed');
+            // Redirect immediately to C7.html
+            window.location.href = 'C7.html'; 
+        }
+
+        // Initial setup
+        generateQuestions();
+        loadQuestion();
+        // --- LOGIC CODE ENDS HERE (UNCHANGED) ---
+    </script>
+</body>
+</html>

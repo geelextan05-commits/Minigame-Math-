@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick Subtraction: Monster Escape Level 8</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;800&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #f0fdf4; }
+    .game-card { border: 4px solid #10b981; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+    .obstacle { background-color: #d1fae5; border: 3px solid #34d399; border-radius: 1rem; padding: 1.5rem; }
+    .choice-button { transition: all 0.1s; box-shadow: 0 4px 0 0 #065f46; }
+    .choice-button:active { transform: translateY(2px); box-shadow: 0 2px 0 0 #065f46; }
+    .runner { font-size: 3rem; }
+    .monster { font-size: 3rem; }
+</style>
+</head>
+<body class="p-4 md:p-8 flex items-center justify-center min-h-screen bg-emerald-50">
+
+<div id="app" class="game-card w-full max-w-lg p-6 md:p-10 text-center rounded-2xl bg-white">
+    <h1 class="text-3xl font-extrabold text-emerald-700 mb-4">🏃 Monster Escape Level 8</h1>
+    <p class="text-gray-600 mb-6">Subtract quickly to remove the obstacle (Difference ≥ 0).</p>
+    
+    <div class="flex justify-between items-center mb-6">
+        <div id="runner" class="runner">🏃</div>
+        <div id="timer-bar-container" class="w-1/2 h-4 bg-gray-300 rounded-full mx-4">
+            <div id="timer-bar" class="h-full bg-red-500 rounded-full transition-all duration-100" style="width: 100%;"></div>
+        </div>
+        <div class="monster">👾</div>
+    </div>
+
+    <div id="game-area">
+        <div id="obstacle" class="obstacle mb-8">
+            <p class="text-xl font-semibold mb-2">Obstacle Value:</p>
+            <p id="question-text" class="text-5xl font-black text-emerald-700">?</p>
+        </div>
+
+        <div id="choices-container" class="grid grid-cols-2 gap-4"></div>
+        
+        <div id="feedback" class="h-8 mt-6 text-lg font-bold"></div>
+    </div>
+
+    <div class="mt-4 text-lg">Score: <span id="score">0</span> / 5</div>
+    <button id="start-button" onclick="startGame()" class="mt-6 px-8 py-3 bg-emerald-600 text-white font-bold rounded-xl choice-button">Start Escape</button>
+</div>
+
+<script>
+let score = 0;
+let correctAnswer = 0;
+const maxQuestions = 5; // Player needs 5 correct answers to pass
+let timerInterval = null;
+let timeRemaining = 100;
+
+const updateDisplay = () => {
+    document.getElementById('score').textContent = score;
+};
+
+const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+const generateQuestion = () => {
+    const num1 = getRandomInt(10, 20);
+    const num2 = getRandomInt(1, num1 - 1); 
+    correctAnswer = num1 - num2;
+
+    document.getElementById('question-text').textContent = `${num1} - ${num2}`;
+
+    const choices = [correctAnswer];
+    while (choices.length < 4) {
+        let choice = getRandomInt(correctAnswer - 3, correctAnswer + 3);
+        if (!choices.includes(choice) && choice >= 0 && choice <= 20) choices.push(choice);
+    }
+    choices.sort(() => Math.random() - 0.5);
+
+    const choicesContainer = document.getElementById('choices-container');
+    choicesContainer.innerHTML = choices.map(choice => `
+        <button onclick="checkAnswer(${choice})" class="choice-button w-full bg-emerald-500 text-white text-3xl font-bold py-4 rounded-lg hover:bg-emerald-600">
+            ${choice}
+        </button>
+    `).join('');
+
+    resetTimer();
+};
+
+const resetTimer = () => {
+    timeRemaining = 100;
+    document.getElementById('timer-bar').style.width = '100%';
+    document.getElementById('runner').textContent = '🏃';
+};
+
+const timerLoop = () => {
+    timeRemaining -= 2;
+    document.getElementById('timer-bar').style.width = `${timeRemaining}%`;
+    if (timeRemaining <= 0) {
+        clearInterval(timerInterval);
+        endGame(`Timeout!`);
+    }
+};
+
+const checkAnswer = (selectedAnswer) => {
+    clearInterval(timerInterval);
+    const feedbackEl = document.getElementById('feedback');
+    const choicesContainer = document.getElementById('choices-container');
+    choicesContainer.style.pointerEvents = 'none';
+
+    if (selectedAnswer === correctAnswer) {
+        score++;
+        feedbackEl.className = 'text-green-600';
+        feedbackEl.textContent = 'Cleared! Keep running!';
+        document.getElementById('runner').textContent = '👍';
+    } else {
+        feedbackEl.className = 'text-red-600';
+        feedbackEl.textContent = `Wrong! It was ${correctAnswer}. Monster got you!`;
+        document.getElementById('runner').textContent = '💥';
+        // Notify parent that the level failed
+        window.parent.postMessage({ type: "levelResult", success: false }, "*");
+        return;
+    }
+
+    updateDisplay();
+
+    setTimeout(() => {
+        feedbackEl.textContent = '';
+        choicesContainer.style.pointerEvents = 'auto'; 
+
+        if (score >= maxQuestions) {
+            // Notify parent that the level passed
+            window.parent.postMessage({ type: "levelResult", success: true }, "*");
+        } else {
+            generateQuestion();
+            timerInterval = setInterval(timerLoop, 100);
+        }
+    }, 1000);
+};
+
+const startGame = () => {
+    score = 0;
+    document.getElementById('start-button').classList.add('hidden');
+    document.getElementById('feedback').textContent = '';
+    updateDisplay();
+    generateQuestion();
+    clearInterval(timerInterval);
+    timerInterval = setInterval(timerLoop, 100);
+};
+
+window.startGame = startGame;
+window.checkAnswer = checkAnswer;
+</script>
+
+</body>
+</html>

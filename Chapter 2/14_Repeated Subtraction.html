@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repeated Subtraction: Treasure Chest Countdown</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f7f7f7; }
+        .game-card { border: 4px solid #14b8a6; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .chest { background-color: #ccfbf1; border: 3px solid #2dd4bf; border-radius: 1rem; padding: 1.5rem; }
+        .lock-button { transition: all 0.1s; box-shadow: 0 4px 0 0 #0f766e; }
+        .lock-button:active { transform: translateY(2px); box-shadow: 0 2px 0 0 #0f766e; }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex items-center justify-center min-h-screen bg-teal-50">
+
+    <div id="app" class="game-card w-full max-w-lg p-6 md:p-10 text-center rounded-2xl bg-white">
+        <h1 class="text-3xl font-extrabold text-teal-700 mb-4">🔑 Treasure Chest Countdown</h1>
+        <p class="text-gray-600 mb-6">How many times must you subtract the small number to open the chest?</p>
+        
+        <div id="chest" class="chest mb-8">
+            <p class="text-xl font-semibold mb-2">Chest Value: <span id="start-value" class="text-2xl font-black text-teal-700">?</span></p>
+            <p class="text-xl font-semibold">Unlock Code: Subtract <span id="subtract-value" class="text-2xl font-black text-teal-700">?</span> repeatedly.</p>
+        </div>
+
+        <div id="question-text" class="text-xl font-bold text-gray-700 mb-6">How many locks must you remove? (Times to subtract)</div>
+
+        <div id="choices-container" class="grid grid-cols-3 gap-3">
+            <!-- Choices will be rendered here -->
+        </div>
+
+        <div id="feedback" class="h-8 mt-6 text-lg font-bold"></div>
+        <div class="mt-4 text-lg">Chests Opened: <span id="score">0</span> / 5</div>
+
+        <button id="start-button" onclick="startGame()" class="mt-6 px-8 py-3 bg-teal-600 text-white font-bold rounded-xl lock-button">Start Countdown</button>
+    </div>
+
+    <script>
+        let score = 0;
+        let correctAnswer = 0;
+        let questionCount = 0;
+        const maxCorrect = 5; // Pass level after 5 correct answers
+
+        const updateDisplay = () => {
+            document.getElementById('score').textContent = score;
+        };
+
+        const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+        const generateQuestion = () => {
+            const subtractNum = getRandomInt(2, 5);
+            const times = getRandomInt(2, 4);
+            const startNum = subtractNum * times;
+
+            if (startNum > 20) { // Ensure result is ≤ 20
+                return generateQuestion();
+            }
+            
+            correctAnswer = times;
+
+            document.getElementById('start-value').textContent = startNum;
+            document.getElementById('subtract-value').textContent = subtractNum;
+
+            const choices = [correctAnswer];
+            while (choices.length < 3) {
+                let choice = getRandomInt(correctAnswer - 2, correctAnswer + 2);
+                if (!choices.includes(choice) && choice >= 1 && choice <= 6) { 
+                    choices.push(choice);
+                }
+            }
+            choices.sort(() => Math.random() - 0.5);
+
+            const choicesContainer = document.getElementById('choices-container');
+            choicesContainer.innerHTML = choices.map(choice => `
+                <button onclick="checkAnswer(${choice})" class="lock-button w-full bg-teal-500 text-white text-3xl font-bold py-4 rounded-xl hover:bg-teal-600">
+                    ${choice} locks
+                </button>
+            `).join('');
+        };
+
+        const checkAnswer = (selectedAnswer) => {
+            const feedbackEl = document.getElementById('feedback');
+            const choicesContainer = document.getElementById('choices-container');
+            choicesContainer.style.pointerEvents = 'none';
+
+            if (selectedAnswer === correctAnswer) {
+                score++;
+                feedbackEl.className = 'text-green-600';
+                feedbackEl.textContent = 'OPEN! That’s the right number of locks!';
+            } else {
+                feedbackEl.className = 'text-red-600';
+                feedbackEl.textContent = `Incorrect! You need to remove ${correctAnswer} locks.`;
+            }
+
+            updateDisplay();
+
+            // If reached maxCorrect, notify main page
+            if (score >= maxCorrect) {
+                feedbackEl.textContent = '🎉 Level Passed!';
+                window.parent.postMessage({ type: 'levelResult', success: true }, '*'); 
+                return;
+            }
+
+            setTimeout(() => {
+                feedbackEl.textContent = '';
+                choicesContainer.style.pointerEvents = 'auto'; 
+                generateQuestion();
+            }, 1200);
+        };
+
+        const startGame = () => {
+            score = 0;
+            questionCount = 0;
+            document.getElementById('start-button').classList.add('hidden');
+            document.getElementById('feedback').textContent = '';
+            updateDisplay();
+            generateQuestion();
+        };
+
+        window.startGame = startGame;
+        window.checkAnswer = checkAnswer;
+    </script>
+</body>
+</html>

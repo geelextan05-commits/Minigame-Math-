@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Level 6 – Shopping Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* 1. Global Styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f0fff4;
+            /* Soft Mint Background */
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 34px;
+            color: #008060;
+            /* Dark Emerald Green */
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .instruction {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+
+        /* 2. Question Container */
+        #questionBox {
+            margin-top: 30px;
+            padding: 30px;
+            background: white;
+            border-radius: 25px;
+            width: 90%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 3. Money/Budget Display */
+        #moneyDisplay {
+            font-size: 28px;
+            font-weight: 800;
+            color: #e63946;
+            /* Highlight the budget */
+            padding: 10px 20px;
+            border: 3px solid #e63946;
+            border-radius: 15px;
+            display: inline-block;
+            margin-bottom: 25px;
+        }
+
+        /* 4. Item List Display */
+        #items {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+            padding: 10px;
+            background: #f7fffb;
+            border-radius: 10px;
+        }
+
+        .item-card {
+            margin: 8px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            width: 120px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .item-card img {
+            width: 70px;
+            /* slightly smaller for card */
+            height: 70px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 5px;
+        }
+
+        .item-card span {
+            display: block;
+            font-weight: 700;
+            color: #005c3b;
+        }
+
+        /* 5. Option Button Styles */
+        button.option {
+            display: block;
+            width: 90%;
+            margin: 12px auto;
+            padding: 18px;
+            border-radius: 15px;
+            border: none;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            background: #66cc99;
+            color: #004d33;
+            transition: 0.2s;
+            box-shadow: 0 5px 0 #008040;
+        }
+
+        button.option:hover {
+            transform: translateY(-3px);
+            background: #4dffa6;
+            box-shadow: 0 8px 0 #008040;
+        }
+
+        /* 6. Feedback */
+        #feedback {
+            font-size: 26px;
+            font-weight: 800;
+            height: 40px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>💰 Level 6 – Smart Shopper</h1>
+    <p class="instruction">Choose the combination of items that uses the **most** of your money without going over
+        budget:</p>
+
+    <div id="questionBox">
+            <div id="moneyDisplay"></div>
+        <p style="font-weight: 600; color: #008060; margin-top: 10px;">Available Items:</p>
+            <div id="items"></div>
+            <div id="options"></div>
+            <div id="feedback"></div>
+    </div>
+
+    <script>
+        // -----------------------------
+        // QUESTIONS (Item Name/Price/Image)
+        // NOTE: Assuming image names match the Item Names (e.g., 'bread.png', 'juice.png')
+        // -----------------------------
+        let questions = [
+            {
+                money: 10.00,
+                items: [
+                    { name: 'Bread 🍞', price: 3.00, img: 'images/bread.png' },
+                    { name: 'Juice 🧃', price: 5.00, img: 'images/juice.png' },
+                    { name: 'Snack 🥨', price: 2.00, img: 'images/snack.png' }
+                ]
+            },
+            {
+                money: 20.00,
+                items: [
+                    { name: 'Book 📚', price: 12.00, img: 'images/book.png' },
+                    { name: 'Pencil ✏️', price: 2.50, img: 'images/pencil.png' },
+                    { name: 'Snack 🍬', price: 3.50, img: 'images/snack.png' }
+                ]
+            },
+            {
+                money: 5.00,
+                items: [
+                    { name: 'Juice 🥤', price: 5.00, img: 'images/juice.png' },
+                    { name: 'Toy 🧸', price: 8.00, img: 'images/toy.png' },
+                    { name: 'Gum 🍬', price: 0.50, img: 'images/gum.png' }
+                ]
+            },
+            {
+                money: 50.00,
+                items: [
+                    { name: 'Board Game 🎲', price: 18.50, img: 'images/board.png' },
+                    { name: 'Toy Car 🚗', price: 25.50, img: 'images/tcar.png' },
+                    { name: 'Stickers 🏷️', price: 3.00, img: 'images/sticker.png' }
+                ]
+            },
+            {
+                money: 30.00,
+                items: [
+                    { name: 'Soda 🥤', price: 10.00, img: 'images/soda.png' },
+                    { name: 'Cookies 🍪', price: 8.50, img: 'images/cookies.png' },
+                    { name: 'Fruit 🍎', price: 5.50, img: 'images/fruit.png' }
+                ]
+            }
+        ];
+
+        // -----------------------------
+        // GAME LOGIC FUNCTIONS
+        // -----------------------------
+
+        /**
+         * Generates all possible combinations (subsets) of items that do not exceed the budget.
+         * Uses a recursive approach (like the knapsack problem, but focusing on all combinations).
+         * @param {Array} items - The list of available items.
+         * @param {number} budget - The maximum amount of money available.
+         * @returns {Array} List of valid purchase objects { names: string, cost: number }.
+         */
+        function generateValidPurchases(items, budget) {
+            let validPurchases = [];
+
+            // Start with the 'buy nothing' option
+            validPurchases.push({ names: 'Buy Nothing (RM0.00)', cost: 0.00 });
+
+            /**
+             * Recursively find combinations.
+             * @param {number} index - Current item index.
+             * @param {Array<string>} currentNames - Names of items currently selected.
+             * @param {number} currentCost - Total cost of items currently selected.
+             */
+            function findCombinations(index, currentNames, currentCost) {
+                if (index === items.length) {
+                    // Check if this combination is new and valid (excluding 'buy nothing')
+                    if (currentCost > 0 && currentCost <= budget) {
+                        const purchase = {
+                            names: currentNames.map(n => n.split(' ')[0]).join(' + '),
+                            cost: currentCost
+                        };
+
+                        // Add the formatted purchase if it's not already in the list
+                        const isDuplicate = validPurchases.some(p => p.cost === purchase.cost && p.names === purchase.names);
+                        if (!isDuplicate) {
+                            validPurchases.push(purchase);
+                        }
+                    }
+                    return;
+                }
+
+                // 1. Include the current item
+                const item = items[index];
+                if (currentCost + item.price <= budget + 0.001) { // Add tolerance for floating point math
+                    findCombinations(index + 1, [...currentNames, item.name], currentCost + item.price);
+                }
+
+                // 2. Exclude the current item (must be done after including, to ensure all subsets are generated)
+                findCombinations(index + 1, currentNames, currentCost);
+            }
+
+            findCombinations(0, [], 0);
+            return validPurchases;
+        }
+
+        /**
+         * Finds the combination that uses the most money without going over budget.
+         * @param {Array} purchases - List of valid purchase combinations.
+         * @returns {string} The formatted string of the correct answer.
+         */
+        function getCorrectAnswer(purchases) {
+            // Find the max cost
+            let maxCost = -1;
+            purchases.forEach(p => {
+                if (p.cost <= questions[current].money && p.cost > maxCost) {
+                    maxCost = p.cost;
+                }
+            });
+
+            // Get all combinations that match the max cost
+            const bestPurchases = purchases.filter(p => Math.abs(p.cost - maxCost) < 0.001);
+
+            // If there are multiple best purchases (e.g., Bread + Juice vs Milk + Snack), any is valid.
+            // We'll choose the one with the longest name list for complexity, or just the first.
+            if (bestPurchases.length > 0) {
+                const best = bestPurchases.sort((a, b) => b.names.length - a.names.length)[0];
+                return `${best.names} = RM${best.cost.toFixed(2)}`;
+            }
+
+            // Should not happen if 'Buy Nothing' is included
+            return "Buy Nothing (RM0.00) = RM0.00";
+        }
+
+        // -----------------------------
+        // GAME FLOW
+        // -----------------------------
+
+        // Shuffle and use only 5
+        questions = questions.sort(() => 0.5 - Math.random()).slice(0, 5);
+
+        let current = 0;
+        let wrong = 0;
+
+        function loadQuestion() {
+            document.querySelectorAll('.option').forEach(btn => btn.disabled = false); // Ensure re-enabled
+            let q = questions[current];
+
+            // 1. Show budget
+            document.getElementById("moneyDisplay").innerHTML = `Budget: <strong>RM${q.money.toFixed(2)}</strong>`;
+
+            // 2. Show item cards
+            let html = "";
+            q.items.forEach(item => {
+                html += `<div class="item-card">
+                    <img src="${item.img}" alt="${item.name}">
+                    <span>${item.name.split(' ')[0]}</span>
+                    <span>RM${item.price.toFixed(2)}</span>
+                </div>`;
+            });
+            document.getElementById("items").innerHTML = html;
+
+            // 3. Dynamic Logic: Get valid purchases
+            let validPurchases = generateValidPurchases(q.items, q.money);
+            let correctAnswerStr = getCorrectAnswer(validPurchases);
+
+            // Save correct answer for check
+            q.correctAnswer = correctAnswerStr;
+
+            // 4. Generate options: 1 correct + 2 dynamic wrong options (sub-optimal valid purchases)
+
+            // Find options that are valid but NOT the optimal (correct) one
+            let suboptimalOptions = validPurchases
+                .map(p => `${p.names} = RM${p.cost.toFixed(2)}`)
+                .filter(opt => opt !== correctAnswerStr);
+
+            // Pick 2 unique wrong options from the suboptimal list
+            let wrongOptions = suboptimalOptions.sort(() => 0.5 - Math.random()).slice(0, 2);
+
+            // If less than 2 suboptimal options, fill with other question answers (legacy style)
+            if (wrongOptions.length < 2) {
+                // Collect answers from other questions
+                let fallbackOptions = questions
+                    .filter((_, index) => index !== current)
+                    .flatMap(q => {
+                        // Generate a valid purchase from a *different* question to use as a distractor
+                        let tempPurchases = generateValidPurchases(q.items, q.money);
+                        // Try to get a non-optimal purchase if available
+                        return tempPurchases.map(p => `${p.names} = RM${p.cost.toFixed(2)}`);
+                    })
+                    .filter(opt => !suboptimalOptions.includes(opt) && opt !== correctAnswerStr);
+
+                // Fill remaining slots
+                while (wrongOptions.length < 2 && fallbackOptions.length > 0) {
+                    wrongOptions.push(fallbackOptions.pop());
+                }
+            }
+
+            // Final options array
+            let options = [correctAnswerStr, ...wrongOptions].sort(() => 0.5 - Math.random());
+
+            // 5. Display buttons
+            let optHTML = "";
+            options.forEach(opt => {
+                optHTML += `<button class="option" onclick="checkAnswer('${opt.replace(/'/g, "\\'")}', '${q.correctAnswer.replace(/'/g, "\\'")}')">${opt}</button>`;
+            });
+            document.getElementById("options").innerHTML = optHTML;
+
+            document.getElementById("feedback").innerHTML = "";
+        }
+
+        function checkAnswer(ans, correct) {
+            let fb = document.getElementById("feedback");
+            document.querySelectorAll('.option').forEach(btn => btn.disabled = true); // Disable during check
+
+            if (ans === correct) {
+                fb.style.color = "#008060";
+                fb.innerHTML = "🎯 Excellent! That was the smartest way to spend! ✔";
+            } else {
+                fb.style.color = "#e63946";
+                fb.innerHTML = "❌ Not quite! Remember to maximize your spending without going over budget.";
+                wrong++;
+            }
+
+            setTimeout(() => {
+                current++;
+                if (current >= questions.length) finishLevel();
+                else loadQuestion();
+            }, 1500);
+        }
+
+        function finishLevel() {
+            if (wrong >= 2) {
+                alert(`You made ${wrong} budget mistakes. Try again to keep your errors below 2!`);
+                window.location.reload();
+                return;
+            }
+
+            localStorage.setItem("C4_Level6", "completed");
+            alert("Level 6 Completed! You are a budgeting PRO! Level 7 Unlocked 🎉");
+            window.location.href = "C4.html";
+        }
+
+        loadQuestion();
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 5 – Level 6: Duration Fun</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --blue-light: #74b9ff;
+            --blue-dark: #004d7f;
+            --yellow-main: #ffd60a;
+            --yellow-accent: #ffb703;
+            --green-main: #06d6a0;
+            --green-accent: #1b9aaa;
+            --red-wrong: #e63946;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, var(--blue-light) 0%, #f0f9ff 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+
+        h1 {
+            margin-top: 40px;
+            font-size: 32px;
+            color: var(--blue-dark);
+            text-shadow: 1px 1px 3px rgba(255,255,255,0.9);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .main-container {
+            background-color: white;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 77, 127, 0.3);
+            max-width: 650px;
+            width: 95%;
+            border-top: 8px solid var(--blue-dark);
+            text-align: center;
+        }
+
+        .clocks {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .clock-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 15px 0;
+        }
+
+        .clock {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            border: 6px solid var(--yellow-main);
+            border-radius: 50%;
+            background: radial-gradient(circle, #ffffff 0%, #d0f0ff 100%);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Numbers around clock */
+        .clock .number {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            /* Rotate around the center (0,0 relative to top/left 50%/50%) */
+            transform: rotate(calc(var(--i) * 30deg)); 
+            transform-origin: 0 0; 
+        }
+
+        .clock .number span {
+            position: absolute;
+            /* Move the number out radially, center it horizontally, and counter-rotate */
+            transform: translate(-50%, -80px) rotate(calc(-1 * var(--i) * 30deg));
+            font-weight: 700;
+            color: var(--blue-dark);
+            font-size: 14px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Clock hands */
+        .hand {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            /* Pivot at the center of the clock face */
+            transform-origin: 0% 50%;
+            border-radius: 4px;
+            transition: transform 0.5s ease-in-out;
+            z-index: 10;
+        }
+
+        .hour {
+            width: 35%;
+            height: 6px;
+            background: var(--blue-dark);
+        }
+        .minute {
+            width: 45%;
+            height: 3px;
+            background: var(--red-wrong);
+        }
+
+        .centerDot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--blue-dark);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+        }
+
+        .digital-time {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--blue-dark);
+            margin-top: 15px;
+            padding: 5px 10px;
+            background-color: #e0f2ff;
+            border-radius: 8px;
+        }
+
+        #question {
+            margin-top: 30px;
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--red-wrong);
+            background-color: #ffe6e6;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 90%;
+            margin: 30px auto 20px auto;
+        }
+
+        #answers {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .answer-btn {
+            padding: 12px 24px;
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--blue-dark);
+            background: linear-gradient(145deg, var(--yellow-main), var(--yellow-accent));
+            border-radius: 12px;
+            border: 3px solid #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 100px;
+            text-align: center;
+            box-shadow: 0 3px 0 #cc9b08;
+            user-select: none;
+        }
+
+        .answer-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 5px 0 #cc9b08;
+        }
+
+        .correct-answer {
+            background: linear-gradient(145deg, var(--green-main), var(--green-accent));
+            color: white;
+            box-shadow: 0 3px 0 #0e7a8b;
+        }
+
+        .wrong-answer {
+            background: linear-gradient(145deg, var(--red-wrong), #d62828);
+            color: white;
+            box-shadow: 0 3px 0 #a51818;
+        }
+
+        #feedback {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: 800;
+            min-height: 28px;
+        }
+
+        #nextBtn {
+            margin-top: 20px;
+            padding: 12px 35px;
+            background: linear-gradient(145deg, var(--green-main), var(--green-accent));
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            display: none;
+            box-shadow: 0 4px 0 #0e7a8b;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #nextBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #0e7a8b;
+        }
+
+        /* Score Modal Styling */
+        #score-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            color: var(--blue-dark);
+            max-width: 90%;
+            border: 5px solid var(--yellow-main);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content h2 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .modal-content p {
+            font-size: 20px;
+            margin-bottom: 25px;
+        }
+
+        .modal-button {
+            padding: 15px 30px;
+            background: linear-gradient(145deg, var(--green-main), var(--green-accent));
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #0e7a8b;
+        }
+
+        .modal-button:hover {
+             transform: translateY(-2px);
+            box-shadow: 0 6px 0 #0e7a8b;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Level 6 – Duration Fun</h1>
+
+    <div class="main-container">
+        <div class="clocks">
+            <div class="clock-container">
+                <div class="digital-time">Start Time</div>
+                <div class="clock" id="startClock">
+                    <!-- Numbers 1 to 12 -->
+                    <div class="number" style="--i:1;"><span>1</span></div>
+                    <div class="number" style="--i:2;"><span>2</span></div>
+                    <div class="number" style="--i:3;"><span>3</span></div>
+                    <div class="number" style="--i:4;"><span>4</span></div>
+                    <div class="number" style="--i:5;"><span>5</span></div>
+                    <div class="number" style="--i:6;"><span>6</span></div>
+                    <div class="number" style="--i:7;"><span>7</span></div>
+                    <div class="number" style="--i:8;"><span>8</span></div>
+                    <div class="number" style="--i:9;"><span>9</span></div>
+                    <div class="number" style="--i:10;"><span>10</span></div>
+                    <div class="number" style="--i:11;"><span>11</span></div>
+                    <div class="number" style="--i:12;"><span>12</span></div>
+                    <div class="hand hour" id="startHour"></div>
+                    <div class="hand minute" id="startMinute"></div>
+                    <div class="centerDot"></div>
+                </div>
+                <div class="digital-time" id="startDigital">--:--</div>
+            </div>
+
+            <div class="clock-container">
+                <div class="digital-time">End Time</div>
+                <div class="clock" id="endClock">
+                    <!-- Numbers 1 to 12 -->
+                    <div class="number" style="--i:1;"><span>1</span></div>
+                    <div class="number" style="--i:2;"><span>2</span></div>
+                    <div class="number" style="--i:3;"><span>3</span></div>
+                    <div class="number" style="--i:4;"><span>4</span></div>
+                    <div class="number" style="--i:5;"><span>5</span></div>
+                    <div class="number" style="--i:6;"><span>6</span></div>
+                    <div class="number" style="--i:7;"><span>7</span></div>
+                    <div class="number" style="--i:8;"><span>8</span></div>
+                    <div class="number" style="--i:9;"><span>9</span></div>
+                    <div class="number" style="--i:10;"><span>10</span></div>
+                    <div class="number" style="--i:11;"><span>11</span></div>
+                    <div class="number" style="--i:12;"><span>12</span></div>
+                    <div class="hand hour" id="endHour"></div>
+                    <div class="hand minute" id="endMinute"></div>
+                    <div class="centerDot"></div>
+                </div>
+                <div class="digital-time" id="endDigital">--:--</div>
+            </div>
+        </div>
+
+        <div id="question">How many hours and minutes passed between the two clocks?</div>
+        <div id="answers"></div>
+        <div id="feedback"></div>
+        <button id="nextBtn" onclick="nextQuestion()">Next Question</button>
+    </div>
+
+    <!-- Score Modal -->
+    <div id="score-modal">
+        <div class="modal-content">
+            <h2 id="modal-title"></h2>
+            <p id="modal-message"></p>
+            <button class="modal-button" onclick="goToMenu()">Go to Main Menu</button>
+        </div>
+    </div>
+
+
+    <script>
+        const totalQuestions = 5;
+        let current = 0;
+        let score = 0;
+        let hasAnswered = false; // Flag to prevent multiple answers per question
+
+        function getRandomTime() {
+            // Generates hours 1-12. Generates minutes 00, 15, 30, 45.
+            const hour = Math.floor(Math.random() * 12) + 1;
+            const minute = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+            return {hour, minute};
+        }
+
+        /**
+         * Rotates the clock hands based on time.
+         * Clock hands are drawn horizontally (pointing right = 0 deg).
+         * Standard clock angles (12 o'clock = 0 deg) need a -90 deg offset for CSS.
+         */
+        function rotateHand(handId, hour, minute, type) {
+            let angle;
+            if (type === 'hour') {
+                // Angle based on (Hour * 30 deg) + (Minute / 60) * 30 deg
+                angle = (hour % 12) * 30 + (minute / 60) * 30;
+            } else { // minute
+                // Angle based on (Minute * 6 deg)
+                angle = minute * 6;
+            }
+            // Apply -90 deg offset because hands are drawn horizontally (3 o'clock is 0 deg in CSS)
+            document.getElementById(handId).style.transform = `rotate(${angle - 90}deg)`;
+        }
+
+        function formatTime(h, m){ 
+            return `${h}:${m.toString().padStart(2,'0')}`; 
+        }
+
+        function loadQuestion(){
+            hasAnswered = false;
+            document.getElementById('answers').innerHTML = '';
+            document.getElementById('feedback').innerText = '';
+            document.getElementById('nextBtn').style.display = 'none';
+
+            const start = getRandomTime();
+            const end = getRandomTime();
+
+            // Set analog clock hands
+            rotateHand('startHour', start.hour, start.minute, 'hour');
+            rotateHand('startMinute', start.hour, start.minute, 'minute');
+            rotateHand('endHour', end.hour, end.minute, 'hour');
+            rotateHand('endMinute', end.hour, end.minute, 'minute');
+
+            // Set digital clock displays
+            document.getElementById('startDigital').innerText = formatTime(start.hour, start.minute);
+            document.getElementById('endDigital').innerText = formatTime(end.hour, end.minute);
+
+            // --- Duration Calculation (Handles 12-hour wrap-around) ---
+            let diffH = end.hour - start.hour;
+            let diffM = end.minute - start.minute;
+            
+            // Handle negative minutes
+            if(diffM < 0){ 
+                diffM += 60; 
+                diffH -= 1; 
+            }
+            
+            // Handle 12-hour wrap-around (e.g., 11:00 to 1:00)
+            if(diffH < 0) {
+                diffH += 12;
+            } else if (diffH === 0 && start.minute > end.minute) {
+                // Handle case where hours are the same but end minute is smaller (e.g. 5:45 to 5:15 -> 11h 30m)
+                 diffH += 12;
+            }
+
+            const correctAnswer = `${diffH}h ${diffM}m`;
+
+            // --- Answer Options Generation ---
+            const options = [correctAnswer];
+            while(options.length < 4){
+                // Generate plausible but incorrect options
+                let randH = Math.floor(Math.random() * 12);
+                let randM = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+
+                // Tweak the correct answer slightly for distractors
+                if (options.length === 1 && diffH < 11) randH = diffH + 1; // +1 hour
+                else if (options.length === 2 && diffM !== 0) randM = diffM - 15; // -15 minutes (if possible)
+                else randH = Math.floor(Math.random() * 12);
+
+                if (randM < 0) randM = 45; // loop back 
+
+                const text = `${randH}h ${randM}m`;
+                if(!options.includes(text) && text !== correctAnswer) options.push(text);
+            }
+            options.sort(()=>Math.random()-0.5);
+
+            const answersDiv = document.getElementById('answers');
+            options.forEach(opt => {
+                const btn = document.createElement('div');
+                btn.className = 'answer-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(btn, opt, correctAnswer);
+                answersDiv.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(button, selected, correct){
+            if (hasAnswered) return;
+            hasAnswered = true;
+
+            // Disable all buttons
+            Array.from(document.getElementsByClassName('answer-btn')).forEach(b => b.onclick = null);
+
+            if(selected === correct){
+                document.getElementById('feedback').innerText = "✅ Correct! Time calculation mastered.";
+                document.getElementById('feedback').style.color = 'var(--green-main)';
+                button.classList.add('correct-answer');
+                score++;
+            } else {
+                document.getElementById('feedback').innerText = `❌ Wrong! The correct duration is: ${correct}`;
+                document.getElementById('feedback').style.color = 'var(--red-wrong)';
+                button.classList.add('wrong-answer');
+            }
+            
+            // Highlight the correct answer among the disabled buttons
+            Array.from(document.getElementsByClassName('answer-btn')).forEach(b => {
+                if (b.innerText === correct) {
+                    b.classList.add('correct-answer');
+                }
+            });
+
+            document.getElementById('nextBtn').style.display = 'block';
+        }
+
+        function showScoreModal() {
+            document.getElementById("modal-title").innerText = `🎉 Level 6 Completed!`;
+            document.getElementById("modal-message").innerText = `Your final score is: ${score}/${totalQuestions}. Congratulations on completing the Time chapter!`;
+            document.getElementById("score-modal").style.display = 'flex';
+        }
+
+        function goToMenu() {
+            localStorage.setItem("C5_Level6", "completed");
+            window.location.href = "C5.html"; 
+        }
+
+        function nextQuestion(){
+            current++;
+            if(current >= totalQuestions){
+                showScoreModal();
+            } else {
+                loadQuestion();
+            }
+        }
+
+        window.onload = loadQuestion;
+    </script>
+</body>
+</html>

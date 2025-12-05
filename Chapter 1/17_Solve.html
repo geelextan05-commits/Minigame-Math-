@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question Gate (Level)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #fff7ed; }
+        .card { 
+            background-color: #ffffff; 
+            border-radius: 1.5rem; 
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.2); 
+            border: 4px solid #f97316;
+        }
+        .gate-door {
+            background-color: #f97316;
+            color: #ffffff;
+            border-radius: 1rem;
+            padding: 2rem 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .answer-choice {
+            transition: all 0.1s ease;
+            box-shadow: 0 5px 0 0 #b45309;
+            transform: translateY(0);
+        }
+        .answer-choice:active {
+            transform: translateY(2px);
+            box-shadow: 0 3px 0 0 #b45309;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex flex-col items-center justify-center">
+
+    <div id="app" class="card w-full max-w-lg p-6 md:p-10 text-center">
+        <h1 class="text-4xl font-extrabold text-orange-600 mb-2">🚪 Question Gate</h1>
+        <p class="text-gray-500 mb-6">Solve the equation to pass through the correct gate!</p>
+        
+        <div id="game-area">
+            <div class="gate-door mb-8">
+                <p id="question-label" class="text-lg font-semibold mb-2">Equation:</p>
+                <div id="expression" class="text-5xl font-black">? + ? = ?</div>
+            </div>
+
+            <div id="feedback-message" class="h-8 mb-4 text-lg font-bold"></div>
+
+            <p class="text-lg font-medium text-gray-700 mb-4">Choose the Answer Gate:</p>
+            <div id="choices-container" class="grid grid-cols-2 gap-4"></div>
+            
+            <button id="start-button" onclick="startGame()" class="mt-8 answer-choice bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-8 rounded-xl">
+                Start Challenge
+            </button>
+        </div>
+
+        <div class="mt-6 text-xl">Score: <span id="score" class="font-bold text-green-600">0</span> / 5</div>
+    </div>
+
+    <script>
+        let score = 0;
+        let correctAnswer = 0;
+        let questionCount = 0;
+        const maxQuestions = 5;
+
+        const updateDisplay = () => {
+            document.getElementById('score').textContent = `${score} / ${maxQuestions}`;
+        };
+
+        const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+        const generateQuestion = () => {
+            const operators = ['+', '-', '*'];
+            const op = operators[getRandomInt(0, 2)];
+            let num1 = getRandomInt(1, 15);
+            let num2 = getRandomInt(1, 10);
+            
+            if (op === '-') {
+                if (num1 < num2) [num1, num2] = [num2, num1];
+            } else if (op === '*') {
+                num1 = getRandomInt(1, 8);
+                num2 = getRandomInt(1, 8);
+            }
+
+            const expressionText = `${num1} ${op} ${num2}`;
+            correctAnswer = eval(expressionText);
+
+            const choices = [correctAnswer];
+            while (choices.length < 4) {
+                let choice = correctAnswer + getRandomInt(-4, 4);
+                if (!choices.includes(choice) && choice >= 0) {
+                    choices.push(choice);
+                }
+            }
+
+            choices.sort(() => Math.random() - 0.5);
+
+            document.getElementById('expression').textContent = expressionText + ' = ?';
+
+            const container = document.getElementById('choices-container');
+            container.innerHTML = choices.map(choice => `
+                <button onclick="checkAnswer(${choice})" class="answer-choice bg-orange-500 text-white text-3xl font-bold py-6 rounded-xl hover:bg-orange-600">
+                    ${choice}
+                </button>
+            `).join('');
+        };
+
+        const checkAnswer = (selectedAnswer) => {
+            const feedback = document.getElementById('feedback-message');
+            const choices = document.getElementById('choices-container');
+            choices.style.pointerEvents = 'none';
+
+            if (selectedAnswer === correctAnswer) {
+                score++;
+                feedback.className = 'text-green-600';
+                feedback.textContent = 'Success! Gate is open!';
+            } else {
+                feedback.className = 'text-red-600';
+                feedback.textContent = `Locked! The answer was ${correctAnswer}.`;
+            }
+
+            updateDisplay();
+
+            setTimeout(() => {
+                feedback.textContent = '';
+                choices.style.pointerEvents = 'auto';
+                questionCount++;
+
+                if (score >= maxQuestions) {
+                    levelComplete();
+                } else if (questionCount < maxQuestions) {
+                    generateQuestion();
+                } else {
+                    endGame();
+                }
+            }, 1200);
+        };
+
+        const startGame = () => {
+            score = 0;
+            questionCount = 0;
+            document.getElementById('start-button').style.display = 'none';
+            updateDisplay();
+            generateQuestion();
+        };
+
+        const levelComplete = () => {
+            document.getElementById('game-area').innerHTML = `
+                <h2 class="text-3xl font-bold text-orange-600 mb-4">🎉 Level Complete!</h2>
+                <p class="text-2xl text-gray-700 mb-6">Great job! You unlocked the next gate.</p>
+            `;
+            // Send completion message to parent frame
+            window.parent.postMessage({ type: 'levelResult', success: true }, '*');
+        };
+
+        const endGame = () => {
+            document.getElementById('game-area').innerHTML = `
+                <h2 class="text-3xl font-bold text-orange-600 mb-4">Challenge Complete!</h2>
+                <p class="text-2xl text-gray-700 mb-6">Score: ${score} / 5</p>
+                <button onclick="startGame()" class="answer-choice bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-8 rounded-xl">
+                    Try Again
+                </button>
+            `;
+        };
+
+        window.startGame = startGame;
+        window.checkAnswer = checkAnswer;
+    </script>
+</body>
+</html>

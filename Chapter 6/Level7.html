@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 6 – Level 7: Solve Problems</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* --- General Body & Background --- */
+body {
+    font-family: 'Poppins', sans-serif;
+    /* Updated background to a refreshing light blue/green gradient */
+    background: linear-gradient(135deg, #E8F5E9, #BBDEFB); 
+    text-align: center;
+    padding: 30px;
+}
+
+h1 {
+    font-size: 45px;
+    font-weight: 900;
+    /* Primary deep blue color */
+    color: #1A237E; 
+    margin-bottom: 15px;
+    text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.1);
+}
+
+#progress {
+    font-size: 22px;
+    /* Secondary accent blue */
+    color: #0D47A1; 
+    font-weight: 700;
+    margin-bottom: 25px;
+}
+
+/* --- Question Card --- */
+.card {
+    background: white;
+    width: 90%;
+    max-width: 450px; /* Increased max-width slightly */
+    margin: 0 auto;
+    padding: 30px 20px;
+    border-radius: 25px;
+    /* Stronger, friendlier box shadow with a teal border accent */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 0 0 5px #00BCD4; 
+}
+
+.question-text {
+    font-size: 24px;
+    font-weight: 800;
+    color: #388E3C; /* Green color for the question */
+    margin-bottom: 30px;
+    padding: 10px;
+    background: #DCEDC8; /* Very light green background for text box */
+    border-radius: 10px;
+}
+
+/* --- Answer Buttons --- */
+.answer-btn {
+    display: block;
+    width: 80%; /* Wider buttons */
+    margin: 15px auto;
+    padding: 18px 10px;
+    font-size: 22px;
+    font-weight: 800;
+    border-radius: 30px; /* More rounded */
+    border: none;
+    cursor: pointer;
+    /* Bright yellow/orange color */
+    background: #FFD700; 
+    color: #4E342E;
+    box-shadow: 0 6px 0 #FF9800; /* Darker orange shadow */
+    transition: 0.1s;
+    letter-spacing: 0.5px;
+}
+
+.answer-btn:hover {
+    filter: brightness(1.05);
+}
+
+.answer-btn:active {
+    transform: translateY(6px);
+    box-shadow: 0 0 0 #FF9800;
+}
+
+/* --- Feedback --- */
+#resultMessage {
+    font-size: 28px;
+    font-weight: 900;
+    margin-top: 30px;
+    padding: 10px 20px;
+    border-radius: 10px;
+}
+
+#completeBox {
+    display: none;
+    font-size: 36px;
+    font-weight: 900;
+    color: #2E7D32;
+    margin-top: 40px;
+    text-shadow: 1px 1px 1px #fff;
+}
+</style>
+</head>
+<body>
+
+<h1>🧠 Level 7 – Solve Problems!</h1>
+<p id="progress"></p>
+
+<div class="card">
+    <p class="question-text" id="questionText"></p>
+    <div id="answersArea"></div>
+</div>
+
+<p id="resultMessage"></p>
+<div id="completeBox">🎉 CONGRATULATIONS! Chapter Complete! 🎉</div>
+
+<script>
+// --- QUESTIONS DATA ---
+// Added Emojis to the questions for better context and fun
+const questions = [
+    {
+        qText: "📏 A pencil is 15 cm long. A ruler is 30 cm long. Which is longer?",
+        options: ["✏️ Pencil", "📐 Ruler", "🤝 Both are same"],
+        ans: "📐 Ruler"
+    },
+    {
+        qText: "⚖️ An apple weighs 200 g, and a bag weighs 500 g. Which is heavier?",
+        options: ["🍎 Apple", "🛍️ Bag", "🤝 Both are same"],
+        ans: "🛍️ Bag"
+    },
+    {
+        qText: "💧 Cup 1 has 200 ml water, Cup 2 has 250 ml. Which has more?",
+        options: ["🥛 Cup 1", "🥤 Cup 2", "🤝 Equal volume"],
+        ans: "🥤 Cup 2"
+    },
+    {
+        qText: "📏 A table is 1.5 m long, and a pencil is 30 cm. Which is longer? (Remember 1 m = 100 cm)",
+        options: ["🪑 Table", "✏️ Pencil", "🤝 Both same"],
+        ans: "🪑 Table"
+    },
+    {
+        qText: "⚖️ A watermelon weighs 3 kg, an apple weighs 1 kg. Which is heavier? (Remember 1 kg = 1000 g)",
+        options: ["🍉 Watermelon", "🍎 Apple", "🤝 Both same"],
+        ans: "🍉 Watermelon"
+    }
+];
+
+let current = 0;
+
+function loadQuestion() {
+    const q = questions[current];
+    document.getElementById("progress").innerText = `Question ${current+1} of ${questions.length}`;
+    document.getElementById("questionText").innerText = q.qText;
+    document.getElementById("resultMessage").innerText = "";
+
+    const answersArea = document.getElementById("answersArea");
+    answersArea.innerHTML = "";
+    q.options.forEach(option => {
+        const btn = document.createElement("button");
+        btn.className = "answer-btn";
+        btn.innerText = option;
+        btn.onclick = () => checkAnswer(option);
+        answersArea.appendChild(btn);
+    });
+}
+
+function checkAnswer(choice) {
+    const q = questions[current];
+    const result = document.getElementById("resultMessage");
+
+    // The choice includes the emoji, but the answer (q.ans) also includes the emoji now.
+    if (choice === q.ans) {
+        result.style.color = "green";
+        result.innerText = "✅ Correct!";
+    } else {
+        result.style.color = "red";
+        // Ensure the correct answer displays its emoji too
+        result.innerText = `❌ Incorrect! Correct answer: ${q.ans}`; 
+    }
+
+    // Move to next question
+    current++;
+    if (current < questions.length) {
+        setTimeout(loadQuestion, 1200);
+    } else {
+        setTimeout(() => {
+            document.getElementById("completeBox").style.display = "block";
+            localStorage.setItem("C6_Level7", "completed");
+            // Assuming this is the last level of Chapter 6, redirect to the main chapter page
+            setTimeout(() => window.location.href = "C6.html", 2000); 
+        }, 1200);
+    }
+}
+
+// Initialize first question
+window.onload = loadQuestion;
+</script>
+
+</body>
+</html>

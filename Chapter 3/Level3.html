@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Level 3 - Build the Fraction</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #fdf6e3;
+  text-align: center;
+  padding: 20px;
+}
+h1 {
+  font-size: 32px;
+  color: #0077b6;
+  font-weight: 800;
+  margin-bottom: 30px;
+}
+#questionBox {
+  margin-top: 20px;
+  padding: 25px;
+  background: white;
+  border-radius: 25px;
+  width: 90%;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+#instructions {
+    font-size: 20px;
+    color: #0077b6;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+#targetArea {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    padding: 10px;
+    border: 2px dashed #00b4d8;
+    border-radius: 15px;
+    background: #f8f9fa;
+}
+.pizzaBox {
+  width: 80px;
+  height: 80px;
+  border: 5px solid #ff7f50;
+  border-radius: 10px; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f1faee;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+  margin: 5px 0;
+}
+.slot {
+    width: 90%;
+    height: 90%;
+    background: none; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#blocksContainer {
+    margin-top: 30px;
+    padding: 10px;
+    min-height: 100px;
+    border: 2px solid #ffb347;
+    border-radius: 10px;
+    background: #fffafa;
+}
+.block {
+  width: 70px;
+  height: 70px;
+  background: #ffb347;
+  border: 4px solid #cc4444; 
+  margin: 10px;
+  border-radius: 15px;
+  cursor: grab;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 3px 3px 7px rgba(0,0,0,0.2);
+  font-size: 35px;
+  transition: transform 0.1s;
+}
+.block:active {
+    transform: scale(1.05);
+}
+.slot .block {
+    margin: 0;
+    width: 90%;
+    height: 90%;
+}
+button {
+  margin-top: 25px;
+  padding: 15px 30px;
+  font-size: 24px;
+  border-radius: 30px;
+  border: none;
+  background: #0077b6;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 4px 0 #023e8a;
+}
+button:hover { background: #023e8a; }
+button:active { box-shadow: none; transform: translateY(4px); }
+#feedback {
+    height: 60px;
+    font-size: 28px;
+    font-weight: 800;
+    margin-top: 15px;
+}
+</style>
+</head>
+<body>
+
+<h1>Level 3 – Build the Fraction</h1>
+<div id="questionBox">
+  <div id="instructions"></div>
+  <div id="targetArea"></div>
+  <div id="blocksContainer">
+      <p style="color: #444; font-weight: 600;">Available Slices:</p>
+  </div>
+  <button id="submitBtn">Check My Slices</button>
+  <div id="feedback"></div>
+</div>
+
+<script>
+let questions = [];
+let current = 0;
+
+// Generate questions: answer (slices) and number of slots (denominator)
+function generateQuestions() {
+    for(let i=0;i<5;i++){
+        let slots = Math.floor(Math.random() * 5) + 2; // 2 to 6 slots
+        let answer = Math.floor(Math.random() * slots) + 1; // 1 to slots
+        questions.push({answer: answer, slots: slots});
+    }
+    // Ensure first questions are recognizable
+    questions[0] = {answer: 3, slots: 4};
+    questions[1] = {answer: 5, slots: 8};
+}
+
+// Load question
+function loadQuestion(){
+    let q = questions[current];
+    document.getElementById("feedback").innerHTML = "";
+
+    // Display fraction: answer / slots
+    let displayFraction = `${q.answer}/${q.slots}`;
+    document.getElementById("instructions").innerHTML = 
+        `Drag <b>${q.answer}</b> slice(s) to match the fraction: <b>${displayFraction}</b>!`;
+
+    // Build target slots
+    let targetArea = document.getElementById("targetArea");
+    targetArea.innerHTML = "";
+    for(let i=0; i<q.slots; i++){
+        let pizzaBox = document.createElement("div");
+        pizzaBox.className = "pizzaBox";
+
+        let slot = document.createElement("div");
+        slot.className = "slot";
+        slot.addEventListener("dragover", e=>e.preventDefault());
+        slot.addEventListener("drop", drop);
+
+        pizzaBox.appendChild(slot);
+        targetArea.appendChild(pizzaBox);
+    }
+
+    // Build draggable blocks: extra slices to challenge student
+    let extraSlices = Math.floor(Math.random()*2)+1; // 1-2 extra
+    let numBlocks = q.answer + extraSlices;
+
+    let blocksC = document.getElementById("blocksContainer");
+    blocksC.innerHTML = '<p style="color: #444; font-weight: 600;">Available Slices:</p>';
+
+    for(let i=0; i<numBlocks; i++){
+        let block = document.createElement("div");
+        block.className = "block";
+        block.draggable = true;
+        block.innerHTML = '🍕'; 
+        block.addEventListener("dragstart", drag);
+        blocksC.appendChild(block);
+    }
+
+    blocksC.addEventListener("dragover", e=>e.preventDefault());
+    blocksC.addEventListener("drop", (e)=>{
+        e.preventDefault();
+        if(e.target.id==='blocksContainer' && dragged.classList.contains('block')){
+            e.target.appendChild(dragged);
+        }
+    });
+}
+
+let dragged;
+function drag(e){ dragged = e.target; }
+function drop(e){
+    e.preventDefault();
+    if(e.target.classList.contains("slot") && e.target.children.length===0 && dragged.classList.contains('block')){
+        e.target.appendChild(dragged);
+    }
+}
+
+// Submit
+document.getElementById("submitBtn").addEventListener("click", ()=>{
+    let q = questions[current];
+    let slotsFilled = 0;
+    document.querySelectorAll(".slot").forEach(s=>{
+        if(s.children.length>0) slotsFilled++;
+    });
+
+    let fb = document.getElementById("feedback");
+    if(slotsFilled === q.answer){
+        fb.style.color = "#2a9d8f";
+        fb.innerHTML = "🥳 Correct! ✔";
+    } else {
+        fb.style.color = "#e63946";
+        fb.innerHTML = `Not quite! You need <b>${q.answer}</b> slice(s), but you placed <b>${slotsFilled}</b>.`;
+    }
+
+    setTimeout(()=>{
+        current++;
+        if(current>=questions.length){
+            localStorage.setItem("C3_Level3","completed");
+            alert("Level 3 Completed!\nLevel 4 is now unlocked.");
+            window.location.href="C3.html";
+        } else loadQuestion();
+    },1500);
+});
+
+// Initialize
+generateQuestions();
+loadQuestion();
+</script>
+
+</body>
+</html>

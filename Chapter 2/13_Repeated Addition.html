@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repeated Addition: Jumping Platforms</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;800&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #f5f5f4; }
+    .game-card { border: 4px solid #7c3aed; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    .platform { background-color: #c4b5fd; border: 3px solid #8b5cf6; border-radius: 1rem; padding: 1rem 2rem; }
+    .jump-button { transition: all 0.1s; box-shadow: 0 4px 0 0 #4c1d95; }
+    .jump-button:active { transform: translateY(2px); box-shadow: 0 2px 0 0 #4c1d95; }
+</style>
+</head>
+<body class="p-4 md:p-8 flex items-center justify-center min-h-screen bg-neutral-50">
+
+<div id="app" class="game-card w-full max-w-lg p-6 md:p-10 text-center rounded-2xl bg-white">
+    <h1 class="text-3xl font-extrabold text-violet-700 mb-4">🤸 Jumping Platforms</h1>
+    <p class="text-gray-600 mb-6">Calculate the total distance (Repeated Addition) to land on the correct platform (Result ≤ 20).</p>
+    
+    <div class="platform mb-8">
+        <p class="text-xl font-semibold mb-2">Jump Path:</p>
+        <p id="question-text" class="text-3xl font-black text-violet-700">?</p>
+    </div>
+
+    <div id="choices-container" class="flex justify-around items-end h-32"></div>
+
+    <div id="feedback" class="h-8 mt-6 text-lg font-bold"></div>
+    <div class="mt-4 text-lg">Successful Jumps: <span id="score">0</span> / 5</div>
+
+    <button id="start-button" onclick="startGame()" class="mt-6 px-8 py-3 bg-violet-600 text-white font-bold rounded-xl jump-button">Start Jumping</button>
+</div>
+
+<script>
+let score = 0;
+let correctAnswer = 0;
+let questionCount = 0;
+const maxCorrect = 5;
+
+const updateDisplay = () => {
+    document.getElementById('score').textContent = score;
+};
+
+const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+const generateQuestion = () => {
+    const addNum = getRandomInt(2, 5); // Number to add repeatedly
+    const count = getRandomInt(2, 4);  // How many times to add
+
+    let result = 0;
+    let question = '';
+    for (let i = 0; i < count; i++) {
+        result += addNum;
+        question += (i > 0 ? ' + ' : '') + addNum;
+    }
+
+    if (result > 20) return generateQuestion(); // Ensure result ≤ 20
+
+    correctAnswer = result;
+    document.getElementById('question-text').textContent = question;
+
+    const choices = [correctAnswer];
+    while (choices.length < 3) {
+        let choice = getRandomInt(correctAnswer - 3, correctAnswer + 3);
+        if (!choices.includes(choice) && choice >= 1 && choice <= 20) choices.push(choice);
+    }
+    choices.sort(() => Math.random() - 0.5);
+
+    const choicesContainer = document.getElementById('choices-container');
+    choicesContainer.innerHTML = choices.map(choice => `
+        <button onclick="checkAnswer(${choice})" class="jump-button bg-violet-500 text-white text-2xl font-bold py-4 px-6 rounded-t-xl hover:bg-violet-600">
+            ${choice}
+        </button>
+    `).join('');
+
+    questionCount++;
+};
+
+const checkAnswer = (selectedAnswer) => {
+    const feedbackEl = document.getElementById('feedback');
+    const choicesContainer = document.getElementById('choices-container');
+    choicesContainer.style.pointerEvents = 'none';
+
+    if (selectedAnswer === correctAnswer) {
+        score++;
+        feedbackEl.className = 'text-green-600';
+        feedbackEl.textContent = '✅ Landed safely!';
+    } else {
+        feedbackEl.className = 'text-red-600';
+        feedbackEl.textContent = `❌ Missed! The total distance was ${correctAnswer}.`;
+    }
+
+    updateDisplay();
+
+    if (score >= maxCorrect) {
+        // Notify main page that level is passed
+        window.parent.postMessage({ type: 'levelResult', success: true }, '*');
+        document.getElementById('choices-container').innerHTML = '';
+        document.getElementById('question-text').textContent = '🏆 Level Passed! Well done!';
+        feedbackEl.textContent = '';
+        return;
+    }
+
+    setTimeout(() => {
+        feedbackEl.textContent = '';
+        choicesContainer.style.pointerEvents = 'auto';
+        generateQuestion();
+    }, 1200);
+};
+
+const startGame = () => {
+    score = 0;
+    questionCount = 0;
+    document.getElementById('start-button').classList.add('hidden');
+    document.getElementById('feedback').textContent = '';
+    updateDisplay();
+    generateQuestion();
+};
+
+window.startGame = startGame;
+window.checkAnswer = checkAnswer;
+</script>
+
+</body>
+</html>

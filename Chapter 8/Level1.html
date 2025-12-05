@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 8 – Level 1: Collect Data</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+body {
+    font-family: 'Poppins', sans-serif;
+    /* Clean, bright orange/yellow theme */
+    background: linear-gradient(135deg, #FFFDE7 0%, #FFECB3 100%); 
+    margin: 0;
+    padding: 30px 20px;
+    text-align: center;
+    min-height: 100vh;
+}
+h1 { 
+    font-size: 44px; 
+    color: #FF8F00; /* Darker Gold/Orange */
+    font-weight: 900;
+    margin-bottom: 5px; 
+    text-shadow: 2px 2px 0 #FFD54F;
+}
+p#instruction { 
+    font-size: 20px; 
+    margin-bottom: 30px; 
+    color: #5D4037; /* Dark Brown for readability */
+    font-weight: 600;
+}
+
+#gameArea { 
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: center; 
+    gap: 20px; /* Increased gap */
+    margin-bottom: 40px; 
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.7); /* Slightly transparent background for contrast */
+    border-radius: 20px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+.item { 
+    width: 90px; /* Slightly larger */
+    height: 90px;
+    border-radius: 50%; /* Make them round like fruit/items */
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    font-size: 50px; /* Larger icon */
+    cursor: pointer; 
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.5s; 
+    background: #FFB300; /* Bright Item Color */
+    box-shadow: 0 6px 0 #F57C00, 0 8px 15px rgba(0,0,0,0.2); /* 3D effect */
+    border: 3px solid #FF8F00;
+}
+.item:hover { 
+    transform: scale(1.15) translateY(-3px); 
+    box-shadow: 0 8px 0 #F57C00, 0 12px 20px rgba(0,0,0,0.3);
+}
+.item[style*="opacity: 0.5"] { /* Style for clicked items */
+    box-shadow: 0 3px 0 #F57C00, 0 4px 8px rgba(0,0,0,0.2);
+    transform: none;
+    background: #FFCC80;
+}
+
+#counterPanel { 
+    display: flex; 
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+    justify-content: center; 
+    gap: 30px 50px; /* Horizontal and vertical gap */
+    margin-bottom: 30px; 
+    padding: 15px;
+    background: #FF8F00; /* Counter background */
+    border-radius: 15px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+.counter { 
+    font-size: 24px; 
+    color: white; 
+    font-weight: 800; 
+    padding: 5px 10px;
+    min-width: 150px;
+    text-align: left;
+}
+
+#submitBtn { 
+    padding: 15px 40px; 
+    font-size: 24px; 
+    font-weight: 900; 
+    border: none; 
+    border-radius: 15px; 
+    background: #4CAF50; /* Green primary action button */
+    color: white; 
+    cursor: pointer; 
+    transition: transform 0.1s, box-shadow 0.1s; 
+    box-shadow: 0 6px 0 #388E3C; /* 3D effect */
+}
+#submitBtn:active { 
+    transform: translateY(6px); /* Push down */
+    box-shadow: none; /* Flatten shadow */
+}
+
+#resultMessage { 
+    margin-top: 25px; 
+    font-size: 30px; 
+    font-weight: 900; 
+    padding: 10px;
+}
+</style>
+</head>
+<body>
+
+<h1>📊 Level 1 – Collect Data</h1>
+<p id="instruction">Click each item to count how many there are. Then press Submit!</p>
+
+<div id="gameArea"></div>
+<div id="counterPanel"></div>
+<button id="submitBtn">Submit</button>
+<p id="resultMessage"></p>
+
+<script>
+// --- MULTIPLE ROUNDS DATA ---
+const rounds = [
+    [
+        { name: "Apple", icon: "🍎", correct: 3, count: 0 },
+        { name: "Banana", icon: "🍌", correct: 4, count: 0 },
+        { name: "Grapes", icon: "🍇", correct: 2, count: 0 }
+    ],
+    [
+        { name: "Orange", icon: "🍊", correct: 5, count: 0 },
+        { name: "Strawberry", icon: "🍓", correct: 3, count: 0 },
+        { name: "Pear", icon: "🍐", correct: 4, count: 0 }
+    ],
+    [
+        { name: "Pineapple", icon: "🍍", correct: 2, count: 0 },
+        { name: "Watermelon", icon: "🍉", correct: 3, count: 0 },
+        { name: "Cherry", icon: "🍒", correct: 5, count: 0 }
+    ]
+];
+
+let currentRound = 0;
+
+// --- SELECT ELEMENTS ---
+const gameArea = document.getElementById("gameArea");
+const counterPanel = document.getElementById("counterPanel");
+const resultMessage = document.getElementById("resultMessage");
+
+// --- LOAD ROUND ---
+function loadRound() {
+    gameArea.innerHTML = '';
+    counterPanel.innerHTML = '';
+    resultMessage.innerText = '';
+
+    const roundData = rounds[currentRound];
+
+    // Reset counts
+    roundData.forEach(item => item.count = 0);
+
+    // Generate items to click
+    // Use Fisher-Yates shuffle to randomize item display order
+    const allItems = [];
+    roundData.forEach(item => {
+        for(let i=0;i<item.correct;i++){
+            allItems.push(item);
+        }
+    });
+
+    // Shuffle the array of items
+    for (let i = allItems.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allItems[i], allItems[j]] = [allItems[j], allItems[i]];
+    }
+
+    allItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerText = item.icon;
+        div.dataset.name = item.name;
+        // The event listener is attached to the item object itself, NOT the name
+        div.addEventListener('click', () => {
+            // Find the correct item object in the roundData to increment its count
+            const dataItem = roundData.find(d => d.name === item.name);
+            dataItem.count++; 
+            updateCounters();
+            div.style.opacity = '0.5';
+            div.style.pointerEvents = 'none';
+        });
+        gameArea.appendChild(div);
+    });
+
+    // Generate counters
+    roundData.forEach(item => {
+        const span = document.createElement('div');
+        span.className = 'counter';
+        span.id = 'counter-' + item.name.replace(/\s/g, ''); // Ensure ID is safe
+        span.innerText = `${item.name}: 0`;
+        counterPanel.appendChild(span);
+    });
+}
+
+// --- UPDATE COUNTERS ---
+function updateCounters() {
+    const roundData = rounds[currentRound];
+    roundData.forEach(item => {
+        document.getElementById('counter-' + item.name.replace(/\s/g, '')).innerText = `${item.name}: ${item.count}`;
+    });
+}
+
+// --- SUBMIT ANSWER ---
+document.getElementById('submitBtn').addEventListener('click', () => {
+    const roundData = rounds[currentRound];
+    let correct = true;
+    roundData.forEach(item => {
+        if(item.count !== item.correct) correct = false;
+    });
+
+    if(correct){
+        resultMessage.style.color = "#2E7D32";
+        resultMessage.innerText = "🎉 Correct!";
+
+        currentRound++;
+        if(currentRound < rounds.length){
+            setTimeout(loadRound, 1500); // Next round
+        } else {
+            localStorage.setItem('C8_Level1', 'completed');
+            setTimeout(()=>{ window.location.href = "C8.html"; }, 2000); // Level complete (Adjusted path)
+        }
+    } else {
+        resultMessage.style.color = "#D84315";
+        resultMessage.innerText = "❌ Some counts are incorrect. Try again!";
+    }
+});
+
+// --- INITIAL LOAD ---
+window.onload = loadRound;
+</script>
+
+</body>
+</html>

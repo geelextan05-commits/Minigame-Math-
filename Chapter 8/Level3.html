@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 8 – Level 3: Solve Data Problems</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+body {
+    font-family: 'Poppins', sans-serif;
+    /* Clean, bright green theme */
+    background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+    margin: 0;
+    padding: 30px 20px;
+    text-align: center;
+    min-height: 100vh;
+}
+
+h1 { 
+    font-size: 44px; 
+    color: #1B5E20; /* Dark Green Title */
+    font-weight: 900; 
+    margin-bottom: 5px; 
+    text-shadow: 2px 2px 0 #A5D6A7;
+}
+p#instruction { 
+    font-size: 20px; 
+    margin-bottom: 30px; 
+    color: #388E3C; 
+    font-weight: 600;
+}
+
+/* --- PICTOGRAPH AREA --- */
+#chartContainer {
+    max-width: 800px;
+    margin: 0 auto 30px;
+    padding: 25px 20px;
+    background: white;
+    border: 4px solid #81C784;
+    border-radius: 15px;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+#pictograph {
+    display: flex;
+    justify-content: space-around; /* Distribute items evenly */
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.symbol {
+    width: 150px; /* Wider area for the text/icons */
+    padding: 10px;
+    background: #E8F5E9; /* Light green background */
+    border: 2px solid #388E3C;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 35px; /* Icon size */
+    font-weight: 700;
+    color: #1B5E20;
+    cursor: grab;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 4px 0 #388E3C; /* 3D effect */
+    user-select: none;
+}
+.symbol:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #388E3C;
+}
+
+/* --- DROP ZONE PANEL --- */
+#questions {
+    background: #A5D6A7; /* Distinct panel background */
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+    margin-bottom: 25px;
+}
+
+.dropZone {
+    width: 150px; /* Wider drop zone */
+    height: 70px;
+    line-height: 70px;
+    border: 4px dashed #1B5E20;
+    border-radius: 15px;
+    font-weight: 900;
+    color: #1B5E20;
+    font-size: 28px;
+    vertical-align: middle;
+    background: #F1F8E9; /* Very light zone background */
+    transition: background-color 0.3s;
+}
+
+.correct { 
+    background: #4CAF50; /* Solid green when correct */
+    color: white; 
+    border-color: #2E7D32; 
+    box-shadow: 0 3px 0 #2E7D32;
+}
+
+#resultMessage {
+    font-size: 30px;
+    font-weight: 900;
+    margin-top: 15px;
+}
+
+#nextBtn {
+    padding: 15px 30px;
+    font-size: 24px;
+    font-weight: 900;
+    border: none;
+    border-radius: 12px;
+    background: #FF9800; /* Orange for 'Next' button */
+    color: white;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 5px 0 #F57C00;
+}
+#nextBtn:active { 
+    transform: translateY(5px);
+    box-shadow: none;
+}
+#nextBtn:disabled { 
+    background: #FFCC80; 
+    cursor: not-allowed; 
+    box-shadow: 0 5px 0 #FFB74D;
+}
+</style>
+</head>
+<body>
+
+<h1>📊 Level 3 – Solve Data Problems</h1>
+<p id="instruction">Drag the item with the most count to "Most" and the least count to "Least" for this question!</p>
+
+<div id="chartContainer">
+    <div id="pictograph"></div>
+</div>
+
+<div id="questions">
+    <span class="dropZone" id="most">Most</span>
+    <span class="dropZone" id="least">Least</span>
+</div>
+
+<p id="resultMessage"></p>
+<button id="nextBtn" disabled>Next Question</button>
+
+<script>
+const questions = [
+    { 
+        items: [
+            {name:"Apple", icon:"🍎", count:3}, 
+            {name:"Banana", icon:"🍌", count:5}, 
+            {name:"Grapes", icon:"🍇", count:2},
+            {name:"Orange", icon:"🍊", count:4}
+        ], 
+        most:"Banana", least:"Grapes" 
+    },
+    { 
+        items: [
+            {name:"Apple", icon:"🍎", count:4}, 
+            {name:"Banana", icon:"🍌", count:3}, 
+            {name:"Grapes", icon:"🍇", count:6},
+            {name:"Cherry", icon:"🍒", count:2}
+        ], 
+        most:"Grapes", least:"Cherry" 
+    },
+    { 
+        items: [
+            {name:"Apple", icon:"🍎", count:2}, 
+            {name:"Banana", icon:"🍌", count:5}, 
+            {name:"Grapes", icon:"🍇", count:4},
+            {name:"Peach", icon:"🍑", count:3}
+        ], 
+        most:"Banana", least:"Apple" 
+    },
+    { 
+        items: [
+            {name:"Apple", icon:"🍎", count:6}, 
+            {name:"Banana", icon:"🍌", count:1}, 
+            {name:"Grapes", icon:"🍇", count:3},
+            {name:"Mango", icon:"🥭", count:2}
+        ], 
+        most:"Apple", least:"Banana" 
+    },
+    { 
+        items: [
+            {name:"Apple", icon:"🍎", count:3}, 
+            {name:"Banana", icon:"🍌", count:2}, 
+            {name:"Grapes", icon:"🍇", count:5},
+            {name:"Strawberry", icon:"🍓", count:4}
+        ], 
+        most:"Grapes", least:"Banana" 
+    }
+];
+
+let current = 0;
+let draggedItem = null;
+
+const pictographDiv = document.getElementById('pictograph');
+const dropZones = [ document.getElementById('most'), document.getElementById('least') ];
+const resultMessage = document.getElementById('resultMessage');
+const nextBtn = document.getElementById('nextBtn');
+
+function loadQuestion(q){
+    pictographDiv.innerHTML = "";
+    resultMessage.innerText = "";
+    nextBtn.disabled = true;
+
+    // Reset drop zones
+    dropZones.forEach(zone=>{
+        zone.innerText = zone.id === "most" ? "Most" : "Least";
+        zone.dataset.accept = zone.id === "most" ? q.most : q.least;
+        zone.classList.remove('correct');
+    });
+
+    // Generate items to drag
+    q.items.forEach(item=>{
+        const div = document.createElement('div');
+        div.className = 'symbol';
+        div.draggable = true;
+        div.dataset.name = item.name;
+        div.dataset.icon = item.icon;
+        // Display the name of the item above the count for clarity
+        const nameSpan = document.createElement('span');
+        nameSpan.style.fontSize = '14px';
+        nameSpan.style.fontWeight = '800';
+        nameSpan.innerText = item.name;
+        
+        const countSpan = document.createElement('span');
+        countSpan.innerText = item.icon.repeat(item.count);
+
+        div.appendChild(nameSpan);
+        div.appendChild(countSpan);
+
+        div.addEventListener('dragstart', e=>{ 
+            draggedItem = div; 
+            setTimeout(() => div.style.opacity = '0.5', 0); // Hide dragged item slightly
+        });
+        div.addEventListener('dragend', e=>{
+            if (draggedItem) { // Only reset opacity if it wasn't dropped correctly (and thus removed)
+                div.style.opacity = '1';
+            }
+        });
+        pictographDiv.appendChild(div);
+    });
+}
+
+// Drag & Drop logic
+dropZones.forEach(zone=>{
+    zone.addEventListener('dragover', e=>e.preventDefault());
+    zone.addEventListener('dragenter', e => { 
+        e.preventDefault(); 
+        zone.style.borderStyle = 'solid';
+        zone.style.borderColor = '#FF9800';
+    });
+    zone.addEventListener('dragleave', e => {
+        zone.style.borderStyle = 'dashed';
+        zone.style.borderColor = '#1B5E20';
+    });
+
+    zone.addEventListener('drop', ()=>{
+        zone.style.borderStyle = 'dashed';
+        zone.style.borderColor = '#1B5E20';
+        
+        if(draggedItem){
+            if(draggedItem.dataset.name === zone.dataset.accept){
+                zone.classList.add('correct');
+                zone.innerText = draggedItem.dataset.icon; // show icon instead of name
+                // Add the dropped item's name back to the drop zone for visual reference
+                zone.title = draggedItem.dataset.name; 
+                draggedItem.remove();
+                checkAnswer();
+            } else {
+                resultMessage.style.color = "#D84315";
+                resultMessage.innerText = "❌ Wrong item. Try again!";
+            }
+            draggedItem = null;
+        }
+    });
+});
+
+function checkAnswer(){
+    if(dropZones.every(zone=>zone.classList.contains('correct'))){
+        resultMessage.style.color = "#2E7D32";
+        resultMessage.innerText = "🎉 Correct! Well done!";
+        nextBtn.disabled = false;
+        localStorage.setItem('C8_Level3_Question'+current, 'completed');
+    }
+}
+
+nextBtn.addEventListener('click', ()=>{
+    // Clear result message and reset button state
+    resultMessage.innerText = '';
+    nextBtn.disabled = true;
+
+    current++;
+    if(current < questions.length){
+        loadQuestion(questions[current]);
+    } else {
+        resultMessage.style.color = "#2E7D32";
+        resultMessage.innerText = "🏆 All questions completed! Level 3 Finished!";
+        localStorage.setItem('C8_Level3', 'completed');
+        setTimeout(()=>{ window.location.href = "C8.html"; }, 2500); // Adjusted path
+        nextBtn.disabled = true;
+    }
+});
+
+// Load first question
+window.onload = () => loadQuestion(questions[current]);
+</script>
+
+</body>
+</html>

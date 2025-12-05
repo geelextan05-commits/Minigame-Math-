@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Level 4 – Giving Change</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* 1. Global Styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f0fff4;
+            /* Soft mint background */
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 34px;
+            color: #008060;
+            /* Dark Emerald Green */
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .instruction {
+            color: #e63946;
+            /* Red for the key action */
+            font-weight: 700;
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+
+        /* 2. Question Container */
+        #questionBox {
+            margin-top: 30px;
+            padding: 30px;
+            background: white;
+            border-radius: 25px;
+            width: 90%;
+            max-width: 600px;
+            /* Slightly wider for better image display */
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 3. Transaction Details (Price and Paid) */
+        .transaction-detail {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: left;
+        }
+
+        #itemPrice {
+            background: #fffbe6;
+            /* Light yellow for price */
+            border: 2px solid #ffcc00;
+            font-size: 28px;
+            font-weight: 800;
+            color: #cc9900;
+            display: inline-block;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+        }
+
+        #moneyReceivedContainer {
+            border: 2px solid #008060;
+            background: #eafff2;
+            /* Light green for money received */
+            padding: 15px;
+        }
+
+        .label {
+            font-weight: 700;
+            font-size: 16px;
+            color: #004d33;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* 4. Money Image Styling */
+        .money-display img {
+            width: 90px;
+            margin: 4px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            vertical-align: middle;
+        }
+
+        /* 5. Answer Options Styling */
+        .option {
+            display: flex;
+            justify-content: center;
+            margin: 15px auto;
+            padding: 8px;
+            border-radius: 15px;
+            border: 3px solid #66cc99;
+            cursor: pointer;
+            width: 95%;
+            gap: 5px;
+            transition: 0.2s;
+            background: #ffffff;
+            /* White background for options */
+        }
+
+        .option:hover {
+            transform: scale(1.01);
+            border-color: #008060;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .option img {
+            width: 60px;
+            /* larger images for options */
+            height: auto;
+            margin: 2px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        #feedback {
+            font-size: 26px;
+            font-weight: 800;
+            height: 40px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🛒 Level 4 – The Change Challenge</h1>
+    <p class="instruction">Calculate the change and click the correct combination of money.</p>
+
+    <div id="questionBox">
+        <div id="itemPrice"></div>
+
+        <div id="moneyReceivedContainer">
+            <span class="label">Money Paid:</span>
+                <div class="money-display" id="moneyReceived"></div>
+        </div>
+
+        <p style="font-size:22px; margin-top:30px; color:#008060;">Your Change Should Be:</p>
+            <div id="options"></div>
+            <div id="feedback"></div>
+    </div>
+
+    <script>
+        let questions = [
+            { price: 5.00, received: ['images/RM10.png'], answerImages: [['images/RM5.png']] },
+            { price: 3.00, received: ['images/RM5.png'], answerImages: [['images/RM1.png', 'images/RM1.png']] },
+            { price: 13.00, received: ['images/RM20.png'], answerImages: [['images/RM5.png', 'images/RM1.png', 'images/RM1.png']] },
+            { price: 1.50, received: ['images/RM5.png'], answerImages: [['images/RM1.png', 'images/RM1.png', 'images/RM1.png', 'images/50sen.png']] },
+            { price: 2.50, received: ['images/RM5.png'], answerImages: [['images/RM1.png', 'images/RM1.png', 'images/50sen.png']] },
+            { price: 4.00, received: ['images/RM5.png'], answerImages: [['images/RM1.png']] },
+            { price: 10.00, received: ['images/RM20.png'], answerImages: [['images/RM10.png']] },
+            // Complex Change Examples
+            { price: 12.80, received: ['images/RM20.png'], answerImages: [['images/RM5.png', 'images/RM1.png', 'images/RM1.png', 'images/20sen.png']] }, // Change RM7.20
+            { price: 6.30, received: ['images/RM5.png', 'images/RM5.png'], answerImages: [['images/RM1.png', 'images/RM1.png', 'images/RM1.png', 'images/50sen.png', 'images/20sen.png']] }, // Change RM3.70 (Paid RM10)
+            { price: 2.70, received: ['images/RM10.png'], answerImages: [['images/RM5.png', 'images/RM1.png', 'images/RM1.png', 'images/10sen.png', 'images/20sen.png']] }, // Change RM7.30
+            { price: 24.20, received: ['images/RM50.png'], answerImages: [['images/RM20.png', 'images/RM5.png', 'images/50sen.png', 'images/20sen.png', 'images/10sen.png']] }, // Change RM25.80
+            { price: 6.50, received: ['images/RM10.png'], answerImages: [['images/RM1.png', 'images/RM1.png', 'images/RM1.png', 'images/50sen.png']] } // Change RM3.50
+        ];
+
+        // Re-sort the questions array to gather all possible change image combinations for distractors
+        const ALL_POSSIBLE_ANSWERS = questions.map(q => q.answerImages[0]);
+
+        // shuffle and pick 5 questions per game
+        questions = questions.sort(() => 0.5 - Math.random()).slice(0, 5);
+        let current = 0;
+
+        function loadQuestion() {
+            let q = questions[current];
+            document.getElementById('itemPrice').innerHTML = `Item Price: RM${q.price.toFixed(2)}`;
+
+            // Show received money
+            let moneyHTML = '';
+            q.received.forEach(src => { moneyHTML += `<img src="${src}" alt="money">`; });
+            document.getElementById('moneyReceived').innerHTML = moneyHTML;
+
+            // Generate wrong options
+            // Filter out the correct answer from the global list and get two unique distractors
+            let correctAnsStr = JSON.stringify(q.answerImages[0]);
+            let uniqueWrongOptions = ALL_POSSIBLE_ANSWERS
+                .filter(opt => JSON.stringify(opt) !== correctAnsStr)
+                .sort(() => 0.5 - Math.random())
+                .slice(0, 2);
+
+            let options = [q.answerImages[0], ...uniqueWrongOptions].sort(() => 0.5 - Math.random());
+
+            let optHTML = '';
+            options.forEach((opt, idx) => {
+                optHTML += `<div class="option" onclick="checkAnswer(${idx})">`;
+                opt.forEach(img => { optHTML += `<img src="${img}" alt="money">`; });
+                optHTML += `</div>`;
+            });
+
+            document.getElementById('options').innerHTML = optHTML;
+            document.getElementById('feedback').innerHTML = '';
+            window.currentOptions = options; // store current options
+        }
+
+        function checkAnswer(idx) {
+    let fb = document.getElementById('feedback');
+    let q = questions[current];
+    let selectedOption = window.currentOptions[idx];
+
+    // Disable clicks temporarily
+    document.querySelectorAll('.option').forEach(btn => btn.style.pointerEvents = 'none');
+
+    if (JSON.stringify(selectedOption) === JSON.stringify(q.answerImages[0])) {
+        fb.style.color = '#008060';
+        fb.innerHTML = '🎯 Perfect Change! You got it right. ✔';
+        document.querySelectorAll('.option')[idx].style.borderColor = '#008060';
+        document.querySelectorAll('.option')[idx].style.boxShadow = '0 0 10px #008060';
+
+        // Move to next question only when correct
+        setTimeout(() => {
+            current++;
+            if (current >= questions.length) finishLevel();
+            else loadQuestion();
+        }, 1500);
+
+    } else {
+        fb.style.color = '#e63946';
+        fb.innerHTML = 'Oops! ❌ That change is incorrect. Try calculating again.';
+        document.querySelectorAll('.option')[idx].style.borderColor = '#e63946';
+        document.querySelectorAll('.option')[idx].style.boxShadow = '0 0 10px #e63946';
+
+        // Re-enable buttons for retry
+        setTimeout(() => {
+            document.querySelectorAll('.option').forEach(btn => btn.style.pointerEvents = 'auto');
+        }, 800);
+    }
+}
+        function finishLevel() {
+            localStorage.setItem("C4_Level4", "completed");
+            alert("Level 4 Completed! You're a money master!\nLevel 5 is now unlocked.");
+            window.location.href = "C4.html"; // Chapter 4 main page
+        }
+
+        loadQuestion();
+    </script>
+
+</body>
+
+</html>

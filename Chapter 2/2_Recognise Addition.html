@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apple Collector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f7f7f7; }
+        .game-card { border: 4px solid #4ade80; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .apple-basket {
+            background-color: #fef08a; border: 3px solid #facc15; border-radius: 1rem; padding: 10px;
+            font-size: 2rem;
+        }
+        .choice-basket { transition: all 0.1s; box-shadow: 0 5px 0 0 #166534; }
+        .choice-basket:active { transform: translateY(2px); box-shadow: 0 3px 0 0 #166534; }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex items-center justify-center min-h-screen bg-green-50">
+
+<div id="app" class="game-card w-full max-w-lg p-6 md:p-10 text-center rounded-2xl bg-white">
+    <h1 class="text-3xl font-extrabold text-green-700 mb-4">🍎 Apple Collector</h1>
+    <p class="text-gray-600 mb-6">Click the basket that has the total number of apples shown below (Sum ≤ 20).</p>
+
+    <div id="visual-area" class="flex justify-around items-center mb-8 p-4 bg-gray-100 rounded-xl">
+        <div id="basket1" class="apple-basket"></div>
+        <div class="text-5xl font-black text-green-500 mx-4">+</div>
+        <div id="basket2" class="apple-basket"></div>
+    </div>
+
+    <div id="question-text" class="text-xl font-bold text-gray-700 mb-6">How many apples total?</div>
+
+    <div id="choices-container" class="grid grid-cols-3 gap-3"></div>
+
+    <div id="feedback" class="h-8 mt-6 text-lg font-bold"></div>
+    <div class="mt-4 text-lg">Score: <span id="score">0</span> / 5</div>
+
+    <button id="start-button" class="mt-6 px-8 py-3 bg-green-600 text-white font-bold rounded-xl choice-basket">Start Game</button>
+</div>
+
+<script>
+    const REQUIRED_SCORE = 5;
+    const MAX_NUMBER = 10;
+
+    const basket1El = document.getElementById('basket1');
+    const basket2El = document.getElementById('basket2');
+    const choicesContainer = document.getElementById('choices-container');
+    const feedbackEl = document.getElementById('feedback');
+    const scoreDisplay = document.querySelector('#app span');
+
+    let score = 0;
+    let currentAnswer = 0;
+
+    function notifyLevelComplete() {
+        window.parent.postMessage({ type: "levelResult", success: true }, "*");
+    }
+
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function generateAppleEmoji(count) {
+        return '🍎'.repeat(count);
+    }
+
+    function generateChoices(correctAnswer) {
+        const choices = new Set([correctAnswer]);
+        while (choices.size < 3) {
+            let choice = getRandomInt(Math.max(1, correctAnswer - 3), Math.min(20, correctAnswer + 3));
+            choices.add(choice);
+        }
+        const arr = Array.from(choices);
+        return arr.sort(() => Math.random() - 0.5);
+    }
+
+    function generateNewQuestion() {
+        let num1 = getRandomInt(1, MAX_NUMBER);
+        let num2 = getRandomInt(1, MAX_NUMBER);
+        if (num1 + num2 > 20) num2 = 20 - num1;
+
+        currentAnswer = num1 + num2;
+
+        basket1El.textContent = generateAppleEmoji(num1);
+        basket2El.textContent = generateAppleEmoji(num2);
+        feedbackEl.textContent = '';
+
+        const choices = generateChoices(currentAnswer);
+        renderChoices(choices);
+    }
+
+    function renderChoices(choices) {
+        choicesContainer.innerHTML = '';
+        choices.forEach(choice => {
+            const btn = document.createElement('button');
+            btn.textContent = choice;
+            btn.className = 'choice-basket bg-green-500 text-white text-3xl font-bold py-4 rounded-xl hover:bg-green-600';
+            btn.onclick = () => checkAnswer(choice, btn);
+            choicesContainer.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selectedAnswer, btnEl) {
+        Array.from(choicesContainer.children).forEach(b => b.disabled = true);
+
+        if (selectedAnswer === currentAnswer) {
+            score++;
+            scoreDisplay.textContent = score;
+            btnEl.className = 'choice-basket bg-green-700 text-white text-3xl font-bold py-4 rounded-xl';
+            feedbackEl.textContent = 'Correct! 🎉';
+            feedbackEl.className = 'h-8 mt-6 text-lg font-bold text-green-600';
+
+            if (score >= REQUIRED_SCORE) {
+                notifyLevelComplete();
+                feedbackEl.textContent = '🎉 Level Completed!';
+            } else {
+                setTimeout(generateNewQuestion, 1200);
+            }
+        } else {
+            btnEl.className = 'choice-basket bg-red-500 text-white text-3xl font-bold py-4 rounded-xl';
+            feedbackEl.textContent = `Oops! The correct answer was ${currentAnswer}`;
+            feedbackEl.className = 'h-8 mt-6 text-lg font-bold text-red-600';
+
+            Array.from(choicesContainer.children).forEach(b => {
+                if (parseInt(b.textContent) === currentAnswer) {
+                    b.style.backgroundColor = '#3b82f6';
+                    b.textContent = `${b.textContent} ✅`;
+                }
+            });
+
+            setTimeout(generateNewQuestion, 2500);
+        }
+    }
+
+    document.getElementById('start-button').onclick = () => {
+        score = 0;
+        scoreDisplay.textContent = score;
+        document.getElementById('start-button').style.display = 'none';
+        generateNewQuestion();
+    };
+</script>
+</body>
+</html>

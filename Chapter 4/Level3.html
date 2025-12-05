@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Level 3 – Conversion of Money</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: #f0fff4;
+        text-align: center;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 32px;
+        color: #008060;
+        font-weight: 800;
+        margin-bottom: 15px;
+    }
+
+    #questionBox {
+        margin-top: 30px;
+        padding: 30px;
+        background: white;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+
+    .money-item img {
+        width: 80px;
+        margin: 10px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+
+    button.option {
+        display: block;
+        width: 90%;
+        margin: 12px auto;
+        padding: 16px;
+        border-radius: 15px;
+        border: none;
+        font-size: 20px;
+        font-weight: 600;
+        cursor: pointer;
+        background: #66cc99;
+        color: #004d33;
+        transition: 0.2s;
+        box-shadow: 0 4px 0 #008040;
+    }
+
+    button.option:hover {
+        transform: translateY(-2px);
+        background: #4dffa6;
+        box-shadow: 0 6px 0 #008040;
+    }
+
+    button.option:active {
+        transform: translateY(2px);
+        box-shadow: 0 2px 0 #008040;
+    }
+
+    #feedback {
+        font-size: 24px;
+        font-weight: 700;
+        height: 40px;
+        margin-top: 15px;
+    }
+
+</style>
+</head>
+<body>
+
+<h1>💱 Level 3 – Conversion of Money</h1>
+<p style="color:#333; font-weight:600;">Choose the correct way to convert the money shown:</p>
+
+<div id="questionBox">
+    <div id="moneyDisplay" class="money-item"></div>
+    <div id="options"></div>
+    <div id="feedback"></div>
+</div>
+
+<script>
+let questions = [
+    { money: ['images/RM1.png','images/RM1.png','images/RM1.png','images/RM1.png','images/RM1.png'], 
+      question:'Convert to RM5', 
+      answer:'1 × RM5' },
+
+    { money: ['images/RM10.png'], 
+      question:'Convert to RM5', 
+      answer:'2 × RM5' },
+
+    { money: ['images/RM5.png','images/RM1.png','images/RM1.png','images/RM1.png','images/RM1.png'], 
+      question:'Convert to RM5 and RM1 ', 
+      answer:'1 × RM5  + 4 × RM1' },
+
+    { money: ['images/50sen.png','images/50sen.png','images/RM1.png'], 
+      question:'Convert to RM1 ', 
+      answer:'2 × RM1' },
+
+    { money: ['images/RM20.png','images/RM10.png'], 
+      question:'Convert to RM10 ', 
+      answer:'3 × RM10' },
+
+    { money: ['images/RM50.png','images/RM20.png','images/RM10.png'], 
+      question:'Convert to RM10 ', 
+      answer:'8 × RM10' },
+
+    { money: ['images/RM100.png','images/RM50.png'], 
+      question:'Convert to RM50 ', 
+      answer:'3 × RM50' }
+];
+
+// Shuffle and pick 5 questions
+questions = questions.sort(() => 0.5 - Math.random()).slice(0,5);
+
+let current = 0;
+let score = 0;   // ✅ NEW — to track correct answers
+
+function loadQuestion() {
+    let q = questions[current];
+
+    // Display money images
+    let html = '';
+    q.money.forEach(src => {
+        html += `<img src="${src}" alt="coin/note">`;
+    });
+    document.getElementById('moneyDisplay').innerHTML = html;
+
+    // Options (correct + 2 wrong)
+    let allOptions = [
+        '1 × RM5 ', '2 × RM5 ', '1 × RM5  + 4 × RM1', 
+        '2 × RM1 ', '3 × RM10 ', '8 × RM10 ', '3 × RM50 ', 
+        '1 × RM10 + 2 × RM1 ', '5 × RM10 ', '4 × RM50'
+    ];
+
+    let wrongOptions = allOptions.filter(x => x !== q.answer)
+                                 .sort(() => 0.5 - Math.random())
+                                 .slice(0,2);
+
+    let options = [q.answer, ...wrongOptions].sort(() => 0.5 - Math.random());
+
+    let optHTML = '';
+    options.forEach(opt => {
+        optHTML += `<button class="option" onclick="checkAnswer('${opt.replace(/'/g,"\\'")}', '${q.answer.replace(/'/g,"\\'")}')">${opt}</button>`;
+    });
+
+    document.getElementById('options').innerHTML = optHTML;
+    document.getElementById('feedback').innerHTML = '';
+}
+
+function checkAnswer(ans, correct) {
+    let fb = document.getElementById('feedback');
+
+    if(ans === correct){
+        fb.style.color = '#008060';
+        fb.innerHTML = '✨ Correct! ✔';
+        score++; // ✅ Increase score
+        current++; // Move to next question
+    } else {
+        fb.style.color = '#e63946';
+        fb.innerHTML = 'Try Again! ❌';
+        return; // ❌ Do NOT move to the next question
+    }
+
+    setTimeout(() => {
+        if(current >= questions.length) finishLevel();
+        else loadQuestion();
+    }, 1200);
+}
+
+function finishLevel() {
+    if(score >= 4) {   // ✔ Must get at least 4 correct
+        localStorage.setItem("C4_Level3","completed");
+        alert("🎉 Level 3 Completed! Level 4 is now unlocked.");
+        window.location.href = "C4.html";
+    } else {
+        alert("❌ You need at least 4 correct answers to pass.\nTry again!");
+        window.location.reload();
+    }
+}
+
+loadQuestion();
+</script>
+
+</body>
+</html>

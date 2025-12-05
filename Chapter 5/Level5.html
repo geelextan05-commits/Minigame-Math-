@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 5 – Level 5: Calendar Challenge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --blue-light: #74b9ff;
+            --blue-dark: #004d7f;
+            --yellow-main: #ffd60a;
+            --yellow-accent: #ffb703;
+            --green-main: #06d6a0;
+            --green-accent: #1b9aaa;
+            --red-wrong: #e63946;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, var(--blue-light) 0%, #f0f9ff 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+
+        .main-container {
+            background-color: white;
+            padding: 25px;
+            margin-top: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 77, 127, 0.3);
+            max-width: 500px;
+            width: 95%;
+            border-top: 8px solid var(--blue-dark);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 30px;
+            color: var(--blue-dark);
+            text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.9);
+            margin-bottom: 20px;
+        }
+
+        #question {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--red-wrong);
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #ffe6e6;
+            border-radius: 8px;
+        }
+
+        #calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr); /* Use fractional units for responsiveness */
+            gap: 4px;
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 12px;
+            background-color: #e0f2ff;
+        }
+
+        .day, .date {
+            aspect-ratio: 1 / 1; /* Make cells square */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .day {
+            background: var(--yellow-main);
+            color: var(--blue-dark);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            font-size: 12px;
+        }
+
+        .date {
+            background: #fff;
+            color: var(--blue-dark);
+            cursor: pointer;
+            border: 2px solid #fff;
+            transition: all .2s ease-in-out;
+            user-select: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        }
+
+        .date.clickable:hover { 
+            transform: translateY(-2px) scale(1.05); 
+            border-color: var(--yellow-accent);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .muted { color: #9aa8b6; background: #f7f7f7; cursor: default; }
+        .muted:hover { transform: none; box-shadow: none; }
+
+        /* Answer States */
+        .date.correct { background: var(--green-main); color: #fff; border-color: var(--green-accent); }
+        .date.wrong { background: var(--red-wrong); color: #fff; border-color: #d62828; }
+        .date.selected { border-color: var(--yellow-accent); }
+
+        #feedback {
+            font-size: 20px;
+            font-weight: 800;
+            min-height: 36px;
+            margin-top: 14px;
+        }
+
+        #nextBtn {
+            margin-top: 20px;
+            padding: 12px 35px;
+            background: linear-gradient(145deg, var(--green-main), var(--green-accent));
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            display: none;
+            box-shadow: 0 4px 0 #0e7a8b;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #nextBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #0e7a8b;
+        }
+
+        /* Score Modal Styling */
+        #score-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            color: var(--blue-dark);
+            max-width: 90%;
+            border: 5px solid var(--yellow-main);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content h2 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .modal-content p {
+            font-size: 20px;
+            margin-bottom: 25px;
+        }
+
+        .modal-button {
+            padding: 15px 30px;
+            background: linear-gradient(145deg, var(--green-main), var(--green-accent));
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <h1>Level 5 – Calendar Challenge</h1>
+
+        <div id="question"></div>
+
+        <div id="calendar"></div>
+
+        <div id="feedback"></div>
+
+        <button id="nextBtn" onclick="nextQuestion()">Next Question</button>
+    </div>
+
+    <!-- Score Modal -->
+    <div id="score-modal">
+        <div class="modal-content">
+            <h2 id="modal-title"></h2>
+            <p id="modal-message"></p>
+            <button class="modal-button" onclick="goToMenu()">Go to Main Menu</button>
+        </div>
+    </div>
+
+<script>
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const totalQuestions = 5;
+    let current = 0;
+    let score = 0;
+    let answered = false; // Flag to ensure only one attempt per question
+
+    let monthDays, startWeekday, targetWeekday, matchingDates;
+
+    function createHeader() {
+        const cal = document.getElementById("calendar");
+        cal.innerHTML = '';
+        days.forEach(d => {
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'day';
+            dayDiv.innerText = d;
+            cal.appendChild(dayDiv);
+        });
+    }
+
+    function buildCalendarGrid() {
+        const cal = document.getElementById("calendar");
+
+        // 1. Fill leading blank cells
+        for (let i = 0; i < startWeekday; i++) {
+            const blank = document.createElement('div');
+            blank.className = 'date muted';
+            cal.appendChild(blank);
+        }
+
+        // 2. Fill actual month days
+        for (let d = 1; d <= monthDays; d++) {
+            const dateDiv = document.createElement('div');
+            dateDiv.className = 'date clickable';
+            dateDiv.innerText = d;
+            dateDiv.onclick = () => onDateClick(dateDiv, d);
+            cal.appendChild(dateDiv);
+        }
+
+        // 3. Fill trailing blank cells to complete the grid
+        const usedCells = startWeekday + monthDays;
+        const remainder = (7 - (usedCells % 7)) % 7;
+
+        for (let i = 0; i < remainder; i++) {
+            const blank = document.createElement('div');
+            blank.className = 'date muted';
+            cal.appendChild(blank);
+        }
+    }
+
+    function disableAllClicks() {
+        document.querySelectorAll('.date.clickable').forEach(d => {
+            d.onclick = null;
+            d.classList.remove('clickable');
+            d.style.cursor = 'default';
+        });
+    }
+
+    function onDateClick(elem, num) {
+        if (answered) return; // Prevent double attempts
+
+        disableAllClicks();
+        answered = true; // Mark question as answered
+
+        document.querySelectorAll('.date').forEach(d => d.classList.remove('selected'));
+        elem.classList.add('selected');
+
+        const feedbackEl = document.getElementById('feedback');
+
+        if (matchingDates.includes(num)) {
+            feedbackEl.innerText = "✅ Correct! You found the right day.";
+            feedbackEl.style.color = 'var(--green-main)';
+            score++;
+            elem.classList.add('correct');
+        } else {
+            feedbackEl.innerText = `❌ Wrong! The correct day is ${days[targetWeekday]}. Dates: ${matchingDates.join(", ")}`;
+            feedbackEl.style.color = 'var(--red-wrong)';
+            elem.classList.add('wrong');
+        }
+
+        highlightCorrectDates();
+        document.getElementById('nextBtn').style.display = 'block';
+    }
+
+    function highlightCorrectDates() {
+        document.querySelectorAll('.date').forEach(c => {
+            const n = parseInt(c.innerText);
+            if (matchingDates.includes(n)) {
+                c.classList.add('correct');
+            }
+        });
+    }
+
+    function prepareQuestion() {
+        answered = false;
+        // Introduce different month lengths to force correct calculation of week day wrap-around
+        const possibleDays = [28, 29, 30, 31];
+        monthDays = possibleDays[Math.floor(Math.random() * possibleDays.length)];
+
+        // Start day of the month (0=Sun, 6=Sat)
+        startWeekday = Math.floor(Math.random() * 7); 
+        // Target weekday to find
+        targetWeekday = Math.floor(Math.random() * 7); 
+
+        document.getElementById('question').innerText =
+            `A month has ${monthDays} days. If the 1st of the month is a ${days[startWeekday]}, click any date that falls on a: ${days[targetWeekday]}`;
+
+        matchingDates = [];
+        for (let d = 1; d <= monthDays; d++) {
+            // Calculate the weekday for date d
+            const weekday = (startWeekday + (d - 1)) % 7;
+            if (weekday === targetWeekday) matchingDates.push(d);
+        }
+
+        createHeader();
+        buildCalendarGrid();
+
+        document.getElementById('feedback').innerText = '';
+        document.getElementById('nextBtn').style.display = 'none';
+    }
+
+    function showScoreModal() {
+        document.getElementById("modal-title").innerText = `🎉 Level 5 Completed!`;
+        document.getElementById("modal-message").innerText = `Your final score is: ${score}/${totalQuestions}. You mastered the calendar!`;
+        document.getElementById("score-modal").style.display = 'flex';
+    }
+    
+    function goToMenu() {
+        localStorage.setItem("C5_Level5", "completed");
+        window.location.href = "C5.html"; 
+    }
+
+    function nextQuestion() {
+        current++;
+        if (current >= totalQuestions) {
+            showScoreModal();
+        } else {
+            prepareQuestion();
+        }
+    }
+
+    window.onload = prepareQuestion;
+</script>
+
+</body>
+</html>

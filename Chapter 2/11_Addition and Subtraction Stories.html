@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Addition/Subtraction Stories: Story Adventure Level 11</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;800&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #fef0f8; }
+    .game-card { border: 4px solid #ec4899; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    .story-box { background-color: #fce7f3; border: 3px solid #f472b6; border-radius: 1rem; padding: 1.5rem; text-align: left; }
+    .answer-button { transition: all 0.1s; box-shadow: 0 4px 0 0 #a2125e; }
+    .answer-button:active { transform: translateY(2px); box-shadow: 0 2px 0 0 #a2125e; }
+</style>
+</head>
+<body class="p-4 md:p-8 flex items-center justify-center min-h-screen bg-pink-50">
+
+<div id="app" class="game-card w-full max-w-lg p-6 md:p-10 text-center rounded-2xl bg-white">
+    <h1 class="text-3xl font-extrabold text-pink-700 mb-4">📖 Story Adventure Level 11</h1>
+    <p class="text-gray-600 mb-6">Read the story and solve the problem to continue the adventure (Result ≤ 20).</p>
+    
+    <div id="story-box" class="story-box mb-8">
+        <p id="story-text" class="text-xl font-medium text-gray-700 mb-4">Adventure starts here...</p>
+        <div id="problem-hint" class="text-3xl font-black text-pink-700"></div>
+    </div>
+
+    <div id="choices-container" class="grid grid-cols-2 gap-4"></div>
+
+    <div id="feedback" class="h-8 mt-6 text-lg font-bold"></div>
+    <div class="mt-4 text-lg">Correct Answers: <span id="score">0</span> / 5</div>
+
+    <button id="start-button" onclick="startGame()" class="mt-6 px-8 py-3 bg-pink-600 text-white font-bold rounded-xl answer-button">Begin Adventure</button>
+</div>
+
+<script>
+let score = 0;
+let correctAnswer = 0;
+const maxCorrect = 5;
+
+const updateDisplay = () => {
+    document.getElementById('score').textContent = score;
+};
+
+const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+// Each story prompt generates its own numbers correctly
+const storyPrompts = [
+    { generate: () => {
+        let n1 = getRandomInt(5, 12);
+        let n2 = getRandomInt(1, 8);
+        while(n1 + n2 > 20) n2 = getRandomInt(1, 8);
+        return { text:`Lilly found ${n1} 🌟 stars. Her friend gave her ${n2} more. How many stars does she have now?`, op: '+', num1: n1, num2: n2, result: n1+n2 };
+    }},
+    { generate: () => {
+        let n1 = getRandomInt(10, 20);
+        let n2 = getRandomInt(1, n1-1);
+        return { text:`${n1} birds were sitting on a tree. ${n2} flew away. How many are left?`, op: '-', num1: n1, num2: n2, result: n1-n2 };
+    }},
+    { generate: () => {
+        let n1 = getRandomInt(10, 20);
+        let n2 = getRandomInt(1, n1-1);
+        return { text:`Dad baked ${n1} 🍪 cookies. You ate ${n2}. How many cookies are left?`, op: '-', num1: n1, num2: n2, result: n1-n2 };
+    }},
+    { generate: () => {
+        let n1 = getRandomInt(5, 12);
+        let n2 = getRandomInt(1, 8);
+        while(n1 + n2 > 20) n2 = getRandomInt(1, 8);
+        return { text:`The shop had ${n1} 🎈 balloons. They got ${n2} new ones. What is the total number?`, op: '+', num1: n1, num2: n2, result: n1+n2 };
+    }}
+];
+
+const generateQuestion = () => {
+    const promptIndex = getRandomInt(0, storyPrompts.length-1);
+    const problem = storyPrompts[promptIndex].generate();
+    correctAnswer = problem.result;
+
+    // Show story
+    document.getElementById('story-text').textContent = problem.text;
+    // Show actual math problem
+    document.getElementById('problem-hint').textContent = `${problem.num1} ${problem.op} ${problem.num2} = ?`;
+
+    // generate 4 answer choices
+    const choices = [correctAnswer];
+    while(choices.length < 4){
+        let choice = getRandomInt(correctAnswer-3, correctAnswer+3);
+        if(!choices.includes(choice) && choice >=0 && choice <=20) choices.push(choice);
+    }
+    choices.sort(()=>Math.random()-0.5);
+
+    const choicesContainer = document.getElementById('choices-container');
+    choicesContainer.innerHTML = choices.map(c=>`
+        <button onclick="checkAnswer(${c})" class="answer-button w-full bg-pink-500 text-white text-3xl font-bold py-4 rounded-lg hover:bg-pink-600">
+            ${c}
+        </button>
+    `).join('');
+};
+
+const checkAnswer = (selectedAnswer) => {
+    const feedbackEl = document.getElementById('feedback');
+    const choicesContainer = document.getElementById('choices-container');
+    choicesContainer.style.pointerEvents = 'none';
+
+    if(selectedAnswer === correctAnswer){
+        score++;
+        feedbackEl.className='text-green-600';
+        feedbackEl.textContent='Correct! Story continues!';
+    } else {
+        feedbackEl.className='text-red-600';
+        feedbackEl.textContent=`Wrong! Correct answer: ${correctAnswer}`;
+    }
+
+    updateDisplay();
+
+    setTimeout(()=>{
+        feedbackEl.textContent='';
+        choicesContainer.style.pointerEvents='auto';
+        if(score >= maxCorrect){
+            window.parent.postMessage({type:"levelResult", success:true},"*");
+        } else {
+            generateQuestion();
+        }
+    },1000);
+};
+
+const startGame = () => {
+    score=0;
+    document.getElementById('start-button').classList.add('hidden');
+    document.getElementById('feedback').textContent='';
+    updateDisplay();
+    document.getElementById('choices-container').style.pointerEvents='auto';
+    generateQuestion();
+};
+
+window.startGame = startGame;
+window.checkAnswer = checkAnswer;
+</script>
+
+</body>
+</html>

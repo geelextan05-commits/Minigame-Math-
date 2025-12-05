@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 6 – Level 8: Memory Measurement Match</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+/* --- General Body & Background --- */
+body {
+    font-family: 'Poppins', sans-serif;
+    /* Cooler gradient background */
+    background: linear-gradient(135deg, #1A237E, #42A5F5); 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 10px;
+    min-height: 100vh;
+}
+
+h1 {
+    font-size: 40px;
+    font-weight: 900;
+    color: #FFC107; /* Gold/Yellow accent */
+    margin-bottom: 5px;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+}
+
+#instruction {
+    font-size: 20px;
+    font-weight: 700;
+    color: #BBDEFB; /* Light blue instruction text */
+    margin-bottom: 30px;
+    text-align: center;
+    max-width: 700px;
+}
+
+/* --- Game Board Grid (5 Columns) --- */
+#gameBoard {
+    display: grid;
+    /* FIX: Changed to 5 columns for 2 rows of 5 cards */
+    grid-template-columns: repeat(5, minmax(100px, 1fr)); 
+    grid-gap: 15px;
+    justify-content: center;
+    max-width: 1000px; /* Increased max width to hold 5 cards */
+    padding: 10px; 
+}
+
+/* --- Card Styling --- */
+.card {
+    width: 100%; 
+    height: 150px; /* Increased height for better visibility */
+    perspective: 1000px;
+    cursor: pointer;
+    box-sizing: border-box; 
+}
+
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    transform-style: preserve-3d;
+}
+
+.card.flipped .card-inner {
+    transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 15px;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-weight: 900;
+    font-size: 18px; /* Slightly larger text */
+    text-align: center;
+    box-shadow: 0 8px 15px rgba(0,0,0,0.5); 
+    border: 3px solid transparent;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+.card-front {
+    background: linear-gradient(145deg, #3F51B5, #303F9F); 
+    color: white;
+    font-size: 45px; /* Bigger question mark */
+}
+
+.card-back {
+    background: #FFEB3B; 
+    color: #3E2723;
+    transform: rotateY(180deg);
+    line-height: 1.2;
+}
+
+/* Matched Card Style (Success Feedback) */
+.card.matched .card-inner {
+    transform: rotateY(180deg); 
+}
+.card.matched .card-back {
+    background: #4CAF50; /* Green for matched */
+    color: white;
+    border: 3px solid #E8F5E9;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* --- Feedback & Completion --- */
+#resultMessage {
+    margin-top: 25px;
+    font-size: 24px;
+    font-weight: 800;
+    color: #FFEB3B;
+}
+
+#completeBox {
+    display: none;
+    margin-top: 40px;
+    font-size: 36px;
+    font-weight: 900;
+    color: #8BC34A; 
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+/* Media query for smaller screens (reverts to 2 columns if screen is too narrow) */
+@media (max-width: 700px) {
+    #gameBoard {
+        grid-template-columns: repeat(2, minmax(100px, 1fr));
+    }
+    .card {
+        height: 150px;
+    }
+}
+</style>
+</head>
+<body>
+
+<h1>🧠 Level 8 – Memory Match!</h1>
+<p id="instruction">Flip the cards to match the items that have the **same quantity** (length, mass, or volume). Good luck!</p>
+
+<div id="gameBoard"></div>
+<p id="resultMessage"></p>
+<div id="completeBox">🥳 Chapter 6 COMPLETE! Amazing Memory! 🥳</div>
+
+<script>
+// --- CARD DATA (No change, 10 cards / 5 pairs) ---
+let cardsData = [
+    { icon: "📏", name: "Ruler", value: "50 cm" },
+    { icon: "✂️", name: "Ribbon", value: "50 cm" },
+    
+    { icon: "🍎", name: "Apple", value: "200 g" },
+    { icon: "🍊", name: "Orange", value: "200 g" },
+    
+    { icon: "🥛", name: "Cup", value: "250 ml" },
+    { icon: "🧴", name: "Bottle", value: "250 ml" },
+
+    { icon: "✏️", name: "Pencil", value: "15 cm" },
+    { icon: "🖍️", name: "Crayon", value: "15 cm" },
+    
+    { icon: "🏋️", name: "Dumbbell", value: "5 kg" },
+    { icon: "🎒", name: "Backpack", value: "5 kg" }
+];
+
+let cards = shuffle(cardsData);
+
+const gameBoard = document.getElementById("gameBoard");
+let flippedCards = [];
+let matchedCount = 0;
+
+function shuffle(array) {
+    for (let i = array.length -1; i > 0; i--) {
+        const j = Math.floor(Math.random()* (i+1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+// Generate cards
+cards.forEach(card => {
+    const cardDiv = document.createElement("div");
+    cardDiv.classList.add("card");
+    cardDiv.dataset.value = card.value; 
+    cardDiv.dataset.id = card.name; 
+
+    cardDiv.innerHTML = `
+        <div class="card-inner">
+            <div class="card-front">?</div>
+            <div class="card-back">
+                <span style="font-size: 40px;">${card.icon}</span><br>
+                ${card.name}<br>
+                <span style="font-size: 16px;">${card.value}</span>
+            </div>
+        </div>
+    `;
+
+    cardDiv.addEventListener("click", () => flipCard(cardDiv));
+    gameBoard.appendChild(cardDiv);
+});
+
+function flipCard(card) {
+    if (flippedCards.length === 2 || card.classList.contains("flipped") || card.classList.contains("matched")) return;
+
+    card.classList.add("flipped");
+    flippedCards.push(card);
+
+    if (flippedCards.length === 2) {
+        checkMatch();
+    }
+}
+
+function checkMatch() {
+    const [card1, card2] = flippedCards;
+    
+    if (card1.dataset.value === card2.dataset.value && card1 !== card2) {
+        card1.classList.add("matched");
+        card2.classList.add("matched");
+        matchedCount +=2;
+        document.getElementById("resultMessage").style.color = "#8BC34A"; 
+        document.getElementById("resultMessage").innerText = "Correct Match! Keep going!";
+    } else {
+        document.getElementById("resultMessage").style.color = "#FF9800"; 
+        document.getElementById("resultMessage").innerText = "Oops! Try Again!";
+        setTimeout(() => {
+            card1.classList.remove("flipped");
+            card2.classList.remove("flipped");
+        }, 1200);
+    }
+
+    flippedCards = [];
+
+    if (matchedCount === cards.length) {
+        setTimeout(() => {
+            document.getElementById("completeBox").style.display = "block";
+            localStorage.setItem("C6_Level8", "completed");
+            setTimeout(() => { window.location.href = "C6.html"; }, 3000); 
+        }, 1000);
+    }
+}
+
+function loadQuestion() {
+    document.getElementById("resultMessage").innerText = "Find the pairs with matching values!";
+}
+
+window.onload = loadQuestion;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classroom Math Exhibition Level 7</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+body { font-family: 'Inter', sans-serif; background-color: #f0f4f8; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.classroom-board { background-color: #3b82f6; border-bottom: 12px solid #1e40af; }
+.table-area { background-color: #a8715a; border-top: 6px solid #b45309; box-shadow: inset 0 8px 10px rgba(0,0,0,0.2); }
+.token-item { cursor: pointer; transition: transform 0.1s; }
+.token-item:hover { transform: scale(1.05); }
+.dropzone { background-color: #fef3c7; border: 3px dashed #fbbf24; min-height: 150px; }
+.correct-answer-flash { animation: flash-green 0.5s ease-in-out; }
+@keyframes flash-green { 0% { border-color: #fbbf24; } 50% { border-color: #10b981; } 100% { border-color: #fbbf24; } }
+</style>
+</head>
+<body>
+<div id="app" class="w-full max-w-xl mx-auto rounded-xl shadow-2xl overflow-hidden bg-white">
+    <div class="classroom-board p-4 text-white text-center">
+        <h1 class="text-3xl font-black mb-1">Math Exhibition Level 7</h1>
+        <p id="equation-display" class="text-4xl font-extrabold text-yellow-300">Project Not Started</p>
+    </div>
+
+    <div class="flex justify-between items-center p-4 bg-gray-100 border-b">
+        <p class="text-lg font-semibold text-gray-700">Score: <span id="score-display">0</span> / 5</p>
+    </div>
+
+    <div class="table-area p-6 min-h-[300px] flex flex-col">
+        <p class="text-lg font-bold text-white mb-2">My Exhibit Table (Click tokens to remove):</p>
+        <div id="result-dropzone" class="dropzone p-3 rounded-lg flex flex-wrap gap-2 items-start justify-start transition-all mb-4 flex-grow"></div>
+        <span id="drop-message" class="text-xl font-bold text-gray-500 select-none text-center p-4">Click tokens below to build your exhibit!</span>
+
+        <p class="text-lg font-bold text-white mt-4 mb-2">Available Tokens (Click to add):</p>
+        <div id="token-inventory" class="p-4 bg-lime-100 rounded-lg shadow-inner flex flex-wrap justify-center gap-3"></div>
+    </div>
+
+    <div class="p-4 border-t flex justify-between items-center">
+        <div class="flex flex-col">
+            <p id="feedback-message" class="text-base font-bold h-6 text-gray-600">Ready to start.</p>
+            <button id="check-btn" onclick="checkAnswer()" class="px-4 py-2 bg-yellow-500 text-white rounded-lg font-bold hover:bg-yellow-600 transition disabled:opacity-50" disabled>Check Exhibit</button>
+        </div>
+        <button id="start-btn" onclick="startGame()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition">Start Level</button>
+    </div>
+</div>
+
+<script>
+const REQUIRED_SCORE = 5;
+
+let score = 0;
+let correctAnswer = 0;
+let tokensInZone = 0;
+let tokenEmoji = '';
+let currentQuestion = 0;
+
+const d = id => document.getElementById(id);
+const equationDisplay = d('equation-display');
+const scoreDisplay = d('score-display');
+const resultDropzone = d('result-dropzone');
+const dropMessage = d('drop-message');
+const tokenInventory = d('token-inventory');
+const feedbackMessage = d('feedback-message');
+const startBtn = d('start-btn');
+const checkBtn = d('check-btn');
+
+const OBJECTS = [
+    { emoji: '📚' }, 
+    { emoji: '🖍️' }, 
+    { emoji: '🍎' }
+];
+
+function notifyLevelComplete() {
+    window.parent.postMessage({ type: "levelResult", success: true }, "*");
+}
+
+function addToken() {
+    if (tokensInZone >= 15) return;
+    const token = document.createElement('span');
+    token.textContent = tokenEmoji;
+    token.classList.add('token-item', 'p-2', 'rounded-full', 'bg-white', 'text-4xl', 'shadow-md', 'select-none');
+    token.onclick = removeToken;
+    resultDropzone.appendChild(token);
+    tokensInZone++;
+    updateDropMessage();
+    checkBtn.disabled = false;
+}
+
+function removeToken(e) {
+    const token = e.target;
+    resultDropzone.removeChild(token);
+    tokensInZone--;
+    updateDropMessage();
+    checkBtn.disabled = tokensInZone === 0;
+}
+
+function updateDropMessage() {
+    dropMessage.style.display = tokensInZone === 0 ? 'block' : 'none';
+}
+
+function startGame() {
+    score = 0;
+    currentQuestion = 0;
+    tokensInZone = 0;
+    startBtn.style.display = 'none';
+    feedbackMessage.textContent = 'Use tokens to match the answer.';
+    scoreDisplay.textContent = score;
+    nextQuestion();
+}
+
+function nextQuestion() {
+    if (score >= REQUIRED_SCORE) {
+        feedbackMessage.textContent = '🎉 Level Completed!';
+        notifyLevelComplete();
+        checkBtn.disabled = true;
+        return;
+    }
+
+    currentQuestion++;
+    tokensInZone = 0;
+    resultDropzone.innerHTML = '';
+    updateDropMessage();
+    checkBtn.disabled = true;
+
+    // Generate random addition/subtraction problem
+    const isAddition = Math.random() < 0.5;
+    const objectType = OBJECTS[Math.floor(Math.random() * OBJECTS.length)];
+    tokenEmoji = objectType.emoji;
+
+    let num1, num2;
+    if (isAddition) {
+        num1 = Math.floor(Math.random() * 5) + 1;
+        num2 = Math.floor(Math.random() * 5) + 1;
+        correctAnswer = num1 + num2;
+        equationDisplay.textContent = `${num1} + ${num2} = ?`;
+    } else {
+        num1 = Math.floor(Math.random() * 9) + 6;
+        num2 = Math.floor(Math.random() * (num1 - 2)) + 1;
+        correctAnswer = num1 - num2;
+        equationDisplay.textContent = `${num1} − ${num2} = ?`;
+    }
+
+    renderTokenButton();
+}
+
+function renderTokenButton() {
+    tokenInventory.innerHTML = '';
+    const btn = document.createElement('button');
+    btn.textContent = `Add ${tokenEmoji} Token`;
+    btn.className = 'px-4 py-2 bg-white text-2xl rounded-lg shadow-md font-bold hover:bg-gray-50 transition';
+    btn.onclick = addToken;
+    tokenInventory.appendChild(btn);
+}
+
+function checkAnswer() {
+    if (tokensInZone === correctAnswer) {
+        score++;
+        scoreDisplay.textContent = score;
+        feedbackMessage.textContent = 'Correct! 🎉';
+        nextQuestion();
+    } else {
+        feedbackMessage.textContent = `Incorrect! Answer is ${correctAnswer}.`;
+    }
+}
+
+</script>
+</body>
+</html>

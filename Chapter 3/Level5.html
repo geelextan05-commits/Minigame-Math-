@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Level 5 – Smart Run</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+    /* 1. Global & Theme Styles */
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: #f0f8ff; /* Light blue/sky background */
+        text-align: center;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 32px;
+        color: #2a9d8f; /* Green/Teal for victory */
+        font-weight: 800;
+        margin-bottom: 30px;
+    }
+
+    #questionBox {
+        margin-top: 30px;
+        padding: 30px;
+        background: white;
+        border-radius: 25px;
+        width: 90%;
+        max-width: 550px;
+        margin-left: auto;
+        margin-right: auto;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    }
+
+    #questionText {
+        font-size: 24px;
+        color: #e76f51; /* Runner color */
+        font-weight: 700;
+        margin-bottom: 25px;
+    }
+
+    /* 2. Option Button Styles */
+    button.option {
+        display: block;
+        width: 90%;
+        margin: 15px auto;
+        padding: 18px;
+        border-radius: 25px;
+        border: 2px solid #264653; /* Dark border */
+        font-size: 28px; /* Bigger font for fractions */
+        cursor: pointer;
+        background: #e9c46a; /* Gold/Prize color */
+        transition: 0.2s;
+        box-shadow: 0 4px 0 #f4a261;
+    }
+    button.option:hover {
+        transform: translateY(-2px);
+        background: #f4a261;
+        box-shadow: 0 6px 0 #e76f51;
+    }
+    button.option:active {
+        transform: translateY(2px);
+        box-shadow: 0 2px 0 #f4a261;
+    }
+
+    #feedback {
+        font-size: 28px;
+        font-weight: 800;
+        height: 50px;
+        margin-top: 15px;
+    }
+</style>
+</head>
+<body>
+
+<h1>🏃‍♂️ Level 5 – The Great Race (Comparing Fractions)</h1>
+
+<div id="questionBox">
+    <div id="questionText"></div>
+    <div id="options"></div>
+    <div id="feedback"></div>
+</div>
+
+<script>
+let questions = [];
+let current = 0;
+
+function formatFraction(n, d) {
+    return `${n}/${d}`;
+}
+
+function generateQuestions() {
+    for(let i=0;i<5;i++){
+        let type = Math.floor(Math.random()*2); // 0: Same Denominator, 1: Same Numerator
+        let q = {};
+        
+        let denA, denB, numA, numB;
+        
+        if (type === 0) { // Type 0: Same Denominator (e.g., 3/5 vs 4/5)
+            let den = [4, 5, 6, 8][Math.floor(Math.random()*4)];
+            numA = Math.floor(Math.random()*(den - 1)) + 1; 
+            numB = Math.floor(Math.random()*(den - 1)) + 1;
+            while (numA === numB) { 
+                numB = Math.floor(Math.random()*(den - 1)) + 1;
+            }
+            denA = den;
+            denB = den;
+            
+        } else { // Type 1: Same Numerator (e.g., 3/4 vs 3/5)
+            let num = [2, 3, 4, 5][Math.floor(Math.random()*4)];
+            denA = Math.floor(Math.random()*4) + 3; // Denom between 3 and 6
+            denB = Math.floor(Math.random()*4) + 3;
+            while (denA === denB) {
+                denB = Math.floor(Math.random()*4) + 3;
+            }
+            numA = num;
+            numB = num;
+        }
+
+        let fractionA = formatFraction(numA, denA);
+        let fractionB = formatFraction(numB, denB);
+        
+        // Determine the larger fraction (the 'winner')
+        let valA = numA / denA;
+        let valB = numB / denB;
+        
+        let correctOption = (valA > valB) ? fractionA : fractionB;
+        
+        // Question text
+        q.text = `Which runner ran a **longer** distance: ${fractionA} or ${fractionB}?`;
+        q.correct = correctOption;
+        q.options = [fractionA, fractionB].sort(()=>Math.random()-0.5); 
+        
+        questions.push(q);
+    }
+}
+
+function loadQuestion(){
+    let q = questions[current];
+    document.getElementById("feedback").innerHTML = "";
+    document.getElementById("questionText").innerHTML = `🏃‍♂️ Q${current+1}: ${q.text}`;
+
+    let html = "";
+    q.options.forEach(opt=>{
+        html += `<button class="option" onclick="checkAnswer('${opt}', '${q.correct}')">${opt}</button>`;
+    });
+
+    document.getElementById("options").innerHTML = html;
+}
+
+function checkAnswer(ans, correct){
+    let fb = document.getElementById("feedback");
+    
+    if(ans === correct){
+        fb.style.color = "green";
+        fb.innerHTML = "🏆 YES! That runner went farther! ✔";
+    } else {
+        fb.style.color = "red";
+        fb.innerHTML = `🏁 Keep running! The correct answer was ${correct}`;
+    }
+
+    setTimeout(()=>{
+        current++;
+        if(current>=5) finishLevel();
+        else loadQuestion();
+    },1500);
+}
+
+function finishLevel(){
+    localStorage.setItem("C3_Level5","completed");
+    alert("🎉 Congratulations! You completed Chapter 3 – Fractions!");
+    window.location.href = "C3.html";
+}
+
+generateQuestions();
+loadQuestion();
+</script>
+
+</body>
+</html>

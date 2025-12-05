@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Maze Escape</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        body {
+            background-color: #2c3e50;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #maze-container {
+            width: 90vw;
+            max-width: 700px;
+            aspect-ratio: 1 / 1;
+            background-color: #34495e;
+            border: 8px solid #f39c12;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+            border-radius: 1rem;
+        }
+
+        .path {
+            background-color: #ecf0f1;
+            border: 2px dashed #bdc3c7;
+            position: absolute;
+            transition: opacity 0.5s;
+        }
+
+        .door {
+            position: absolute;
+            background-color: #e74c3c;
+            border: 3px solid #c0392b;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.25rem;
+            transition: background-color 0.5s, transform 0.2s, opacity 0.5s;
+            border-radius: 0.5rem;
+        }
+
+        .door:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 255, 0, 0.5);
+        }
+
+        .door.open {
+            background-color: #2ecc71;
+            opacity: 0;
+            pointer-events: none;
+            box-shadow: none;
+        }
+
+        #player {
+            position: absolute;
+            font-size: 3rem;
+            z-index: 10;
+            transition: top 0.5s, left 0.5s;
+        }
+
+        #chaser {
+            position: absolute;
+            font-size: 3rem;
+            color: #bdc3c7;
+            z-index: 9;
+            transition: top 1.5s, left 1.5s;
+        }
+
+        #exit {
+            position: absolute;
+            font-size: 3rem;
+            color: #f1c40f;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #modal {
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            z-index: 50;
+        }
+        .modal-content {
+            font-family: 'Press Start 2P', cursive;
+            background: #ecf0f1;
+            border: 6px solid #e74c3c;
+            color: #2c3e50;
+            box-shadow: 0 15px 40px rgba(231, 76, 60, 0.5);
+        }
+        .choice-btn {
+            background-color: #3498db;
+            color: white;
+            font-family: 'Press Start 2P', cursive;
+            transition: background-color 0.1s;
+        }
+        .choice-btn:hover {
+            background-color: #2980b9;
+        }
+        .choice-btn:active {
+            transform: scale(0.98);
+        }
+
+    </style>
+</head>
+<body class="p-4">
+
+<div id="game-wrapper" class="w-full max-w-lg md:max-w-4xl flex flex-col items-center">
+
+    <h1 class="text-3xl md:text-4xl font-extrabold text-white mb-4 text-center">
+        Math Maze Escape 👻
+    </h1>
+
+    <div id="status-bar" class="w-full max-w-md flex justify-between bg-gray-700 p-3 rounded-xl mb-4 text-white font-mono text-lg">
+        <span>Score: <span id="score-display">0</span></span>
+        <span>Level: <span id="level-display">1</span></span>
+    </div>
+
+    <div id="maze-container">
+        <div id="player">🏃</div>
+        <div id="chaser">👻</div>
+        <div id="exit">🔑</div>
+    </div>
+
+    <div id="modal" class="fixed inset-0 hidden items-center justify-center p-4">
+        <div class="modal-content p-6 rounded-lg w-full max-w-md text-center">
+            <p id="modal-title" class="text-2xl mb-4"></p>
+            <p id="modal-question" class="text-4xl my-6 font-bold"></p>
+            <div id="modal-choices" class="grid grid-cols-3 gap-3"></div>
+            <button id="modal-continue" class="hidden choice-btn w-full mt-6 py-3 rounded">Continue</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const MAX_OPERAND = 7;
+    const CHASER_DELAY_STEPS = 5;
+    const MAZE_CONFIG = [
+        [
+            { id: 'start', top: 5, left: 5, width: '40%', height: '40%', type: 'start' },
+            { id: 'path1', top: 20, left: 45, width: '10%', height: '60%', type: 'path' },
+            { id: 'room2', top: 55, left: 5, width: '40%', height: '40%', type: 'room' },
+            { id: 'doorA', top: 45, left: 20, width: '10%', height: '10%', type: 'door', leadsTo: 'room2', leadsFrom: 'start' },
+            { id: 'doorB', top: 70, left: 45, width: '10%', height: '10%', type: 'door', leadsTo: 'exit', leadsFrom: 'room2' },
+            { id: 'exit', top: 55, left: 55, width: '40%', height: '40%', type: 'exit' },
+        ],
+        [
+            { id: 'start', top: 5, left: 5, width: '40%', height: '40%', type: 'start' },
+            { id: 'room2', top: 5, left: 55, width: '40%', height: '40%', type: 'room' },
+            { id: 'doorA', top: 20, left: 45, width: '10%', height: '10%', type: 'door', leadsTo: 'room2', leadsFrom: 'start' },
+            { id: 'room3', top: 55, left: 5, width: '40%', height: '40%', type: 'room' },
+            { id: 'doorB', top: 45, left: 20, width: '10%', height: '10%', type: 'door', leadsTo: 'room3', leadsFrom: 'start' },
+            { id: 'path1', top: 45, left: 45, width: '10%', height: '60%', type: 'path' },
+            { id: 'doorC', top: 70, left: 45, width: '10%', height: '10%', type: 'door', leadsTo: 'exit', leadsFrom: 'room3' },
+            { id: 'exit', top: 55, left: 55, width: '40%', height: '40%', type: 'exit' },
+        ]
+    ];
+
+    const mazeContainer = document.getElementById('maze-container');
+    const playerElement = document.getElementById('player');
+    const chaserElement = document.getElementById('chaser');
+    const exitElement = document.getElementById('exit');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalQuestion = document.getElementById('modal-question');
+    const modalChoices = document.getElementById('modal-choices');
+    const modalContinue = document.getElementById('modal-continue');
+    const scoreDisplay = document.getElementById('score-display');
+    const levelDisplay = document.getElementById('level-display');
+
+    let currentLevelIndex = 0;
+    let currentRoomId = 'start';
+    let isModalOpen = false;
+    let currentAnswer = 0;
+    let score = 0;
+    let playerPath = ['start'];
+
+    function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+    function generateProblem() {
+        let num1, num2, operation, result;
+        if (Math.random() < 0.5) {
+            operation = '+'; num1 = getRandomInt(1, MAX_OPERAND); num2 = getRandomInt(1, MAX_OPERAND);
+            result = num1 + num2;
+        } else {
+            operation = '-'; num1 = getRandomInt(1, MAX_OPERAND); num2 = getRandomInt(1, num1);
+            result = num1 - num2;
+        }
+        currentAnswer = result;
+        return { num1, operation, num2, result };
+    }
+
+    function generateChoices(correctAnswer) {
+        const choices = new Set([correctAnswer]); let attempts = 0;
+        while (choices.size < 3 && attempts < 10) {
+            let wrongAnswer = correctAnswer + (getRandomInt(0,1)*2-1)*getRandomInt(1,2);
+            if (wrongAnswer >= 0 && wrongAnswer !== correctAnswer) choices.add(wrongAnswer);
+            attempts++;
+        }
+        let arr = Array.from(choices).slice(0,3);
+        for (let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]];}
+        return arr;
+    }
+
+    function renderMaze() {
+        const currentMaze = MAZE_CONFIG[currentLevelIndex];
+        mazeContainer.innerHTML = '';
+        playerPath = ['start'];
+        currentMaze.forEach(item => {
+            const el = document.createElement('div');
+            el.id = item.id;
+            el.style.top = `${item.top}%`;
+            el.style.left = `${item.left}%`;
+            el.style.width = `${item.width}`;
+            el.style.height = `${item.height}`;
+            if (item.type === 'start' || item.type === 'room' || item.type === 'exit') {
+                el.className = 'path p-4 flex justify-center items-center text-xl font-bold text-gray-800 rounded-lg shadow-inner';
+                el.textContent = item.type==='start'?'START':item.type==='exit'?'':'Room '+item.id.slice(-1);
+            }
+            if (item.type === 'door') { el.className='door'; el.textContent='❓ DOOR'; el.onclick=()=>openQuestionModal(item.id,item.leadsTo);}
+            if (item.type==='path'){ el.className='path'; el.textContent='';}
+            mazeContainer.appendChild(el);
+        });
+        mazeContainer.appendChild(playerElement); mazeContainer.appendChild(chaserElement); mazeContainer.appendChild(exitElement);
+        currentRoomId='start'; movePlayerToRoom(currentRoomId,0); moveChaser();
+        const exitRoom=currentMaze.find(i=>i.type==='exit');
+        if(exitRoom){exitElement.style.top=`${exitRoom.top+20}%`; exitElement.style.left=`${exitRoom.left+30}%`;}
+    }
+
+    function movePlayerToRoom(roomId,duration=500){
+        const targetElement=document.getElementById(roomId); if(!targetElement) return;
+        const {top,left,width,height}=targetElement.style;
+        const targetTop=parseFloat(top)+parseFloat(height)/2-2;
+        const targetLeft=parseFloat(left)+parseFloat(width)/2-2;
+        playerElement.style.transitionDuration=`${duration}ms`;
+        playerElement.style.top=`${targetTop}%`; playerElement.style.left=`${targetLeft}%`;
+        currentRoomId=roomId;
+        if(roomId==='exit'){ setTimeout(winGame,600); }
+    }
+
+    function moveChaser(){
+        const chaserIndex=Math.max(0,playerPath.length-1-CHASER_DELAY_STEPS);
+        const chaserTargetId=playerPath[chaserIndex];
+        const targetElement=document.getElementById(chaserTargetId); if(!targetElement)return;
+        const {top,left,width,height}=targetElement.style;
+        const targetTop=parseFloat(top)+parseFloat(height)/2-2;
+        const targetLeft=parseFloat(left)+parseFloat(width)/2-2;
+        chaserElement.style.top=`${targetTop}%`; chaserElement.style.left=`${targetLeft}%`;
+        if(chaserTargetId===currentRoomId && currentRoomId!=='start'){
+            if(!document.getElementById('exit').classList.contains('door.open')) setTimeout(loseGame,100);
+        }
+    }
+
+    function openQuestionModal(doorId,leadsToRoomId){
+        if(isModalOpen)return;
+        const problem=generateProblem();
+        const choices=generateChoices(problem.result);
+        modalTitle.textContent='Solve the Gate Lock!';
+        modalQuestion.textContent=`${problem.num1} ${problem.operation} ${problem.num2} = ?`;
+        modalChoices.innerHTML='';
+        modalContinue.classList.add('hidden');
+        choices.forEach(choice=>{
+            const btn=document.createElement('button');
+            btn.textContent=choice; btn.className='choice-btn py-3 rounded text-xl';
+            btn.onclick=()=>checkAnswer(choice,doorId,leadsToRoomId);
+            modalChoices.appendChild(btn);
+        });
+        modal.classList.remove('hidden'); modal.classList.add('flex'); isModalOpen=true;
+    }
+
+    function checkAnswer(selectedAnswer,doorId,leadsToRoomId){
+        const doorElement=document.getElementById(doorId);
+        const currentChoices=Array.from(modalChoices.children);
+        currentChoices.forEach(btn=>btn.disabled=true);
+        if(selectedAnswer===currentAnswer){
+            score++; doorElement.classList.add('open');
+            modalTitle.textContent='Correct!'; modalQuestion.textContent='The Door is Open! 🔓';
+            scoreDisplay.textContent=score;
+            currentChoices.forEach(btn=>{ if(parseInt(btn.textContent)===selectedAnswer) btn.classList.add('bg-green-500','hover:bg-green-500');});
+            modalContinue.classList.remove('hidden');
+            modalContinue.onclick=()=>{ playerPath.push(leadsToRoomId); movePlayerToRoom(leadsToRoomId); moveChaser(); closeModal(); };
+        }else{
+            modalTitle.textContent='Wrong!'; modalQuestion.textContent='The Ghost Moves Closer! 😱';
+            currentChoices.forEach(btn=>{
+                const val=parseInt(btn.textContent);
+                if(val===selectedAnswer) btn.classList.add('bg-red-500','hover:bg-red-500');
+                if(val===currentAnswer) btn.classList.add('bg-yellow-500','hover:bg-yellow-500');
+            });
+            moveChaser();
+            modalContinue.textContent='Try Again';
+            modalContinue.classList.remove('hidden');
+            modalContinue.onclick=()=>{ closeModal(); };
+        }
+    }
+
+    function closeModal(){ modal.classList.add('hidden'); modal.classList.remove('flex'); isModalOpen=false; }
+
+    function winGame(){
+        if(currentLevelIndex<MAZE_CONFIG.length-1){
+            currentLevelIndex++;
+            levelDisplay.textContent=currentLevelIndex+1;
+            modalTitle.textContent='MAZE ESCAPED!';
+            modalQuestion.textContent='Treasure found! Time for the next level! 🏆';
+            modalChoices.innerHTML='';
+            modalContinue.textContent='Next Maze';
+            modalContinue.classList.remove('hidden');
+            modalContinue.onclick=()=>{ closeModal(); renderMaze(); };
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+        }else {
+    // Notify main page that Level 15 is completed
+    window.parent.postMessage({ type: "levelResult", success: true }, "*");
+}
+    
+    }
+
+    function loseGame(){
+        if(isModalOpen) closeModal();
+        modalTitle.textContent='GAME OVER!';
+        modalQuestion.textContent=`The Ghost caught you! You solved ${score} locks before being trapped. 👻`;
+        modalChoices.innerHTML='';
+        modalContinue.textContent='Try Maze Again';
+        modalContinue.classList.remove('hidden');
+        modalContinue.onclick=resetGame;
+        modal.classList.remove('hidden'); modal.classList.add('flex');
+    }
+
+    function resetGame(){
+        score=0; currentLevelIndex=0;
+        scoreDisplay.textContent=score; levelDisplay.textContent=currentLevelIndex+1;
+        closeModal(); renderMaze();
+    }
+
+    window.onload=resetGame;
+</script>
+
+</body>
+</html>

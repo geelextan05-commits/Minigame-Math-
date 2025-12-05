@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shapes Adventure - Level 7</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            font-family: 'Nunito', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .shape-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .bounce {
+            animation: bounce 0.5s;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            opacity: 0;
+        }
+        
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .shape-icon {
+            transition: all 0.3s ease;
+        }
+        
+        .shape-icon:hover {
+            transform: scale(1.2) rotate(10deg);
+        }
+        
+        .card-3d {
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+        
+        .card-3d:hover {
+            transform: rotateY(5deg) rotateX(5deg);
+        }
+        
+        .button-glow {
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+        
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            border-radius: 25px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            transform: scale(0.8);
+            transition: transform 0.3s;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            color: white;
+            border: 8px solid white;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        
+        .modal-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: modalBounce 1s infinite alternate;
+        }
+
+        #back-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background: #4CAF50;
+            color: white;
+            border: 3px solid #2E7D32;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 9999;
+        }
+        
+        @keyframes modalBounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-15px); }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <button id="back-btn" onclick="goBack()">⬅️ Back to Menu</button>
+    
+    <!-- Background floating shapes -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div class="absolute top-10 left-5 w-16 h-16 bg-yellow-300 rounded-full shape-float opacity-30"></div>
+        <div class="absolute top-1/4 right-10 w-12 h-12 bg-blue-400 shape-float opacity-30" style="clip-path: polygon(50% 0%, 0% 100%, 100% 100%);"></div>
+        <div class="absolute bottom-1/3 left-1/4 w-14 h-14 bg-green-400 shape-float opacity-30 rounded-lg"></div>
+        <div class="absolute top-2/3 right-1/4 w-10 h-10 bg-red-400 shape-float opacity-30" style="border-radius: 50% / 30%;"></div>
+        <div class="absolute bottom-20 left-10 w-20 h-10 bg-purple-400 shape-float opacity-30"></div>
+    </div>
+    
+    <!-- Modal for completion message -->
+    <div id="completionModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-icon">🏆</div>
+            <h2 class="text-3xl font-bold mb-4">Level 7 Complete!</h2>
+            <p class="text-xl mb-6">You've mastered all the shapes! Mr. Square is so proud of you!</p>
+            <div class="text-2xl mb-8">
+                <i class="fas fa-star text-yellow-300"></i>
+                <i class="fas fa-star text-yellow-300 mx-2"></i>
+                <i class="fas fa-star text-yellow-300"></i>
+            </div>
+            <p class="text-lg mb-8">Returning to Chapter Selection in <span id="countdown">5</span> seconds...</p>
+            <button id="goNowBtn" class="px-8 py-3 bg-white text-purple-700 font-bold rounded-full text-lg hover:bg-gray-100 transition-colors duration-300">
+                Go Now <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Main container -->
+    <div class="relative z-10 w-full max-w-4xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-black text-gray-800 mb-2">
+                <span class="text-blue-600">Shapes</span> <span class="text-orange-500">Adventure</span>
+            </h1>
+            <p class="text-xl text-gray-600 mb-6">Can you help Mr. Square find his shape friends?</p>
+            
+            <!-- Progress bar -->
+            <div class="w-full bg-gray-200 rounded-full h-6 mb-4 max-w-2xl mx-auto shadow-inner">
+                <div id="progressBar" class="h-6 rounded-full progress-bar bg-gradient-to-r from-blue-500 to-green-500" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between text-sm font-bold text-gray-700 max-w-2xl mx-auto px-2">
+                <span>Question <span id="currentQuestion">1</span> of 6</span>
+                <span><i class="fas fa-star text-yellow-500"></i> Score: <span id="score">0</span>/6</span>
+            </div>
+        </div>
+        
+        <!-- Main game area -->
+        <div class="flex flex-col md:flex-row gap-8">
+            <!-- Question card -->
+            <div class="flex-1">
+                <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 border-8 border-white overflow-hidden card-3d">
+                    <!-- Shape character -->
+                    <div class="flex justify-center mb-6">
+                        <div id="shapeCharacter" class="w-32 h-32 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <i class="fas fa-square text-white text-6xl"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Question -->
+                    <div class="mb-8">
+                        <h2 id="questionText" class="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-6"></h2>
+                        
+                        <!-- Options container -->
+                        <div id="optionsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <!-- Options will be inserted here by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Feedback area -->
+                    <div id="feedbackBox" class="hidden p-4 rounded-2xl text-center font-bold text-lg mb-4"></div>
+                    
+                    <!-- Navigation buttons -->
+                    <div class="flex justify-center gap-4 flex-wrap">
+                        <button id="nextBtn" class="hidden px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                            <i class="fas fa-arrow-right mr-2"></i> Next Question
+                        </button>
+                        
+                        <button id="retryBtn" class="hidden px-8 py-4 bg-gradient-to-r from-red-500 to-pink-600 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                            <i class="fas fa-redo mr-2"></i> Try Again
+                        </button>
+                        
+                        <button id="playAgainBtn" class="hidden px-8 py-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                            <i class="fas fa-play mr-2"></i> Play Again
+                        </button>
+                        
+                        <button id="nextChapterBtn" class="hidden px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 button-glow">
+                            <i class="fas fa-arrow-circle-right mr-2"></i> Next Chapter
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Side panel with shapes info -->
+            <div class="md:w-80">
+                <div class="bg-gradient-to-b from-blue-100 to-indigo-100 rounded-3xl shadow-2xl p-6 border-8 border-white h-full">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+                        <i class="fas fa-shapes text-blue-600 mr-2"></i> Shape Friends
+                    </h3>
+                    
+                    <div class="mb-6">
+                        <h4 class="font-bold text-gray-700 mb-3 text-lg">
+                            <i class="fas fa-square text-blue-500 mr-2"></i> 2D Shapes
+                        </h4>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div class="bg-white p-3 rounded-2xl text-center shadow-md shape-icon">
+                                <div class="w-12 h-12 bg-yellow-400 rounded-full mx-auto mb-2 flex items-center justify-center">
+                                    <i class="fas fa-circle text-white text-xl"></i>
+                                </div>
+                                <p class="font-bold text-gray-800 text-sm">Circle</p>
+                            </div>
+                            
+                            <div class="bg-white p-3 rounded-2xl text-center shadow-md shape-icon">
+                                <div class="w-12 h-12 bg-red-500 mx-auto mb-2 flex items-center justify-center" style="clip-path: polygon(50% 0%, 0% 100%, 100% 100%);">
+                                    <i class="fas fa-play text-white text-xl rotate-90"></i>
+                                </div>
+                                <p class="font-bold text-gray-800 text-sm">Triangle</p>
+                            </div>
+                            
+                            <div class="bg-white p-3 rounded-2xl text-center shadow-md shape-icon">
+                                <div class="w-12 h-12 bg-green-500 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                                    <i class="fas fa-square text-white text-xl"></i>
+                                </div>
+                                <p class="font-bold text-gray-800 text-sm">Square</p>
+                            </div>
+                            
+                            <div class="bg-white p-3 rounded-2xl text-center shadow-md shape-icon">
+                                <div class="w-16 h-12 bg-blue-500 mx-auto mb-2 flex items-center justify-center">
+                                    <i class="fas fa-square text-white text-xl"></i>
+                                </div>
+                                <p class="font-bold text-gray-800 text-sm">Rectangle</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold text-gray-700 mb-3 text-lg">
+                            <i class="fas fa-cube text-purple-500 mr-2"></i> 3D Shapes
+                        </h4>
+                        <div class="grid grid-cols-3 gap-3 mb-6">
+                            <div class="bg-white p-3 rounded-2xl text-center shadow-md shape-icon">
+                                <div class="w-12 h-12 bg-purple-500 mx-auto mb-2 flex items-center justify-center">
+                                    <i class="fas fa-cube text-white text-xl"></i>
+                                </div>
+                                <p class="font-bold text-gray-800 text-sm">Cube</p>
+                            </div>
+                            
+                            <div class="bg-white p-3 rounded-2xl text-center shadow-md shape-icon">
+                                <div class="w-14 h-12 bg-orange-500 mx-auto mb-2 flex items-center justify-center">
+                                    <i class="fas fa-cube text-white text-xl"></i>
+                                </div>
+                                <p class="font-bold text-gray-800 text-sm">Cuboid</p>
+                            </div>
+                            
+                            <div class="bg-white p-3 rounded-2xl text-center shadow-md shape-icon">
+                                <div class="w-12 h-12 bg-pink-500 rounded-full mx-auto mb-2 flex items-center justify-center">
+                                    <i class="fas fa-basketball text-white text-xl"></i>
+                                </div>
+                                <p class="font-bold text-gray-800 text-sm">Sphere</p>
+                            </div>
+                            
+                            <div class="bg-white p-3 rounded-2xl text-center shadow-md shape-icon">
+                                <div class="w-12 h-16 bg-teal-500 mx-auto mb-2 flex items-center justify-center">
+                                    <i class="fas fa-warehouse text-white text-xl"></i>
+                                </div>
+                                <p class="font-bold text-gray-800 text-sm">Cylinder</p>
+                            </div>
+                            
+                            <div class="bg-white p-3 rounded-2xl text-center shadow-md shape-icon col-span-2">
+                                <div class="w-16 h-12 bg-amber-600 mx-auto mb-2 flex items-center justify-center" style="clip-path: polygon(50% 0%, 0% 100%, 100% 100%);">
+                                    <i class="fas fa-gem text-white text-xl"></i>
+                                </div>
+                                <p class="font-bold text-gray-800 text-sm">Pyramid</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-2xl shadow-md">
+                        <h4 class="font-bold text-gray-800 mb-3 text-lg">
+                            <i class="fas fa-trophy text-yellow-500 mr-2"></i> Your Progress
+                        </h4>
+                        <div id="progressCircles" class="flex justify-center gap-2 mb-4">
+                            <!-- Progress circles will be added by JavaScript -->
+                        </div>
+                        <p class="text-gray-600 text-center text-sm">Answer all questions to help Mr. Square find all his friends!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confetti container -->
+    <div id="confettiContainer" class="fixed top-0 left-0 w-full h-full pointer-events-none z-20"></div>
+
+    <script>
+        // Questions database - 12 questions about shapes (focusing on 2D: circle, rectangle, square, triangle and 3D: cuboid, cube, sphere, cylinder, pyramid)
+        const allQuestions = [
+            // 2D Shape Questions
+            {
+                question: "Which shape has 3 sides?",
+                options: ["Circle", "Triangle", "Square", "Rectangle"],
+                answer: 1,
+                shape: "triangle",
+                icon: "fa-play",
+                color: "from-red-400 to-red-600",
+                type: "2D"
+            },
+            {
+                question: "Which shape has 4 equal sides?",
+                options: ["Rectangle", "Triangle", "Square", "Circle"],
+                answer: 2,
+                shape: "square",
+                icon: "fa-square",
+                color: "from-green-400 to-green-600",
+                type: "2D"
+            },
+            {
+                question: "Which shape is round with no corners?",
+                options: ["Square", "Triangle", "Circle", "Rectangle"],
+                answer: 2,
+                shape: "circle",
+                icon: "fa-circle",
+                color: "from-yellow-400 to-yellow-600",
+                type: "2D"
+            },
+            {
+                question: "Which shape has 4 sides with two longer and two shorter?",
+                options: ["Square", "Triangle", "Circle", "Rectangle"],
+                answer: 3,
+                shape: "rectangle",
+                icon: "fa-square",
+                color: "from-blue-400 to-blue-600",
+                type: "2D"
+            },
+            {
+                question: "Which shape looks like a slice of pizza?",
+                options: ["Square", "Triangle", "Circle", "Rectangle"],
+                answer: 1,
+                shape: "triangle",
+                icon: "fa-pizza-slice",
+                color: "from-red-400 to-red-600",
+                type: "2D"
+            },
+            {
+                question: "What shape is a door usually?",
+                options: ["Circle", "Triangle", "Square", "Rectangle"],
+                answer: 3,
+                shape: "rectangle",
+                icon: "fa-door-closed",
+                color: "from-blue-400 to-blue-600",
+                type: "2D"
+            },
+            
+            // 3D Shape Questions
+            {
+                question: "A dice is an example of which 3D shape?",
+                options: ["Sphere", "Cylinder", "Cube", "Pyramid"],
+                answer: 2,
+                shape: "cube",
+                icon: "fa-dice",
+                color: "from-purple-400 to-purple-600",
+                type: "3D"
+            },
+            {
+                question: "A soccer ball is an example of which 3D shape?",
+                options: ["Cube", "Sphere", "Cylinder", "Pyramid"],
+                answer: 1,
+                shape: "sphere",
+                icon: "fa-futbol",
+                color: "from-pink-400 to-pink-600",
+                type: "3D"
+            },
+            {
+                question: "A can of soda is an example of which 3D shape?",
+                options: ["Cone", "Cube", "Sphere", "Cylinder"],
+                answer: 3,
+                shape: "cylinder",
+                icon: "fa-beer",
+                color: "from-teal-400 to-teal-600",
+                type: "3D"
+            },
+            {
+                question: "Which 3D shape has a square base and triangular sides?",
+                options: ["Cube", "Cuboid", "Cylinder", "Pyramid"],
+                answer: 3,
+                shape: "pyramid",
+                icon: "fa-gem",
+                color: "from-amber-400 to-amber-600",
+                type: "3D"
+            },
+            {
+                question: "A box that is not a cube (like a shoe box) is what 3D shape?",
+                options: ["Cube", "Cuboid", "Sphere", "Pyramid"],
+                answer: 1,
+                shape: "cuboid",
+                icon: "fa-box",
+                color: "from-orange-400 to-orange-600",
+                type: "3D"
+            },
+            {
+                question: "Which 3D shape can roll?",
+                options: ["Cube", "Cuboid", "Sphere", "Pyramid"],
+                answer: 2,
+                shape: "sphere",
+                icon: "fa-basketball",
+                color: "from-pink-400 to-pink-600",
+                type: "3D"
+            }
+        ];
+
+        // Game variables
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let gameCompleted = false;
+        let countdownTimer;
+        
+        // DOM elements
+        const questionText = document.getElementById('questionText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const feedbackBox = document.getElementById('feedbackBox');
+        const nextBtn = document.getElementById('nextBtn');
+        const retryBtn = document.getElementById('retryBtn');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        const nextChapterBtn = document.getElementById('nextChapterBtn');
+        const progressBar = document.getElementById('progressBar');
+        const currentQuestionEl = document.getElementById('currentQuestion');
+        const scoreEl = document.getElementById('score');
+        const progressCircles = document.getElementById('progressCircles');
+        const shapeCharacter = document.getElementById('shapeCharacter');
+        const confettiContainer = document.getElementById('confettiContainer');
+        const completionModal = document.getElementById('completionModal');
+        const countdownEl = document.getElementById('countdown');
+        const goNowBtn = document.getElementById('goNowBtn');
+        
+        // Initialize the game
+        function initGame() {
+            // Reset game variables
+            currentQuestionIndex = 0;
+            score = 0;
+            gameCompleted = false;
+            
+            // Select 6 random questions from the pool (ensuring mix of 2D and 3D)
+            const shuffledQuestions = [...allQuestions].sort(() => 0.5 - Math.random());
+            const twoDQuestions = shuffledQuestions.filter(q => q.type === "2D").slice(0, 3);
+            const threeDQuestions = shuffledQuestions.filter(q => q.type === "3D").slice(0, 3);
+            questions = [...twoDQuestions, ...threeDQuestions].sort(() => 0.5 - Math.random());
+            
+            // Update UI
+            updateProgressCircles();
+            updateScore();
+            loadQuestion();
+            
+            // Hide buttons
+            nextBtn.classList.add('hidden');
+            retryBtn.classList.add('hidden');
+            playAgainBtn.classList.add('hidden');
+            nextChapterBtn.classList.add('hidden');
+            feedbackBox.classList.add('hidden');
+            
+            // Hide modal if shown
+            completionModal.classList.remove('active');
+        }
+        
+        // Update progress circles
+        function updateProgressCircles() {
+            progressCircles.innerHTML = '';
+            for (let i = 0; i < questions.length; i++) {
+                const circle = document.createElement('div');
+                const is2D = questions[i].type === "2D";
+                circle.className = `w-10 h-10 rounded-full flex items-center justify-center font-bold ${i < currentQuestionIndex ? 'bg-green-500 text-white' : i === currentQuestionIndex ? 'bg-blue-500 text-white pulse' : 'bg-gray-300 text-gray-700'}`;
+                circle.innerHTML = `<i class="fas ${is2D ? 'fa-square' : 'fa-cube'} text-xs ${i < currentQuestionIndex ? 'text-white' : i === currentQuestionIndex ? 'text-white' : 'text-gray-500'}"></i>`;
+                progressCircles.appendChild(circle);
+            }
+        }
+        
+        // Load current question
+        function loadQuestion() {
+            const question = questions[currentQuestionIndex];
+            
+            // Update question text
+            questionText.textContent = question.question;
+            
+            // Update shape character with appropriate shape
+            shapeCharacter.className = `w-32 h-32 bg-gradient-to-br ${question.color} rounded-xl flex items-center justify-center shadow-lg bounce`;
+            shapeCharacter.innerHTML = `<i class="fas ${question.icon} text-white text-6xl"></i>`;
+            
+            // Update progress bar
+            const progressPercent = ((currentQuestionIndex + 1) / questions.length) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+            
+            // Update question counter
+            currentQuestionEl.textContent = currentQuestionIndex + 1;
+            
+            // Clear options container
+            optionsContainer.innerHTML = '';
+            
+            // Create option buttons
+            question.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'p-4 text-lg font-bold rounded-2xl shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl';
+                
+                // Different colors for each option
+                const colors = [
+                    'bg-gradient-to-r from-blue-400 to-blue-600 text-white',
+                    'bg-gradient-to-r from-red-400 to-red-600 text-white',
+                    'bg-gradient-to-r from-green-400 to-green-600 text-white',
+                    'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white'
+                ];
+                
+                button.className += ` ${colors[index]}`;
+                button.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span>${option}</span>
+                        <div class="w-10 h-10 rounded-full bg-white bg-opacity-30 flex items-center justify-center">
+                            <span class="font-black">${String.fromCharCode(65 + index)}</span>
+                        </div>
+                    </div>
+                `;
+                
+                button.addEventListener('click', () => checkAnswer(index));
+                optionsContainer.appendChild(button);
+            });
+            
+            // Hide feedback and next button
+            feedbackBox.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+        }
+        
+        // Check the selected answer
+        function checkAnswer(selectedIndex) {
+            const question = questions[currentQuestionIndex];
+            const options = document.querySelectorAll('#optionsContainer button');
+            
+            // Disable all buttons
+            options.forEach(button => {
+                button.disabled = true;
+                button.classList.remove('transform', 'hover:-translate-y-1', 'hover:shadow-xl');
+            });
+            
+            // Mark correct and incorrect answers
+            options.forEach((button, index) => {
+                if (index === question.answer) {
+                    button.classList.add('bg-gradient-to-r', 'from-emerald-500', 'to-green-600');
+                    button.classList.remove(...button.className.match(/from-\w+-\d00/g) || [], ...button.className.match(/to-\w+-\d00/g) || []);
+                } else if (index === selectedIndex && selectedIndex !== question.answer) {
+                    button.classList.add('bg-gradient-to-r', 'from-red-500', 'to-pink-600');
+                    button.classList.remove(...button.className.match(/from-\w+-\d00/g) || [], ...button.className.match(/to-\w+-\d00/g) || []);
+                }
+            });
+            
+            // Check if answer is correct
+            if (selectedIndex === question.answer) {
+                score++;
+                updateScore();
+                showFeedback(true, "Great job! That's correct!");
+                playSound('correct');
+                
+                // Add bounce animation to shape character
+                shapeCharacter.classList.add('bounce');
+                setTimeout(() => shapeCharacter.classList.remove('bounce'), 500);
+            } else {
+                showFeedback(false, `Oops! The correct answer is: ${question.options[question.answer]}`);
+                playSound('incorrect');
+            }
+            
+            // Show next button
+            setTimeout(() => {
+                nextBtn.classList.remove('hidden');
+                feedbackBox.classList.remove('hidden');
+            }, 800);
+        }
+        
+        // Show feedback message
+        function showFeedback(isCorrect, message) {
+            feedbackBox.textContent = message;
+            feedbackBox.className = `p-4 rounded-2xl text-center font-bold text-lg mb-4 ${isCorrect ? 'bg-gradient-to-r from-green-100 to-emerald-200 text-green-800 border-2 border-green-300' : 'bg-gradient-to-r from-red-100 to-pink-200 text-red-800 border-2 border-red-300'}`;
+        }
+        
+        // Move to next question
+        function nextQuestion() {
+            currentQuestionIndex++;
+            updateProgressCircles();
+            
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+            } else {
+                finishGame();
+            }
+        }
+        
+        // Finish the game
+        function finishGame() {
+            gameCompleted = true;
+            
+            // Update progress bar to 100%
+            progressBar.style.width = '100%';
+            
+            // Show final score
+            questionText.textContent = `Game Over! You scored ${score} out of ${questions.length}!`;
+            
+            // Clear options container
+            optionsContainer.innerHTML = '';
+            
+            // Show appropriate message
+            if (score === questions.length) {
+                feedbackBox.innerHTML = `
+                    <div class="text-center">
+                        <div class="text-4xl mb-4">🎉 🏆 🎊</div>
+                        <p class="text-2xl font-bold text-green-800">Perfect! You're a Shapes Master!</p>
+                        <p class="mt-2">You helped Mr. Square find all his shape friends!</p>
+                    </div>
+                `;
+                feedbackBox.className = 'p-6 rounded-2xl text-center font-bold text-lg mb-4 bg-gradient-to-r from-yellow-100 to-yellow-300 text-yellow-800 border-2 border-yellow-400';
+                createConfetti();
+                playSound('win');
+            } else if (score >= questions.length / 2) {
+                feedbackBox.innerHTML = `
+                    <div class="text-center">
+                        <div class="text-4xl mb-4">👍 😊 👏</div>
+                        <p class="text-2xl font-bold text-blue-800">Good Job!</p>
+                        <p class="mt-2">You know a lot about shapes!</p>
+                    </div>
+                `;
+                feedbackBox.className = 'p-6 rounded-2xl text-center font-bold text-lg mb-4 bg-gradient-to-r from-blue-100 to-blue-300 text-blue-800 border-2 border-blue-400';
+                playSound('good');
+            } else {
+                feedbackBox.innerHTML = `
+                    <div class="text-center">
+                        <div class="text-4xl mb-4">🤔 📚 ✨</div>
+                        <p class="text-2xl font-bold text-purple-800">Keep practicing!</p>
+                        <p class="mt-2">You'll get better at recognizing shapes!</p>
+                    </div>
+                `;
+                feedbackBox.className = 'p-6 rounded-2xl text-center font-bold text-lg mb-4 bg-gradient-to-r from-purple-100 to-purple-300 text-purple-800 border-2 border-purple-400';
+            }
+            
+            feedbackBox.classList.remove('hidden');
+            
+            // Show appropriate buttons
+            nextBtn.classList.add('hidden');
+            
+            // FIXED: Only show "Play Again" and "Next Chapter" when ALL questions are correct
+            if (score === questions.length) {
+                // Perfect score: Show Play Again and Next Chapter buttons
+                playAgainBtn.classList.remove('hidden');
+                nextChapterBtn.classList.remove('hidden');
+                retryBtn.classList.add('hidden'); // Hide Try Again button
+            } else {
+                // Not perfect score: Show only Try Again and Play Again buttons
+                retryBtn.classList.remove('hidden');
+                nextChapterBtn.classList.add('hidden'); // Hide Next Chapter button
+            }
+        }
+        
+        // Update score display
+        function updateScore() {
+            scoreEl.textContent = score;
+        }
+        
+        // Create confetti animation
+        function createConfetti() {
+            confettiContainer.innerHTML = '';
+            const colors = ['#FF5252', '#FF4081', '#E040FB', '#7C4DFF', '#536DFE', '#448AFF', '#40C4FF', '#18FFFF', '#64FFDA', '#69F0AE', '#B2FF59', '#EEFF41', '#FFFF00', '#FFD740', '#FFAB40', '#FF6E40'];
+            
+            for (let i = 0; i < 150; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.top = `${Math.random() * -20}%`;
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                confetti.style.width = `${Math.random() * 10 + 5}px`;
+                confetti.style.height = `${Math.random() * 10 + 5}px`;
+                
+                confettiContainer.appendChild(confetti);
+                
+                // Animate confetti
+                const animation = confetti.animate([
+                    { transform: `translate(0, 0) rotate(0deg)`, opacity: 1 },
+                    { transform: `translate(${Math.random() * 100 - 50}px, ${window.innerHeight}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+                ], {
+                    duration: Math.random() * 3000 + 2000,
+                    easing: 'cubic-bezier(0.215, 0.610, 0.355, 1)'
+                });
+                
+                // Remove confetti after animation
+                animation.onfinish = () => confetti.remove();
+            }
+        }
+        
+        // Play sound effects (using simple beeps since we can't load audio files without user interaction)
+        function playSound(type) {
+            // In a real app, you would load actual sound files
+            // For this demo, we'll just log the sound type
+            console.log(`Playing ${type} sound`);
+            
+            // Create a simple beep for correct answers
+            if (type === 'correct' && window.AudioContext) {
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.5);
+                } catch (e) {
+                    console.log("Audio not supported");
+                }
+            }
+        }
+        
+        // Show completion modal and redirect to main page
+        function showCompletionModal() {
+            // Mark Level 7 as completed in localStorage
+            localStorage.setItem("C7_Level7", "completed");
+            
+            // Show the modal
+            completionModal.classList.add('active');
+            
+            // Start countdown from 5
+            let countdown = 5;
+            countdownEl.textContent = countdown;
+            
+            // Update countdown every second
+            countdownTimer = setInterval(() => {
+                countdown--;
+                countdownEl.textContent = countdown;
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownTimer);
+                    redirectToMainPage();
+                }
+            }, 1000);
+        }
+        // ----------------------Redirect to main page (main.html)---------------------------//
+        // ----------------------Redirect to main page (main.html)---------------------------//
+        function redirectToMainPage() {
+            window.location.href = "main.html";
+        }
+        
+        // Event listeners
+        nextBtn.addEventListener('click', nextQuestion);
+        retryBtn.addEventListener('click', initGame);
+        playAgainBtn.addEventListener('click', initGame);
+        
+        // Updated nextChapterBtn event listener to show modal instead of alert
+        nextChapterBtn.addEventListener('click', showCompletionModal);
+        
+        // Go Now button in modal
+        goNowBtn.addEventListener('click', () => {
+            clearInterval(countdownTimer);
+            redirectToMainPage();
+        });
+        
+        // Initialize the game when page loads
+        window.addEventListener('DOMContentLoaded', initGame);
+
+        //Back main
+        function goBack() {
+            window.location.href = "C7.html";
+        }
+    </script>
+</body>
+</html>

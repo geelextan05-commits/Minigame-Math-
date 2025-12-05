@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug Collector (Many and Few)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #ecfdf5; }
+        .jar {
+            border: 4px solid #14b8a6;
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+            background-color: #ccfbf1;
+            position: relative;
+        }
+        .jar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 15px rgba(20, 184, 166, 0.4);
+        }
+        .bug-icon {
+            position: absolute;
+            font-size: 20px;
+            color: #4c1d95; /* Deep Purple Bug */
+            user-select: none;
+        }
+        .score-box {
+            min-width: 150px;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div id="game-container" class="w-full max-w-xl bg-white rounded-xl p-6 md:p-8 text-center shadow-2xl">
+        <h1 class="text-3xl font-extrabold text-teal-600 mb-4">🐞 Bug Collector 🦋</h1>
+        <div id="question-box" class="text-2xl font-semibold mb-6 p-3 bg-amber-100 rounded-lg text-amber-800"></div>
+
+        <div id="jar-container" class="flex justify-around space-x-4 mb-8 h-48 md:h-64">
+            <!-- Jars will be injected here -->
+        </div>
+
+        <div id="feedback-box" class="h-8 text-xl font-bold text-gray-800 mb-4"></div>
+
+        <div class="flex justify-center space-x-6">
+            <div class="score-box p-3 bg-green-100 rounded-lg shadow-inner">
+                <p class="text-lg font-medium text-green-700">Score</p>
+                <p id="score" class="text-3xl font-bold text-green-800">0</p>
+            </div>
+            <button id="next-button" class="px-6 py-3 bg-cyan-600 text-white font-bold rounded-lg shadow-md hover:bg-cyan-700 transition duration-150" disabled>Next Question</button>
+        </div>
+    </div>
+
+    <script>
+        let score = 0;
+let currentQuestionIndex = 0;
+const MAX_QUESTIONS = 5; // Total questions for the level
+let correctAnswers = 0;
+let gameActive = true;
+
+const jarContainer = document.getElementById('jar-container');
+const questionBox = document.getElementById('question-box');
+const feedbackBox = document.getElementById('feedback-box');
+const scoreElement = document.getElementById('score');
+const nextButton = document.getElementById('next-button');
+
+const generateRandomBugs = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const getRandomPosition = (size) => ({
+    top: `${generateRandomBugs(10, 80)}%`,
+    left: `${generateRandomBugs(10, 80)}%`,
+    transform: `rotate(${generateRandomBugs(0, 360)}deg)`
+});
+
+const renderJar = (count, index) => {
+    const jar = document.createElement('div');
+    jar.className = 'jar flex-1 rounded-full p-2 relative flex flex-col items-center justify-center';
+    jar.dataset.count = count;
+    jar.dataset.index = index;
+    jar.addEventListener('click', handleJarClick);
+
+    for (let i = 0; i < count; i++) {
+        const bug = document.createElement('span');
+        bug.className = 'bug-icon';
+        bug.textContent = '🐛';
+        const pos = getRandomPosition(jarContainer.clientWidth / 2);
+        bug.style.top = pos.top;
+        bug.style.left = pos.left;
+        bug.style.transform = pos.transform;
+        jar.appendChild(bug);
+    }
+    return jar;
+}
+
+const setupQuestion = () => {
+    if (currentQuestionIndex >= MAX_QUESTIONS) {
+        // Level completed
+        if (correctAnswers === MAX_QUESTIONS) {
+            // Passed
+            feedbackBox.innerHTML = "🎉 Level Passed!";
+            window.parent.postMessage({ type: "levelResult", success: true }, "*");
+        } else {
+            // Failed
+            feedbackBox.innerHTML = "❌ Level Failed! Try again.";
+            window.parent.postMessage({ type: "levelResult", success: false }, "*");
+        }
+        gameActive = false;
+        nextButton.disabled = true;
+        return;
+    }
+
+    gameActive = true;
+    feedbackBox.textContent = '';
+    nextButton.disabled = true;
+
+    // Generate question
+    let count1, count2;
+    do {
+        count1 = generateRandomBugs(5, 15);
+        count2 = generateRandomBugs(5, 15);
+    } while (count1 === count2);
+
+    const counts = [count1, count2];
+
+    // Randomly decide "more" or "fewer"
+    currentQuestion = {};
+    currentQuestion.type = Math.random() > 0.5 ? 'more' : 'fewer';
+    currentQuestion.correctJar = (currentQuestion.type === 'more') 
+        ? (count1 > count2 ? 0 : 1)
+        : (count1 < count2 ? 0 : 1);
+
+    questionBox.innerHTML = `Question ${currentQuestionIndex + 1}: Which jar has **${currentQuestion.type.toUpperCase()}** bugs?`;
+
+    jarContainer.innerHTML = '';
+    jarContainer.appendChild(renderJar(counts[0], 0));
+    jarContainer.appendChild(renderJar(counts[1], 1));
+}
+
+const handleJarClick = (event) => {
+    if (!gameActive) return;
+    gameActive = false;
+
+    const clickedIndex = parseInt(event.currentTarget.dataset.index);
+    const isCorrect = clickedIndex === currentQuestion.correctJar;
+
+    document.querySelectorAll('.jar').forEach(jar => {
+        jar.removeEventListener('click', handleJarClick);
+        if (parseInt(jar.dataset.index) === currentQuestion.correctJar) {
+            jar.style.borderColor = '#10b981';
+            jar.style.backgroundColor = '#d1fae5';
+        } else {
+            jar.style.borderColor = '#ef4444';
+            jar.style.backgroundColor = '#fee2e2';
+        }
+        jar.style.cursor = 'default';
+    });
+
+    if (isCorrect) {
+        correctAnswers++;
+        feedbackBox.textContent = '🥳 Correct!';
+        feedbackBox.classList.remove('text-red-600');
+        feedbackBox.classList.add('text-green-600');
+    } else {
+        feedbackBox.textContent = `❌ Wrong!`;
+        feedbackBox.classList.remove('text-green-600');
+        feedbackBox.classList.add('text-red-600');
+    }
+
+    scoreElement.textContent = correctAnswers;
+    currentQuestionIndex++;
+    nextButton.disabled = false;
+}
+
+nextButton.addEventListener('click', setupQuestion);
+
+// Initial Setup
+setupQuestion();
+
+    </script>
+</body>
+</html>

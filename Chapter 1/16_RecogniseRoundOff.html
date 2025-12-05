@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Round Off Cannon (Up to 100)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #eef2ff; }
+        .card { 
+            background-color: #ffffff; 
+            border-radius: 1.5rem; 
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.2); 
+            border: 4px solid #4f46e5;
+        }
+        .target-box {
+            background-color: #4f46e5;
+            color: #ffffff;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .cannon-ball {
+            transition: all 0.1s ease;
+            box-shadow: 0 5px 0 0 #0f172a;
+            transform: translateY(0);
+        }
+        .cannon-ball:active {
+            transform: translateY(2px);
+            box-shadow: 0 3px 0 0 #0f172a;
+        }
+        .feedback-correct { animation: fade-in-green 0.5s; }
+        .feedback-incorrect { animation: shake 0.5s; }
+
+        @keyframes fade-in-green {
+            0% { opacity: 0; background-color: #d1fae5; }
+            100% { opacity: 1; background-color: transparent; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex flex-col items-center justify-center">
+
+    <div id="app" class="card w-full max-w-xl p-6 md:p-10 text-center">
+        <h1 class="text-4xl font-extrabold text-indigo-700 mb-2">🎯 Round to the Nearest 10</h1>
+        <p class="text-gray-500 mb-6">Round numbers up to 99 to hit the correct target!</p>
+        
+        <div id="game-area">
+            <!-- Question -->
+            <div class="target-box mb-8">
+                <p id="question-label" class="text-lg font-semibold mb-2">Cannonball Value:</p>
+                <div id="cannon-value" class="text-7xl font-black">?</div>
+                <p id="rounding-rule" class="text-xl font-medium mt-2">Round to the nearest 10 (Up to 99)</p>
+            </div>
+
+            <div id="feedback-message" class="h-8 mb-4 text-lg font-bold"></div>
+
+            <!-- Targets -->
+            <p class="text-lg font-medium text-gray-700 mb-4">Choose the Correct Target:</p>
+            <div id="choices-container" class="grid grid-cols-2 gap-4"></div>
+            
+            <button id="start-button" onclick="startGame()" 
+                class="mt-8 cannon-ball bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-8 rounded-xl">
+                Start Game
+            </button>
+        </div>
+
+        <div class="mt-6 text-xl">
+            Score: <span id="score" class="font-bold text-green-600">0</span> / 5
+        </div>
+    </div>
+
+    <script>
+        let score = 0;
+        let correctAnswer = 0;
+        let questionCount = 0;
+
+        const maxCorrect = 5;
+
+        const updateDisplay = () => {
+            document.getElementById('score').textContent = `${score} / ${maxCorrect}`;
+        };
+
+        const roundToNearest = (num, multiple) => Math.round(num / multiple) * multiple;
+
+        const getRandomInt = (min, max) =>
+            Math.floor(Math.random() * (max - min + 1)) + min;
+
+        const generateQuestion = () => {
+            const multiple = 10;
+            const initialNumber = getRandomInt(1, 99);
+            correctAnswer = roundToNearest(initialNumber, multiple);
+
+            const choices = [correctAnswer];
+            const tensList = [];
+
+            for (let i = 0; i <= 100; i += 10) tensList.push(i);
+
+            while (choices.length < 4) {
+                const choice = tensList[getRandomInt(0, tensList.length - 1)];
+                if (!choices.includes(choice)) choices.push(choice);
+            }
+
+            choices.sort(() => Math.random() - 0.5);
+
+            document.getElementById('cannon-value').textContent = initialNumber;
+
+            const choicesContainer = document.getElementById('choices-container');
+            choicesContainer.innerHTML = "";
+
+            choices.forEach(c => {
+                const btn = document.createElement("button");
+                btn.className = "cannon-ball bg-indigo-500 text-white text-3xl font-bold py-6 rounded-xl hover:bg-indigo-600";
+                btn.textContent = c;
+                btn.onclick = () => checkAnswer(c);
+                choicesContainer.appendChild(btn);
+            });
+        };
+
+        const checkAnswer = (picked) => {
+            const feedback = document.getElementById("feedback-message");
+            document.getElementById('choices-container').style.pointerEvents = 'none';
+
+            if (picked === correctAnswer) {
+                score++;
+                feedback.className = "text-green-600 feedback-correct";
+                feedback.textContent = "BULLSEYE! Correct!";
+            } else {
+                feedback.className = "text-red-600 feedback-incorrect";
+                feedback.textContent = `Miss! The correct answer was ${correctAnswer}.`;
+            }
+
+            updateDisplay();
+
+            setTimeout(() => {
+                feedback.textContent = "";
+                feedback.className = "";
+                questionCount++;
+                document.getElementById('choices-container').style.pointerEvents = 'auto';
+
+                if (score >= maxCorrect) {
+                    levelComplete();
+                } else {
+                    generateQuestion();
+                }
+
+            }, 1200);
+        };
+
+        const startGame = () => {
+            score = 0;
+            questionCount = 0;
+            updateDisplay();
+            document.getElementById("start-button").style.display = "none";
+            generateQuestion();
+        };
+
+        const levelComplete = () => {
+            document.getElementById('game-area').innerHTML = `
+                <h2 class="text-3xl font-bold text-indigo-700 mb-4">🎉 Level Complete!</h2>
+                <p class="text-2xl text-gray-700 mb-6">Great job rounding numbers!</p>
+            `;
+
+            // Send completion message to parent
+            window.parent.postMessage({ type: 'levelResult', success: true }, '*');
+        };
+
+        document.addEventListener("DOMContentLoaded", updateDisplay);
+    </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cookie Thief Level 6</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;800&display=swap');
+body { font-family: 'Inter', sans-serif; background-color: #fefce8; }
+.game-card { border: 4px solid #f97316; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+.plate { background-color: #fff7ed; border: 3px solid #fb923c; border-radius: 50%; padding: 20px; display: inline-flex; flex-wrap: wrap; justify-content: center; }
+.cookie { font-size: 2.5rem; transition: all 0.5s; }
+.choice-button { transition: all 0.1s; box-shadow: 0 5px 0 0 #c2410c; }
+.choice-button:active { transform: translateY(2px); box-shadow: 0 3px 0 0 #c2410c; }
+</style>
+</head>
+<body class="p-4 md:p-8 flex items-center justify-center min-h-screen bg-orange-50">
+
+<div id="app" class="game-card w-full max-w-lg p-6 md:p-10 text-center rounded-2xl bg-white">
+    <h1 class="text-3xl font-extrabold text-orange-700 mb-4">🍪 Cookie Thief Level 6</h1>
+    <p class="text-gray-600 mb-6">The thief is back! How many cookies are left? (Difference ≥ 0)</p>
+    
+    <div class="mb-8">
+        <div id="plate" class="plate"></div>
+        <p id="subtraction-text" class="text-xl font-bold text-gray-700 mt-4">20 - 8 = ?</p>
+    </div>
+
+    <div id="choices-container" class="grid grid-cols-3 gap-3"></div>
+
+    <div id="feedback" class="h-8 mt-6 text-lg font-bold"></div>
+    <div class="mt-4 text-lg">Score: <span id="score">0</span> / 5</div>
+
+    <button id="start-button" onclick="startGame()" class="mt-6 px-8 py-3 bg-orange-600 text-white font-bold rounded-xl choice-button">Start Game</button>
+</div>
+
+<script>
+let score = 0;
+let correctAnswer = 0;
+const REQUIRED_SCORE = 5;
+
+const scoreEl = document.getElementById('score');
+const plateEl = document.getElementById('plate');
+const subtractionTextEl = document.getElementById('subtraction-text');
+const choicesContainer = document.getElementById('choices-container');
+const feedbackEl = document.getElementById('feedback');
+const startBtn = document.getElementById('start-button');
+
+const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+function notifyLevelComplete() {
+    window.parent.postMessage({ type: "levelResult", success: true }, "*");
+}
+
+function generateQuestion() {
+    const startNum = getRandomInt(10, 25);
+    const subtractNum = getRandomInt(1, startNum - 1);
+    correctAnswer = startNum - subtractNum;
+
+    subtractionTextEl.textContent = `${startNum} - ${subtractNum} = ?`;
+
+    plateEl.innerHTML = '';
+    for (let i = 0; i < startNum; i++) {
+        const cookieEl = document.createElement('span');
+        cookieEl.className = 'cookie';
+        cookieEl.textContent = '🍪';
+        plateEl.appendChild(cookieEl);
+    }
+
+    // Visualize stolen cookies
+    setTimeout(() => {
+        const cookies = plateEl.querySelectorAll('.cookie');
+        for (let i = 0; i < subtractNum; i++) {
+            if (cookies[i]) cookies[i].style.opacity = '0.3';
+        }
+    }, 500);
+
+    // Generate choices
+    const choices = [correctAnswer];
+    while (choices.length < 3) {
+        let choice = getRandomInt(Math.max(0, correctAnswer - 4), Math.min(correctAnswer + 4, 25));
+        if (!choices.includes(choice)) choices.push(choice);
+    }
+    choices.sort(() => Math.random() - 0.5);
+
+    choicesContainer.innerHTML = choices.map(c => `
+        <button onclick="checkAnswer(${c})" class="choice-button w-full bg-orange-500 text-white text-3xl font-bold py-4 rounded-xl hover:bg-orange-600">
+            ${c}
+        </button>
+    `).join('');
+}
+
+function checkAnswer(selected) {
+    choicesContainer.style.pointerEvents = 'none';
+    if (selected === correctAnswer) {
+        score++;
+        scoreEl.textContent = score;
+        feedbackEl.className = 'h-8 mt-6 text-lg font-bold text-green-600';
+        feedbackEl.textContent = 'Correct! 🍪';
+        if (score >= REQUIRED_SCORE) {
+            feedbackEl.textContent = '🎉 Level Completed!';
+            notifyLevelComplete();
+            return; // stop further questions
+        }
+    } else {
+        feedbackEl.className = 'h-8 mt-6 text-lg font-bold text-red-600';
+        feedbackEl.textContent = `Wrong! ${subtractionTextEl.textContent.split('=')[0]} = ${correctAnswer}`;
+    }
+
+    setTimeout(() => {
+        feedbackEl.textContent = '';
+        choicesContainer.style.pointerEvents = 'auto';
+        if (score < REQUIRED_SCORE) generateQuestion();
+    }, 1500);
+}
+
+function startGame() {
+    score = 0;
+    scoreEl.textContent = score;
+    startBtn.classList.add('hidden');
+    feedbackEl.textContent = '';
+    generateQuestion();
+}
+
+window.startGame = startGame;
+window.checkAnswer = checkAnswer;
+</script>
+</body>
+</html>

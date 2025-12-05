@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chapter 5 – Level 3: Telling Time</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #74b9ff 0%, #f0f9ff 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-top: 50px;
+            font-size: 36px;
+            color: #004d7f;
+            text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.9);
+        }
+
+        #clockContainer {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 40px 0;
+            border: 8px solid #ffde54;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ffffff 0%, #d0f0ff 100%);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        #clockNumbers div {
+            position: absolute;
+            font-weight: 800;
+            color: #004d7f;
+            font-size: 20px;
+            user-select: none;
+        }
+
+        .hand {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform-origin: 0% 50%;
+            border-radius: 4px;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .hour {
+            width: 40%;
+            height: 6px;
+            background: #004d7f;
+        }
+
+        .minute {
+            width: 48%;
+            height: 3px;
+            background: #e63946;
+        }
+
+        #centerDot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #004d7f;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #question {
+            font-size: 22px;
+            color: #004d7f;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        #answerInput {
+            padding: 12px 15px;
+            font-size: 18px;
+            border-radius: 8px;
+            border: 3px solid #fff;
+            margin-bottom: 20px;
+            width: 150px;
+            text-align: center;
+        }
+
+        #submitBtn, #nextBtn {
+            padding: 12px 28px;
+            background: linear-gradient(145deg, #06d6a0, #1b9aaa);
+            border: none;
+            border-radius: 10px;
+            color: #004d7f;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        #submitBtn:hover, #nextBtn:hover {
+            transform: translateY(-2px);
+        }
+
+        #feedback {
+            font-size: 24px;
+            font-weight: 700;
+            min-height: 35px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Level 3 – Telling Time</h1>
+
+    <div id="clockContainer">
+        <div id="clockNumbers"></div>
+        <div class="hand hour" id="hourHand"></div>
+        <div class="hand minute" id="minuteHand"></div>
+        <div id="centerDot"></div>
+    </div>
+
+    <div id="question">Enter the time shown on the clock (HH:MM format):</div>
+    <input type="text" id="answerInput" placeholder="e.g. 3:15">
+    <div>
+        <button id="submitBtn">Submit</button>
+        <button id="nextBtn" onclick="nextQuestion()" style="display:none">Next</button>
+    </div>
+    <div id="feedback"></div>
+
+    <script>
+        const totalQuestions = 5;
+        let current = 0;
+        let score = 0;
+
+        const clockNumbersContainer = document.getElementById("clockNumbers");
+        const clockRadius = 150;
+
+        // Draw numbers 1-12
+        for (let i = 1; i <= 12; i++) {
+            const angle = (i * 30 - 90) * Math.PI / 180;
+            const x = clockRadius + Math.cos(angle) * (clockRadius - 30);
+            const y = clockRadius + Math.sin(angle) * (clockRadius - 30);
+            const numDiv = document.createElement('div');
+            numDiv.style.left = `${x - 10}px`;
+            numDiv.style.top = `${y - 10}px`;
+            numDiv.innerText = i;
+            clockNumbersContainer.appendChild(numDiv);
+        }
+
+        function getRandomTime() {
+            const hour = Math.floor(Math.random() * 12) + 1;
+            const minute = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+            return { hour, minute };
+        }
+
+        function rotateHands(hour, minute) {
+            const h = hour % 12;
+            const hourDeg = (h * 30) + (minute * 0.5) - 90;
+            const minuteDeg = (minute * 6) - 90;
+            document.getElementById("hourHand").style.transform = `rotate(${hourDeg}deg)`;
+            document.getElementById("minuteHand").style.transform = `rotate(${minuteDeg}deg)`;
+        }
+
+        function formatTime(h, m) {
+            return `${h}:${m.toString().padStart(2,'0')}`;
+        }
+
+        function loadQuestion() {
+            document.getElementById("feedback").innerText = '';
+            document.getElementById("nextBtn").style.display = 'none';
+            document.getElementById("submitBtn").style.display = 'inline-block';
+            document.getElementById("answerInput").value = '';
+
+            window.currentTime = getRandomTime();
+            rotateHands(window.currentTime.hour, window.currentTime.minute);
+        }
+
+        document.getElementById("submitBtn").onclick = function() {
+            const userAnswer = document.getElementById("answerInput").value.trim();
+            const correctAnswer = formatTime(window.currentTime.hour, window.currentTime.minute);
+
+            if (userAnswer === correctAnswer) {
+                document.getElementById("feedback").innerText = "✅ Correct!";
+                document.getElementById("feedback").style.color = "#06d6a0";
+                score++;
+            } else {
+                document.getElementById("feedback").innerText = `❌ Wrong! Correct: ${correctAnswer}`;
+                document.getElementById("feedback").style.color = "#e63946";
+            }
+
+            document.getElementById("submitBtn").style.display = 'none';
+            document.getElementById("nextBtn").style.display = 'inline-block';
+        };
+
+        function nextQuestion() {
+            current++;
+            if (current >= totalQuestions) {
+                alert(`🎉 Level 3 Completed! Score: ${score}/${totalQuestions}`);
+                localStorage.setItem("C5_Level3", "completed");
+                window.location.href = "C5.html";
+            } else {
+                loadQuestion();
+            }
+        }
+
+        window.onload = loadQuestion;
+    </script>
+</body>
+</html>

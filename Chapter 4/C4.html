@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 4 – Money</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* 1. Global & Background (Wealth Theme) */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f0fff4 0%, #d8f5e7 100%);
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-top: 40px;
+            font-size: 38px;
+            font-weight: 800;
+            color: #008060;
+            text-shadow: 2px 2px 0 #ffffff, 4px 4px 0 rgba(0, 0, 0, 0.1);
+            letter-spacing: 1px;
+        }
+
+        /* 2. Container Styling */
+        .level-container {
+            width: 90%;
+            max-width: 500px;
+            margin: 40px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 3. Level Button Base */
+        .level {
+            padding: 20px 25px;
+            font-size: 22px;
+            font-weight: 600;
+            border-radius: 15px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: left;
+            box-shadow: 0 6px 0 #00503a;
+        }
+
+        .level span {
+            margin-right: 15px;
+        }
+
+        .unlocked {
+            background: #00cc7a;
+            box-shadow: 0 6px 0 #00995c;
+        }
+
+        .unlocked:hover {
+            transform: translateY(-3px) scale(1.02);
+            background: #00e086;
+            box-shadow: 0 9px 0 #00995c;
+        }
+
+        .unlocked:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #00995c;
+        }
+
+        .locked {
+            background: #9fa8a3;
+            cursor: not-allowed;
+            box-shadow: 0 6px 0 #606d68;
+            opacity: 0.8;
+        }
+
+        .locked:hover {
+            transform: none;
+            box-shadow: 0 6px 0 #606d68;
+        }
+
+        #resetBtn {
+            margin-top: 30px;
+            padding: 12px 25px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            background: #e63946;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #a82a35;
+            transition: 0.2s;
+        }
+
+        #resetBtn:hover {
+            background: #cc2e3d;
+        }
+
+        #resetBtn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #a82a35;
+        }
+
+        /* Back to Main Button */
+        #backToMainBtn {
+            margin-top: 20px;
+            padding: 12px 25px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            background: #FF6F00;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #cc5500;
+            transition: 0.2s;
+        }
+
+        #backToMainBtn:hover {
+            background: #e65c00;
+        }
+
+        #backToMainBtn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #cc5500;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>💰 Chapter 4 – Money</h1>
+
+    <!-- Back to Main Menu Button -->
+    <button id="backToMainBtn">⬅️ Back to Main Menu</button>
+
+    <div class="level-container">
+        <button id="lvl1" class="level locked"><span class="status-icon"></span>Level 1 – Recognise Money</button>
+        <button id="lvl2" class="level locked"><span class="status-icon"></span>Level 2 – Value of Money</button>
+        <button id="lvl3" class="level locked"><span class="status-icon"></span>Level 3 – Conversion of Money</button>
+        <button id="lvl4" class="level locked"><span class="status-icon"></span>Level 4 – Get & Record Money</button>
+        <button id="lvl5" class="level locked"><span class="status-icon"></span>Level 5 – My Project</button>
+        <button id="lvl6" class="level locked"><span class="status-icon"></span>Level 6 – Solve</button>
+        <button id="lvl7" class="level locked"><span class="status-icon"></span>Level 7 – Smart Run</button>
+    </div>
+
+    <button id="resetBtn">Reset Progress</button>
+
+    <script>
+        // --- Back to Main Menu ---
+        document.getElementById('backToMainBtn').addEventListener('click', () => {
+            window.location.href = "../index.html"; // Adjust path to your main page
+        });
+
+        const EMOJIS = { locked: "🔒", unlocked: "▶️", completed: "✅" };
+
+        function loadProgress() {
+            let allCompleted = true;
+
+            for (let i = 1; i <= 7; i++) {
+                const levelId = "C4_Level" + i;
+                const status = localStorage.getItem(levelId);
+
+                const isUnlocked = (i === 1 || localStorage.getItem("C4_Level" + (i - 1)) === "completed");
+
+                if (isUnlocked) {
+                    unlockLevel(i, status === "completed");
+                    if (status !== "completed") allCompleted = false;
+                } else {
+                    lockLevel(i);
+                    allCompleted = false;
+                }
+            }
+
+            if (allCompleted) {
+                document.querySelector('h1').innerHTML += ' 🏆';
+            }
+        }
+
+        function unlockLevel(level, isCompleted) {
+            let btn = document.getElementById("lvl" + level);
+            btn.classList.remove("locked");
+            btn.classList.add("unlocked");
+            btn.onclick = function () { startLevel(level); };
+
+            const icon = isCompleted ? EMOJIS.completed : EMOJIS.unlocked;
+            let iconSpan = btn.querySelector(".status-icon");
+            if (iconSpan) iconSpan.innerHTML = icon;
+
+            if (isCompleted) {
+                btn.style.background = "#ffd700";
+                btn.style.boxShadow = "0 6px 0 #ccaa00";
+                btn.style.color = "#333";
+            } else {
+                btn.style.background = "#00cc7a";
+                btn.style.boxShadow = "0 6px 0 #00995c";
+                btn.style.color = "white";
+            }
+        }
+
+        function lockLevel(level) {
+            let btn = document.getElementById("lvl" + level);
+            btn.classList.remove("unlocked");
+            btn.classList.add("locked");
+            btn.onclick = null;
+
+            let iconSpan = btn.querySelector(".status-icon");
+            if (iconSpan) iconSpan.innerHTML = EMOJIS.locked;
+        }
+
+        function startLevel(level) {
+            window.location.href = `Level${level}.html`;
+        }
+
+        document.getElementById("resetBtn").addEventListener("click", () => {
+            if (confirm("Are you sure you want to reset all progress for Chapter 4 - Money?")) {
+                for (let i = 1; i <= 7; i++) localStorage.removeItem("C4_Level" + i);
+                alert("Progress reset! Level 1 is unlocked.");
+                window.location.reload();
+            }
+        });
+
+        loadProgress();
+    </script>
+
+</body>
+
+</html>

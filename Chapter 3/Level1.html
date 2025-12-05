@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Level 1 - Fraction Match</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+    /* 1. Global & Theme Styles */
+    body {
+        font-family: 'Poppins', sans-serif; /* Friendly, modern font */
+        background: #f0f8ff; /* Light blue/sky background */
+        text-align: center;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 32px;
+        color: #264653; /* Darker header color */
+        font-weight: 800;
+        margin-bottom: 10px;
+    }
+
+    #questionBox {
+        margin-top: 25px;
+        padding: 30px;
+        background: white;
+        border-radius: 25px;
+        width: 90%;
+        max-width: 480px; 
+        margin-left: auto;
+        margin-right: auto;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    #prompt {
+        font-size: 22px;
+        color: #e76f51; /* Orange/Red for emphasis */
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+
+    /* 2. Shape Styles (Chocolate Bar/Block Theme) */
+    .shapeContainer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 180px;
+        margin-bottom: 20px;
+    }
+    
+    .shape {
+        position: relative;
+        border: 4px solid #264653; /* Strong border for "the whole" */
+        border-radius: 5px;
+        display: flex; /* Use flex to align slices easily */
+        overflow: hidden;
+        box-shadow: 3px 3px 10px rgba(0,0,0,0.1);
+    }
+    
+    /* Targeting specific shapes for size */
+    .square {
+        width: 150px;
+        height: 150px;
+        background: #f4a261; /* Light chocolate color */
+    }
+
+    .rectangle {
+        width: 250px;
+        height: 100px;
+        background: #f4a261; /* Light chocolate color */
+    }
+
+    .slice {
+        height: 100%;
+        box-sizing: border-box;
+        border-right: 1px solid #264653; /* Grid lines for slices */
+        background: none;
+        position: relative; 
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    /* Remove the right border on the last slice */
+    .shape .slice:last-child {
+        border-right: none;
+    }
+
+    /* Shaded Block Style */
+    .shaded {
+        background: #e76f51; /* Darker, appetizing color (e.g., dark chocolate or frosting) */
+        width: 100%;
+        height: 100%;
+    }
+
+    /* 3. Option Button Styles */
+    button.option {
+        display: block;
+        width: 80%;
+        margin: 12px auto;
+        padding: 18px;
+        border-radius: 20px;
+        border: none;
+        font-size: 26px; /* Bigger fractions */
+        cursor: pointer;
+        background: #2a9d8f; /* Green color for options */
+        color: white;
+        font-weight: bold;
+        transition: 0.2s;
+        box-shadow: 0 4px 0 #264653;
+    }
+    button.option:hover {
+        transform: translateY(-2px);
+        background: #1e7a6d;
+        box-shadow: 0 6px 0 #264653;
+    }
+    button.option:active {
+        transform: translateY(2px);
+        box-shadow: 0 2px 0 #264653;
+    }
+
+    #feedback {
+        font-size: 30px;
+        font-weight: 800;
+        margin-top: 15px;
+        height: 50px;
+    }
+</style>
+</head>
+<body>
+
+<h1>Level 1 – Fraction Match</h1>
+
+<div id="questionBox">
+    <div id="prompt">Match this divided block to its fraction.</div>
+    <div id="shapeContainer"></div>
+    <div id="feedback"></div>
+    <div id="options"></div>
+</div>
+
+<script>
+let questions = [];
+let current = 0;
+let score = 0;
+
+function formatFraction(n, d) {
+    return `${n}/${d}`;
+}
+
+// Generate 5 random fraction questions
+function generateQuestions() {
+    for (let i = 0; i < 5; i++) {
+        let shapes = ["square", "rectangle"];
+        let shape = shapes[Math.floor(Math.random() * shapes.length)];
+
+        let denominator = [2, 3, 4][Math.floor(Math.random() * 3)]; 
+        let numerator = Math.floor(Math.random() * denominator) + 1; 
+
+        questions.push({
+            shape: shape,
+            num: numerator,
+            den: denominator
+        });
+    }
+}
+
+// Draw the shape using CSS Flexbox for clear, equal divisions (like a chocolate bar)
+function drawShape(q) {
+    let container = document.getElementById("shapeContainer");
+    container.innerHTML = "";
+    
+    // Create the main shape wrapper (e.g., the chocolate bar)
+    let shapeDiv = document.createElement('div');
+    shapeDiv.className = `shape ${q.shape}`;
+    
+    // Calculate slice size based on the number of divisions (denominator)
+    let totalSize = (q.shape === 'square' ? 150 : 250);
+    let sliceWidthPercent = 100 / q.den;
+
+    for (let i = 0; i < q.den; i++) {
+        let slice = document.createElement('div');
+        slice.className = 'slice';
+        slice.style.width = sliceWidthPercent + '%';
+        
+        // Add shading if the index (i) is less than the numerator (q.num)
+        if (i < q.num) {
+            let shadedDiv = document.createElement('div');
+            shadedDiv.className = 'shaded';
+            slice.appendChild(shadedDiv);
+        }
+        
+        shapeDiv.appendChild(slice);
+    }
+
+    container.appendChild(shapeDiv);
+}
+
+function loadQuestion() {
+    let q = questions[current];
+    drawShape(q);
+    
+    document.getElementById("prompt").innerHTML = `🍫 Q${current+1}: Match this divided block to its fraction. (Total parts: **${q.den}**)`;
+
+    let correct = formatFraction(q.num, q.den);
+    
+    // Generate 2 wrong options 
+    let wrong1 = formatFraction(q.num, q.den + 1); // Wrong denominator (e.g., 2/3 becomes 2/4)
+    let wrong2 = formatFraction(q.num + 1, q.den); // Wrong numerator (e.g., 2/3 becomes 3/3)
+    
+    // Safety check to keep options simple and non-negative
+    if (q.num + 1 > q.den) wrong2 = formatFraction(q.num - 1, q.den);
+    if (q.num - 1 < 1) wrong2 = formatFraction(q.num + 1, q.den);
+    if (q.den + 1 > 5) wrong1 = formatFraction(q.num, q.den - 1); // If den is 4, don't make it 5
+    
+    let all = [correct, wrong1, wrong2].sort(() => Math.random() - 0.5);
+
+    let optHTML = "";
+    all.forEach(opt => {
+        optHTML += `<button class="option" onclick="checkAnswer('${opt}','${correct}')">${opt}</button>`;
+    });
+
+    document.getElementById("options").innerHTML = optHTML;
+    document.getElementById("feedback").innerHTML = "";
+}
+
+function checkAnswer(ans, correct) {
+    let fb = document.getElementById("feedback");
+
+    if (ans === correct) {
+        fb.style.color = "#2a9d8f"; 
+        fb.innerHTML = "✨ Awesome! That's a perfect match! ✔";
+        score++;
+    } else {
+        fb.style.color = "#e76f51"; 
+        fb.innerHTML = "🤔 Not quite! Remember: shaded parts / total parts. ✖";
+    }
+
+    setTimeout(() => {
+        fb.innerHTML = "";
+        current++;
+        if (current >= 5) finishLevel();
+        else loadQuestion();
+    }, 1200); 
+}
+
+function finishLevel() {
+    localStorage.setItem("C3_Level1", "completed");
+    alert(`Level 1 Completed! You scored ${score}/5.\nLevel 2 is now unlocked!`);
+    window.location.href = "C3.html";
+}
+
+// initialize
+generateQuestions();
+loadQuestion();
+</script>
+
+</body>
+</html>

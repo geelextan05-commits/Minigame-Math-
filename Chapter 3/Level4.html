@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Level 4 – Fraction Solve</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+    /* 1. Global & Theme Styles */
+    body {
+        font-family: 'Poppins', sans-serif; /* Friendly font */
+        background: #fff8f0; /* Soft, warm background */
+        text-align: center;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 32px;
+        color: #ff6f91; /* Bright pink/red for sweets */
+        font-weight: 800;
+        margin-bottom: 30px;
+    }
+
+    #questionBox {
+        margin-top: 20px;
+        padding: 30px;
+        background: white;
+        border-radius: 25px;
+        width: 90%;
+        max-width: 550px;
+        margin-left: auto;
+        margin-right: auto;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    }
+
+    #questionText {
+        font-size: 28px;
+        color: #00b4d8; /* Blue for question focus */
+        font-weight: 700;
+        margin-bottom: 25px;
+    }
+
+    /* 2. Option Button Styles */
+    button.option {
+        display: block;
+        width: 90%;
+        margin: 12px auto;
+        padding: 18px;
+        border-radius: 20px;
+        border: 2px solid #ffbf00; /* Border for emphasis */
+        font-size: 26px; /* Bigger font for fractions */
+        cursor: pointer;
+        background: #ffd65c; /* Yellow background */
+        transition: 0.2s;
+        box-shadow: 0 4px 0 #ffbf00;
+    }
+    button.option:hover {
+        transform: translateY(-2px);
+        background: #ffbf00;
+        box-shadow: 0 6px 0 #e6a800;
+    }
+    button.option:active {
+        transform: translateY(2px);
+        box-shadow: 0 2px 0 #ffbf00;
+    }
+
+    #feedback {
+        font-size: 28px;
+        font-weight: 800;
+        height: 50px;
+        margin-top: 15px;
+    }
+</style>
+</head>
+<body>
+
+<h1>🎂 Level 4 – Fraction Solve</h1>
+
+<div id="questionBox">
+    <div id="questionText"></div>
+    <div id="options"></div>
+    <div id="feedback"></div>
+</div>
+
+<script>
+let questions = [];
+let current = 0;
+
+// Helper function to format fraction as string
+function formatFraction(n, d) {
+    return `${n}/${d}`;
+}
+
+// Generate 5 simple fraction problems (Same Denominator)
+function generateQuestions() {
+    for(let i=0;i<5;i++){
+        // Denominator (d) must be the same for both fractions
+        let denominator = [3, 4, 5, 6][Math.floor(Math.random()*4)]; 
+        
+        let n1, n2;
+        let operators = ["+", "-"];
+        let op = operators[Math.floor(Math.random()*2)];
+        let correctN;
+        
+        if (op === "+") {
+            // Addition: n2 can be 1 or 2, allowing for answers that might be improper (e.g., 5/4)
+            n1 = Math.floor(Math.random()*(denominator - 1)) + 1; // Start n1 from 1
+            n2 = Math.floor(Math.random()*2) + 1; 
+            correctN = n1 + n2;
+        } else {
+            // Subtraction: n1 must be > n2
+            n1 = Math.floor(Math.random()*(denominator - 1)) + 2; // Start n1 from 2
+            n2 = Math.floor(Math.random()*(n1 - 1)) + 1; // n2 is always less than n1
+            correctN = n1 - n2;
+        }
+
+        let answerString = formatFraction(correctN, denominator);
+
+        // Create 2 wrong options by adjusting the numerator (keeping the denominator the same)
+        let wrongN1 = correctN + 1;
+        let wrongN2 = (correctN > 1) ? correctN - 1 : correctN + 2; 
+
+        // Ensure options are not duplicates
+        let options = [answerString, formatFraction(wrongN1, denominator)];
+        if (wrongN2 !== correctN && wrongN2 > 0) { // Check for n > 0
+             options.push(formatFraction(wrongN2, denominator));
+        }
+        // Shuffle options and take the first 3
+        options = options.sort(()=>Math.random()-0.5).slice(0, 3);
+        
+        // Final question text setup
+        let qText = `${formatFraction(n1, denominator)} ${op} ${formatFraction(n2, denominator)}`;
+
+        questions.push({
+            qText: qText,
+            correct: answerString,
+            options: options
+        });
+    }
+}
+
+function loadQuestion(){
+    let q = questions[current];
+    document.getElementById("feedback").innerHTML = "";
+    // Updated question text to reflect the theme and problem
+    document.getElementById("questionText").innerHTML = `🍰 Q${current+1}: How much treat is left? <br> ${q.qText} = ?`;
+
+    let html = "";
+    q.options.forEach(opt=>{
+        // Note: The answer needs to be passed as a string because it's a fraction
+        html += `<button class="option" onclick="checkAnswer('${opt}', '${q.correct}')">${opt}</button>`;
+    });
+
+    document.getElementById("options").innerHTML = html;
+}
+
+function checkAnswer(ans, correct){
+    let fb = document.getElementById("feedback");
+    
+    if(ans === correct){
+        fb.style.color = "green";
+        fb.innerHTML = "🎉 Yummy! That's the correct amount! ✔";
+    } else {
+        fb.style.color = "red";
+        fb.innerHTML = `🤔 Oops! Try again. The correct answer was ${correct}`;
+    }
+
+    setTimeout(()=>{
+        current++;
+        if(current>=5) finishLevel();
+        else loadQuestion();
+    },1500);
+}
+
+function finishLevel(){
+    // Note: The original code used C3_Level4 for the level completion flag, maintaining that here.
+    localStorage.setItem("C3_Level4","completed"); 
+    alert("Level 4 Completed!\nLevel 5 is now unlocked.");
+    window.location.href="C3.html";
+}
+
+generateQuestions();
+loadQuestion();
+</script>
+
+</body>
+</html>

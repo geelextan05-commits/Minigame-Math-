@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 5 – Level 7: Clock Puzzle</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --blue-light: #74b9ff;
+            --blue-dark: #004d7f;
+            --yellow-main: #ffb703;
+            --yellow-accent: #ffde54;
+            --green-main: #06d6a0;
+            --green-accent: #1b9aaa;
+            --red-wrong: #e63946;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, var(--blue-light) 0%, #f0f9ff 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+
+        h1 {
+            margin-top: 40px;
+            font-size: 32px;
+            color: var(--blue-dark);
+            text-shadow: 1px 1px 3px rgba(255,255,255,0.9);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .main-container {
+            background-color: white;
+            padding: 30px 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 77, 127, 0.4);
+            max-width: 450px;
+            width: 90%;
+            border-top: 8px solid var(--blue-dark);
+            text-align: center;
+        }
+
+        #question {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--blue-dark);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        #targetTime {
+            color: var(--red-wrong);
+            font-size: 24px;
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        #clockContainer {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 20px auto;
+            border: 8px solid var(--yellow-main);
+            border-radius: 50%;
+            background: radial-gradient(circle,#ffffff 0%,#e0f2ff 100%);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3) inset, 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        .number {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: rotate(var(--rotation)); 
+            transform-origin: 0 0; 
+        }
+        .number span {
+            position: absolute;
+            transform: translate(-50%, -140px) rotate(calc(-1 * var(--rotation))); 
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--blue-dark);
+            width: 30px;
+            text-align: center;
+        }
+        
+        .hand {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform-origin: 0% 50%; 
+            border-radius: 4px;
+            transition: width 0.3s, height 0.3s, background 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            cursor: grab;
+            touch-action: none;
+        }
+        
+        .hour { width: 40%; height: 8px; background: var(--blue-dark); z-index: 10; }
+        .minute { width: 48%; height: 5px; background: var(--red-wrong); z-index: 20; }
+        
+        #centerDot { 
+            position: absolute; 
+            width: 16px; 
+            height: 16px; 
+            background: var(--blue-dark); 
+            border: 3px solid white;
+            border-radius: 50%; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            z-index: 30; 
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        #digitalHint { 
+            font-size: 24px; 
+            font-weight: 800; 
+            color: var(--red-wrong); 
+            margin-top: 20px;
+            min-height: 30px;
+        }
+
+        #submitBtn, #nextBtn, #backBtn { 
+            margin-top: 20px; 
+            padding: 12px 35px; 
+            font-size: 20px; 
+            font-weight: 700; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            transition: all 0.2s;
+            box-shadow: 0 5px 0 rgba(0, 0, 0, 0.2);
+            user-select: none;
+        }
+
+        #submitBtn { 
+            background: linear-gradient(145deg, var(--yellow-accent), var(--yellow-main)); 
+            color: var(--blue-dark); 
+            box-shadow: 0 4px 0 #cc9b08;
+        }
+        #submitBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #cc9b08;
+        }
+
+        #nextBtn { 
+            background: linear-gradient(145deg, var(--green-main), var(--green-accent)); 
+            color: white; 
+            box-shadow: 0 4px 0 #0e7a8b;
+            display: none; 
+        }
+        #nextBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #0e7a8b;
+        }
+
+        #backBtn {
+            background: #ffd60a;
+            color: #004d7f;
+            box-shadow: 0 4px 0 #cc9b08;
+        }
+        #backBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #cc9b08;
+        }
+
+        #feedback { 
+            font-size: 22px; 
+            font-weight: 800; 
+            margin-top: 20px; 
+            min-height: 30px; 
+            text-align: center; 
+        }
+
+        @media (max-width: 400px) {
+            #clockContainer { width: 250px; height: 250px; }
+            .number span { font-size: 18px; transform: translate(-50%, -115px) rotate(calc(-1 * var(--rotation))); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Level 7 – Clock Puzzle</h1>
+
+    <div class="main-container">
+        <div id="question">Drag the hands to match the time: <span id="targetTime"></span></div>
+
+        <div id="clockContainer">
+            <div class="number" style="--rotation:0deg;"><span>12</span></div>
+            <div class="number" style="--rotation:30deg;"><span>1</span></div>
+            <div class="number" style="--rotation:60deg;"><span>2</span></div>
+            <div class="number" style="--rotation:90deg;"><span>3</span></div>
+            <div class="number" style="--rotation:120deg;"><span>4</span></div>
+            <div class="number" style="--rotation:150deg;"><span>5</span></div>
+            <div class="number" style="--rotation:180deg;"><span>6</span></div>
+            <div class="number" style="--rotation:210deg;"><span>7</span></div>
+            <div class="number" style="--rotation:240deg;"><span>8</span></div>
+            <div class="number" style="--rotation:270deg;"><span>9</span></div>
+            <div class="number" style="--rotation:300deg;"><span>10</span></div>
+            <div class="number" style="--rotation:330deg;"><span>11</span></div>
+
+            <div class="hand hour" id="hourHand"></div>
+            <div class="hand minute" id="minuteHand"></div>
+            <div id="centerDot"></div>
+        </div>
+
+        <div id="digitalHint"></div>
+        <button id="submitBtn">Check Answer</button>
+        <button id="nextBtn" onclick="nextRound()">Next Puzzle</button>
+        <button id="backBtn" onclick="goBack()">Back to Main Page</button>
+        <div id="feedback"></div>
+    </div>
+
+    <script>
+        let targetHour, targetMinute;
+        let selectedHand = null;
+        let isDragging = false;
+
+        function generateTime() {
+            targetHour = Math.floor(Math.random()*12) + 1;
+            targetMinute = [0, 15, 30, 45][Math.floor(Math.random()*4)];
+            document.getElementById('targetTime').innerText = formatTime(targetHour, targetMinute);
+            rotateHands(Math.floor(Math.random()*12)+1, [5, 20, 35, 50][Math.floor(Math.random()*4)], true);
+        }
+
+        function formatTime(h, m){ 
+            const displayH = h === 0 ? 12 : h; 
+            return `${displayH}:${m.toString().padStart(2,'0')}`; 
+        }
+
+        function rotateHands(h, m, randomize = false){
+            let hourAngle = (h % 12) * 30 + m/2;
+            let minuteAngle = m*6;
+
+            if(randomize){
+                hourAngle = Math.random() * 360;
+                minuteAngle = Math.random() * 360;
+            }
+
+            document.getElementById('hourHand').style.transform = `rotate(${hourAngle - 90}deg)`;
+            document.getElementById('minuteHand').style.transform = `rotate(${minuteAngle - 90}deg)`;
+        }
+
+        function getAngle(x, y) {
+            let angle = Math.atan2(y, x) * 180 / Math.PI;
+            return (angle + 360) % 360; 
+        }
+
+        function handleStart(e) {
+            const event = e.touches ? e.touches[0] : e;
+            if (e.target.classList.contains('hand')) {
+                selectedHand = e.target;
+                isDragging = true;
+                selectedHand.style.cursor = 'grabbing';
+                e.preventDefault(); 
+            }
+        }
+
+        function handleMove(e) {
+            if (!isDragging || !selectedHand) return;
+            const event = e.touches ? e.touches[0] : e;
+            const clockRect = document.getElementById('clockContainer').getBoundingClientRect();
+            const x = event.clientX - clockRect.left - clockRect.width / 2;
+            const y = event.clientY - clockRect.top - clockRect.height / 2;
+            const angle = getAngle(x, y);
+            selectedHand.style.transform = `rotate(${angle}deg)`;
+        }
+
+        function handleEnd() {
+            if (isDragging && selectedHand) {
+                selectedHand.style.cursor = 'grab';
+                isDragging = false;
+                selectedHand = null;
+            }
+        }
+
+        document.addEventListener('mousedown', handleStart);
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', handleEnd);
+        document.addEventListener('touchstart', handleStart);
+        document.addEventListener('touchmove', handleMove);
+        document.addEventListener('touchend', handleEnd);
+
+        document.getElementById('submitBtn').onclick = () => {
+            const hourHand = document.getElementById('hourHand');
+            const minuteHand = document.getElementById('minuteHand');
+
+            function getRotation(hand) {
+                const style = window.getComputedStyle(hand).getPropertyValue('transform');
+                const matrix = new DOMMatrixReadOnly(style);
+                const angleRad = Math.atan2(matrix.b, matrix.a);
+                return (angleRad * 180 / Math.PI + 360) % 360; 
+            }
+
+            let mAngle3 = getRotation(minuteHand);
+            let hAngle3 = getRotation(hourHand);
+
+            let mAngle12 = (mAngle3 + 90) % 360; 
+            let hAngle12 = (hAngle3 + 90) % 360;
+
+            let minuteRaw = Math.round(mAngle12 / 6);
+            if (minuteRaw === 60) minuteRaw = 0;
+
+            let minuteGuess = Math.round(minuteRaw / 15) * 15;
+            if (minuteGuess === 60) minuteGuess = 0;
+
+            let hourGuess = Math.round(hAngle12 / 30);
+            if(hourGuess === 0) hourGuess = 12;
+
+            const expectedHourAngle = (targetHour % 12) * 30 + targetMinute / 2; 
+            const checkHAngle = (hAngle12 + 360) % 360;
+            const checkTargetAngle = (expectedHourAngle + 360) % 360;
+            const hourTolerance = 5;
+
+            const isHourCorrect = Math.abs(checkHAngle - checkTargetAngle) < hourTolerance || 
+                                 Math.abs(checkHAngle - checkTargetAngle - 360) < hourTolerance ||
+                                 Math.abs(checkHAngle - checkTargetAngle + 360) < hourTolerance;
+
+            const isMinuteCorrect = minuteGuess === targetMinute;
+            const isCorrect = isHourCorrect && isMinuteCorrect;
+
+            document.getElementById('submitBtn').style.display='none';
+            document.getElementById('nextBtn').style.display='inline-block';
+
+            if (isCorrect) {
+                document.getElementById('feedback').innerText = '✅ Puzzle Solved! Perfect timing.';
+                document.getElementById('feedback').style.color = 'var(--green-main)';
+                document.getElementById('digitalHint').innerText = `You set the time to ${formatTime(targetHour, targetMinute)}`;
+            } else {
+                rotateHands(targetHour, targetMinute, false); 
+                document.getElementById('feedback').innerText = `❌ Wrong! Resetting hands to the correct time: ${formatTime(targetHour, targetMinute)}. Study the clock.`;
+                document.getElementById('feedback').style.color = 'var(--red-wrong)';
+                document.getElementById('digitalHint').innerText = `Target Time: ${formatTime(targetHour, targetMinute)}`;
+            }
+        };
+
+        function nextRound(){
+            document.getElementById('feedback').innerText = '';
+            document.getElementById('digitalHint').innerText = '';
+            document.getElementById('nextBtn').style.display='none';
+            document.getElementById('submitBtn').style.display='inline-block';
+            generateTime();
+        }
+
+        function goBack(){
+            window.location.href = "C5.html"; // Change this to your Chapter 5 main page
+        }
+        
+        window.onload = generateTime;
+
+    </script>
+
+</body>
+</html>

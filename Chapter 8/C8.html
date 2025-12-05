@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 8 – Space Adventure</title>
+<style>
+  /* --- General Page Setup --- */
+  body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: radial-gradient(circle at top, #0B0C2A, #1B1C44);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #fff;
+    position: relative;
+  }
+
+  h1 {
+    margin-top: 20px;
+    font-size: 3em;
+    text-align: center;
+    color: #FFD700;
+    text-shadow: 2px 2px 5px #000;
+  }
+
+  #instruction {
+    font-size: 1.2em;
+    margin: 10px 0 30px;
+    color: #a0cfff;
+  }
+
+  /* --- Orbit Container --- */
+  .orbit-container {
+    position: relative;
+    width: 500px;
+    height: 500px;
+  }
+
+  /* --- Orbit Circles --- */
+  .orbit {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border: 1px dashed rgba(255,255,255,0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .orbit1 { width: 150px; height: 150px; }
+  .orbit2 { width: 250px; height: 250px; }
+  .orbit3 { width: 350px; height: 350px; }
+  .orbit4 { width: 450px; height: 450px; }
+
+  /* --- Planet Styling --- */
+  .planet {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    color: #fff;
+    transition: transform 0.3s, box-shadow 0.3s;
+    box-shadow: 0 0 20px rgba(255,255,255,0.5);
+    z-index: 10;
+  }
+
+  .planet:hover {
+    transform: scale(1.3) translate(-50%, -50%);
+    box-shadow: 0 0 40px rgba(255,255,255,0.9);
+  }
+
+  .planet1 { background: #FF6F61; }
+  .planet2 { background: #6EC1E4; }
+  .planet3 { background: #FDD835; color: #000; }
+  .planet4 { background: #AB47BC; }
+
+  /* --- Center Sun --- */
+  .sun {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, #FFD700 0%, #FFA500 100%);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 60px #FFD700;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.2em;
+    text-align: center;
+    color: #fff;
+    z-index: 20;
+  }
+
+  /* --- Level Completion Indicator --- */
+  .completed {
+    border: 3px solid #00FF00 !important;
+  }
+
+  /* --- Back to Main Menu button --- */
+  #back-to-main {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background: #00C853;
+    color: white;
+    border: 3px solid #009624;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    z-index: 20;
+  }
+</style>
+</head>
+<body>
+
+<h1>🚀 Chapter 8 – Space Adventure</h1>
+<p id="instruction">Click a planet to start the level. Completed levels will glow green!</p>
+
+<div class="orbit-container">
+  <div class="sun">CH8</div>
+
+  <!-- Orbits -->
+  <div class="orbit orbit1"></div>
+  <div class="orbit orbit2"></div>
+  <div class="orbit orbit3"></div>
+  <div class="orbit orbit4"></div>
+
+  <!-- Planets -->
+  <div class="planet planet1" data-level="1">L1</div>
+  <div class="planet planet2" data-level="2">L2</div>
+  <div class="planet planet3" data-level="3">L3</div>
+  <div class="planet planet4" data-level="4">L4</div>
+</div>
+
+<!-- Back to Main Menu Button -->
+<button id="back-to-main" onclick="goBack()">⬅️ Back to Main Menu</button>
+
+<script>
+const planets = document.querySelectorAll('.planet');
+
+// Check localStorage for completed levels and mark planets
+planets.forEach(planet => {
+  const level = planet.dataset.level;
+  if(localStorage.getItem('C8_Level' + level) === 'completed') {
+    planet.classList.add('completed');
+  }
+
+  planet.addEventListener('click', () => {
+    window.location.href = `Level${level}.html`;
+  });
+});
+
+// Rotate planets continuously
+let angle = 0;
+function rotatePlanets() {
+  angle += 0.3; // rotation speed
+  planets.forEach((planet, index) => {
+    const radius = 75 + index * 50; // distance from sun
+    const rotateAngle = angle * (index % 2 === 0 ? 1 : -1); // alternate direction
+    planet.style.transform = `rotate(${rotateAngle}deg) translateX(${radius}px) translate(-50%, -50%)`;
+  });
+  requestAnimationFrame(rotatePlanets);
+}
+rotatePlanets();
+
+// Go back to main menu
+function goBack() {
+  window.location.href = '../index.html';
+}
+</script>
+
+</body>
+</html>

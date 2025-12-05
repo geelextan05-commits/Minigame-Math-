@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>Chapter 6 – Length, Mass & Volume</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(to bottom, #7986CB 0%, #E8EAF6 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+}
+
+h1 {
+    margin-top: 40px;
+    font-size: 48px;
+    font-weight: 900;
+    color: #FFCA28;
+    text-shadow: 3px 3px 0 #3949AB, 5px 5px 0 rgba(0,0,0,0.2);
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+}
+
+#stand {
+    position: relative;
+    margin-top: 50px;
+    width: 400px;
+    height: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#stand::before {
+    content: '';
+    position: absolute;
+    bottom: -50px;
+    width: 50px;
+    height: 150px;
+    background: #3E2723;
+    border-radius: 5px 5px 0 0;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+}
+
+#wheel {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    border: 10px solid #795548;
+    border-radius: 50%;
+}
+
+/* --- SPOKES --- */
+.spoke {
+    position: absolute;
+    top: 101%;
+    left: 50%;
+    width: 5px;
+    height: 200px;
+    background: #5D4037;
+    transform-origin: 50% 0%;
+    z-index: 0; /* Behind buttons */
+}
+
+/* Rotate spokes */
+#S1 { transform: translate(-50%, -100%) rotateZ(0deg); }
+#S2 { transform: translate(-50%, -100%) rotateZ(45deg); }
+#S3 { transform: translate(-50%, -100%) rotateZ(90deg); }
+#S4 { transform: translate(-50%, -100%) rotateZ(135deg); }
+#S5 { transform: translate(-50%, -100%) rotateZ(180deg); }
+#S6 { transform: translate(-50%, -100%) rotateZ(225deg); }
+#S7 { transform: translate(-50%, -100%) rotateZ(270deg); }
+#S8 { transform: translate(-50%, -100%) rotateZ(315deg); }
+
+.button {
+    position: absolute;
+    width: 120px;
+    height: 80px;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #3949AB;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    border: 3px solid #64B5F6;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    background: white;
+    z-index: 5;
+    top: calc(50% - 40px);
+    left: calc(50% - 60px);
+    transform-origin: 60px 200px;
+    transition: transform 0.5s;
+}
+
+#L1 { transform: rotateZ(0deg) translateY(-200px) rotateZ(0deg); }
+#L2 { transform: rotateZ(45deg) translateY(-200px) rotateZ(-45deg); }
+#L3 { transform: rotateZ(90deg) translateY(-200px) rotateZ(-90deg); }
+#L4 { transform: rotateZ(135deg) translateY(-200px) rotateZ(-135deg); }
+#L5 { transform: rotateZ(180deg) translateY(-200px) rotateZ(-180deg); }
+#L6 { transform: rotateZ(225deg) translateY(-200px) rotateZ(-225deg); }
+#L7 { transform: rotateZ(270deg) translateY(-200px) rotateZ(-270deg); }
+#L8 { transform: rotateZ(315deg) translateY(-200px) rotateZ(-315deg); }
+
+.level-icon { display: block; font-size: 25px; margin-bottom: 2px; line-height: 1; }
+
+.button:hover:not(.locked) {
+    transform: scale(1.05) translateY(-5px);
+    background: #E3F2FD;
+    border-color: #2196F3;
+    box-shadow: 0 10px 20px rgba(33, 150, 243, 0.4);
+}
+
+.locked {
+    background: #CFD8DC;
+    color: #78909C;
+    cursor: not-allowed;
+    border-color: #B0BEC5;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    opacity: 0.8;
+    pointer-events: none;
+}
+
+.unlocked {
+    pointer-events: auto !important;
+    background: #B3E5FC;
+    color: #1A237E;
+}
+
+#reset-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background: #FF5252;
+    color: white;
+    border: 3px solid #D50000;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    z-index: 20;
+}
+
+#turn-left-btn {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    padding: 10px 20px;
+    background: #2979FF;
+    color: white;
+    border: 3px solid #1565C0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    z-index: 20;
+}
+
+/* --- Back to Main Menu button --- */
+#back-to-main {
+    position: absolute;
+    bottom: 60px; /* above reset button */
+    right: 20px;
+    padding: 10px 20px;
+    background: #00C853;
+    color: white;
+    border: 3px solid #009624;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    z-index: 20;
+}
+</style>
+</head>
+
+<body>
+<h1>🎡 Chapter 6 – The Measurement Wheel ⚖️</h1>
+
+<div id="stand">
+    <div id="wheel">
+        <!-- SPOKES -->
+        <div class="spoke" id="S1"></div>
+        <div class="spoke" id="S2"></div>
+        <div class="spoke" id="S3"></div>
+        <div class="spoke" id="S4"></div>
+        <div class="spoke" id="S5"></div>
+        <div class="spoke" id="S6"></div>
+        <div class="spoke" id="S7"></div>
+        <div class="spoke" id="S8"></div>
+
+        <!-- LEVEL BUTTONS (unchanged) -->
+        <div class="button" id="L1">
+            <span class="level-icon">📏</span>
+            Level 1<br>Recognise Length
+        </div>
+        <div class="button locked" id="L2">
+            <span class="level-icon">📏</span>
+            Level 2<br>Measure Length
+        </div>
+        <div class="button locked" id="L3">
+            <span class="level-icon">⚖️</span>
+            Level 3<br>Recognise Mass
+        </div>
+        <div class="button locked" id="L4">
+            <span class="level-icon">⚖️</span>
+            Level 4<br>Compare Mass
+        </div>
+        <div class="button locked" id="L5">
+            <span class="level-icon">💧</span>
+            Level 5<br>Recognise Volume
+        </div>
+        <div class="button locked" id="L6">
+            <span class="level-icon">💧</span>
+            Level 6<br>Compare Volume
+        </div>
+        <div class="button locked" id="L7">
+            <span class="level-icon">🧠</span>
+            Level 7<br>Solve Problems
+        </div>
+        <div class="button locked" id="L8">
+            <span class="level-icon">🏅</span>
+            Level 8<br>Smart Run
+        </div>
+    </div>
+</div>
+
+<button id="turn-left-btn" onclick="turnLeft()">⬅️ Shift Levels</button>
+<button id="back-to-main" onclick="goBack()">⬅️ Back to Main Menu</button>
+<button id="reset-btn" onclick="resetProgress()">🔄 Reset All Progress</button>
+
+<script>
+const levelFiles = {
+    'L1': 'Level1.html',
+    'L2': 'Level2.html',
+    'L3': 'Level3.html',
+    'L4': 'Level4.html',
+    'L5': 'Level5.html',
+    'L6': 'Level6.html',
+    'L7': 'Level7.html',
+    'L8': 'Level8.html'
+};
+
+const levels = ['L1','L2','L3','L4','L5','L6','L7','L8'];
+
+function updateUnlocks() {
+    for (let i = 0; i < levels.length; i++) {
+        const btn = document.getElementById(levels[i]);
+        const prevKey = i === 0 ? null : "C6_Level" + i;
+        const prevCompleted = i === 0 ? true : localStorage.getItem(prevKey) === "completed";
+
+        if (prevCompleted) {
+            btn.classList.add("unlocked");
+            btn.classList.remove("locked");
+            btn.onclick = () => openLevel(levels[i]);
+        } else {
+            btn.classList.add("locked");
+            btn.classList.remove("unlocked");
+            btn.onclick = null;
+        }
+    }
+}
+
+function openLevel(level) {
+    window.location.href = levelFiles[level];
+}
+
+function turnLeft() {
+    levels.push(levels.shift());
+    for (let i = 0; i < levels.length; i++) {
+        const btn = document.getElementById(levels[i]);
+        btn.style.transform = `rotateZ(${i*45}deg) translateY(-200px) rotateZ(${-i*45}deg)`;
+        if (btn.classList.contains('unlocked')) btn.onclick = () => openLevel(levels[i]);
+    }
+}
+
+function resetProgress() {
+    if(confirm("Are you sure you want to reset all Chapter 6 progress?")){
+        for(let i=1;i<=8;i++){
+            localStorage.removeItem("C6_Level"+i);
+        }
+        window.location.reload();
+    }
+}
+
+function goBack() {
+    window.location.href = '../index.html';
+}
+
+window.onload = updateUnlocks;
+</script>
+</body>
+</html>

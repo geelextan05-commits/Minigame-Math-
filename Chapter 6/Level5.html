@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 6 – Level 5: Recognise Volume</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* --- General Body & Background --- */
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #a7d9ff, #e3faff);
+    text-align: center;
+    padding: 20px 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+}
+
+h1 {
+    font-size: 40px;
+    font-weight: 900;
+    color: #1565C0;
+    margin-bottom: 5px;
+    text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.8);
+}
+
+#instruction {
+    font-size: 22px;
+    color: #0D47A1;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+#progress {
+    font-size: 18px;
+    color: #0D47A1;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+/* --- Container Card --- */
+.card {
+    background: white;
+    width: 90%;
+    max-width: 450px;
+    margin: 0 auto;
+    padding: 20px;
+    border-radius: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 0 0 4px #c2e0ff;
+    min-height: 350px; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --- Dynamic Water Level Visualization (CSS Generated) --- */
+#containerVisual {
+    position: relative;
+    width: 150px; 
+    height: 300px; /* Height representing 1000 ml max */
+    border: 3px solid #64B5F6; 
+    border-top: none;
+    border-radius: 0 0 15px 15px;
+    margin: 10px 0;
+    overflow: hidden; 
+    background: #E0F7FA; 
+}
+
+/* --- Beaker Head (New Element) --- */
+#containerHead {
+    position: absolute;
+    top: -15px; /* Position above the main body */
+    left: -3px; 
+    width: 156px; /* Width slightly wider than containerVisual */
+    height: 20px;
+    background: #E0F7FA; /* Match container background */
+    border: 3px solid #64B5F6;
+    border-radius: 10px 10px 0 0;
+    z-index: 20; /* Ensure it's above everything */
+}
+#containerHead::after {
+    content: "1000 ml";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 12px;
+    color: black;
+    font-weight: 700;
+}
+
+/* --- Measurement Markings (100ml increments) --- */
+.mark {
+    position: absolute;
+    right: 0;
+    width: 15px;
+    height: 1px;
+    background: black; /* Changed to black */
+    font-size: 10px;
+    color: black; /* Changed to black */
+    font-weight: 600;
+    z-index: 15; /* CRITICAL: Must be higher than the water (z-index: 5) */
+}
+.mark::before {
+    content: attr(data-volume);
+    position: absolute;
+    right: 20px;
+    top: -5px;
+    white-space: nowrap;
+}
+
+/* Specific position and length for each 100ml mark (Top is 0px, Bottom is 300px) */
+/* Height: 300px. 1000ml / 10 = 100ml per 30px height interval */
+.mark-1000 { top: 0px; width: 25px; }
+.mark-900 { top: 30px; width: 15px; }
+.mark-800 { top: 60px; width: 15px; }
+.mark-700 { top: 90px; width: 15px; }
+.mark-600 { top: 120px; width: 15px; }
+.mark-500 { top: 150px; width: 25px; } /* Long mark for 500 */
+.mark-400 { top: 180px; width: 15px; }
+.mark-300 { top: 210px; width: 15px; }
+.mark-200 { top: 240px; width: 15px; }
+.mark-100 { top: 270px; width: 15px; }
+.mark-0 { top: 300px; width: 25px; }
+
+/* The Water Level Element */
+#waterLevel {
+    height: var(--water-height, 0%); 
+    width: 100%;
+    background: linear-gradient(to top, #0096FF, #00CCFF);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    z-index: 5;
+    transition: height 1s ease-out; 
+    border-radius: 0 0 15px 15px;
+}
+
+/* --- Buttons --- */
+#buttonsArea {
+    margin-top: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+}
+
+.volume-btn {
+    padding: 15px 30px;
+    font-size: 22px;
+    font-weight: 700;
+    border-radius: 15px;
+    border: none;
+    cursor: pointer;
+    color: white;
+    box-shadow: 0 5px 0 #008AC5; 
+    background: #00B0FF;
+    transition: all 0.1s ease;
+    width: 150px;
+}
+
+.volume-btn:active {
+    transform: translateY(5px);
+    box-shadow: 0 0 0 #008AC5; 
+}
+
+/* --- Feedback --- */
+#resultMessage {
+    font-size: 26px;
+    font-weight: 800;
+    margin-top: 25px;
+    padding: 10px 20px;
+    border-radius: 10px;
+}
+
+#completeBox {
+    display: none;
+    font-size: 32px;
+    color: #2E7D32;
+    font-weight: 900;
+    margin-top: 40px;
+    text-shadow: 1px 1px 1px #fff;
+}
+</style>
+</head>
+<body>
+
+<h1>🧪 Level 5 – Read the Volume</h1>
+<p id="instruction">Look carefully at the water level and choose the correct volume.</p>
+<p id="progress"></p>
+
+<div class="card">
+    <div id="containerVisual">
+        <div id="containerHead"></div>
+
+        <div class="mark mark-1000" data-volume="1000 ml"></div>
+        <div class="mark mark-900" data-volume="900 ml"></div>
+        <div class="mark mark-800" data-volume="800 ml"></div>
+        <div class="mark mark-700" data-volume="700 ml"></div>
+        <div class="mark mark-600" data-volume="600 ml"></div>
+        <div class="mark mark-500" data-volume="500 ml"></div>
+        <div class="mark mark-400" data-volume="400 ml"></div>
+        <div class="mark mark-300" data-volume="300 ml"></div>
+        <div class="mark mark-200" data-volume="200 ml"></div>
+        <div class="mark mark-100" data-volume="100 ml"></div>
+        <div class="mark mark-0" data-volume="0 ml"></div>
+        
+        <div id="waterLevel"></div>
+    </div>
+</div>
+
+<div id="buttonsArea"></div>
+<p id="resultMessage"></p>
+<div id="completeBox">🎉 Excellent! Level Complete! Returning to main page... 🎉</div>
+
+<script>
+// --- GLOBAL MAX VOLUME ---
+const MAX_ML = 1000; 
+
+// --- HELPER FUNCTION TO CONVERT VOLUME TO MILLILITERS ---
+function toMilliliters(volumeString) {
+    const parts = volumeString.split(' ');
+    const value = parseFloat(parts[0]);
+    const unit = parts[1].toLowerCase();
+    
+    if (unit === 'l') {
+        return value * 1000;
+    }
+    return value; 
+}
+
+// --- QUESTIONS DATA (Adjusted for 1L Max) ---
+const questions = [
+    { volume: "500 ml", options: ["250 ml", "500 ml", "750 ml"], ans: "500 ml" },
+    { volume: "750 ml", options: ["500 ml", "750 ml", "1000 ml"], ans: "750 ml" },
+    { volume: "250 ml", options: ["100 ml", "250 ml", "500 ml"], ans: "250 ml" },
+    { volume: "1000 ml", options: ["750 ml", "900 ml", "1000 ml"], ans: "1000 ml" },
+    { volume: "100 ml", options: ["100 ml", "200 ml", "300 ml"], ans: "100 ml" },
+    { volume: "400 ml", options: ["200 ml", "400 ml", "600 ml"], ans: "400 ml" }, // Added new question for variety
+    { volume: "800 ml", options: ["700 ml", "800 ml", "900 ml"], ans: "800 ml" }  // Added new question for variety
+];
+
+let current = 0;
+const waterLevel = document.getElementById("waterLevel");
+
+function loadQuestion() {
+    const q = questions[current];
+    document.getElementById("progress").innerText = `Question ${current+1} of ${questions.length}`;
+    document.getElementById("resultMessage").innerText = "";
+
+    // 1. Calculate the required water level percentage
+    const currentML = toMilliliters(q.volume);
+    const heightPercentage = (currentML / MAX_ML) * 100;
+
+    // 2. Apply the calculated height using the CSS variable
+    waterLevel.style.setProperty('--water-height', `${heightPercentage}%`);
+
+    // 3. Render the buttons
+    const buttonsArea = document.getElementById("buttonsArea");
+    buttonsArea.innerHTML = "";
+    
+    const shuffledOptions = shuffleArray(q.options);
+    
+    shuffledOptions.forEach(option => {
+        const btn = document.createElement("button");
+        btn.className = "volume-btn";
+        btn.innerText = option;
+        btn.onclick = () => checkAnswer(option);
+        buttonsArea.appendChild(btn);
+    });
+}
+
+function checkAnswer(choice) {
+    const q = questions[current];
+    const message = document.getElementById("resultMessage");
+
+    if (choice === q.ans) {
+        message.style.color = "green";
+        message.innerText = "Correct! Well done!";
+        
+        setTimeout(() => {
+            current++;
+            if (current < questions.length) {
+                loadQuestion();
+            } else {
+                document.getElementById("completeBox").style.display = "block";
+                localStorage.setItem("C6_Level5", "completed");
+                setTimeout(() => {
+                    window.location.href = "C6.html";
+                }, 2000);
+            }
+        }, 800);
+    } else {
+        message.style.color = "red";
+        message.innerText = "Try again! Look closer at the level.";
+    }
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+// Initialize
+window.onload = loadQuestion;
+</script>
+
+</body>
+</html>

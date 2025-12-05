@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 7 - Level 5: 2-D Shape Patterns</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* --- 1. THEME & BACKGROUND (Adventure Map Style) --- */
+        body {
+            /* Use Fredoka font for the main text */
+            font-family: 'Fredoka', sans-serif;
+            /* Bright sky and sun background */
+            background: linear-gradient(to bottom, #87ceeb 0%, #a2d2ff 60%, #ffc04b 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* --- 2. HEADER & TITLE STYLING --- */
+        .quiz-title {
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 900;
+            color: #ff4757; /* Mr. Square's Red */
+            text-shadow: 
+                3px 3px 0px #2f3542, /* Dark outline */
+                5px 5px 0px #ffa502, /* Orange pop */
+                0 0 10px rgba(0, 0, 0, 0.3);
+            -webkit-text-stroke: 1px #2f3542; 
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+        }
+
+        /* --- 3. MAIN QUIZ CARD (The Island) --- */
+        #question-box {
+            /* White card with a playful border */
+            background: #ffffff;
+            border: 8px solid #2ecc71; /* Green border */
+            box-shadow: 0 15px 0px 0px #1e8449, 0 20px 40px rgba(0,0,0,0.3);
+            border-radius: 40px; 
+        }
+
+        #question {
+            /* Bold question text */
+            color: #1e8449; /* Dark Green */
+            font-size: clamp(1.5rem, 4vw, 2.25rem);
+            font-weight: 700;
+            text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.8);
+        }
+
+        /* Pattern Display Area */
+        #pattern-display {
+            font-size: clamp(3rem, 8vw, 5rem); 
+            background: #fff8e1; /* Very light yellow for the scroll */
+            border: 4px dashed #ffcc00; /* Yellow dashed line */
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+            /* Keep flex and whitespace settings for emoji pattern display */
+        }
+        
+        /* --- 4. ANSWER BUTTONS (Chunky & Clickable) --- */
+        .answer-btn {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white !important; /* Ensure white text on buttons */
+            /* Default appearance: Green/Success Theme */
+            background-color: #2ed573; 
+            border: 4px solid white;
+            border-bottom: 6px solid #218c74; 
+            box-shadow: 0 6px 0px 0px #218c74;
+            transition: all 0.2s;
+            border-radius: 20px;
+            padding: 15px;
+            cursor: pointer;
+        }
+
+        .answer-btn:hover {
+            transform: translateY(-3px);
+            border-bottom-width: 8px;
+            box-shadow: 0 8px 0px 0px #218c74;
+        }
+        .answer-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0px 0px #218c74;
+            border-bottom-width: 4px;
+        }
+        
+        /* Styles for missing shape buttons (if logic dictates different colors) */
+        .answer-btn.correct-highlight {
+            background-color: #10b981 !important; /* Brighter Green */
+            border-bottom-color: #059669 !important;
+            color: white !important;
+        }
+
+        /* --- 5. FEEDBACK & ACTION BUTTONS --- */
+        #feedback {
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 900;
+        }
+        
+        /* Action buttons (Next Level / Retry) */
+        .action-button-base {
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 900;
+            border: 4px solid white;
+            border-bottom: 6px solid;
+            box-shadow: 0 6px 0px 0px;
+        }
+        .action-button-base:hover {
+            transform: translateY(-3px);
+            border-bottom-width: 8px;
+        }
+        .action-button-base:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0px 0px;
+            border-bottom-width: 4px;
+        }
+
+        #retry-btn {
+            background-color: #ff4757; /* Red/Square theme */
+            border-bottom-color: #cc3744;
+            box-shadow: 0 6px 0px 0px #cc3744;
+        }
+        #finish-btn {
+            background-color: #ffa502; /* Orange/Gold theme */
+            border-bottom-color: #cc8400;
+            box-shadow: 0 6px 0px 0px #cc8400;
+        }
+
+        /* Feedback Animations */
+        .feedback-correct {
+            animation: pulse-success 0.5s;
+        }
+        .feedback-wrong {
+            animation: shake 0.5s;
+        }
+
+        @keyframes pulse-success {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+    </style>
+</head>
+
+<body>
+    <h1 class="quiz-title">Level 5 – Magic Pattern Quest! 🪄</h1>
+    <h2 class="text-2xl font-bold text-blue-800 mb-6">Help Mr. Square finish the sequences!</h2>
+    <div id="question-box" class="w-full max-w-3xl p-6 md:p-10 text-center">
+        
+        <div id="question" class="text-xl md:text-2xl font-bold mb-4 min-h-[3rem]">Loading question...</div>
+        
+        <div id="pattern-display" class="my-6 p-4 overflow-x-auto whitespace-nowrap flex justify-center items-center">
+            </div>
+        
+        <div id="answers" class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            </div>
+        
+        <div id="feedback" class="mt-8 text-2xl md:text-4xl font-extrabold min-h-[2.5rem]"></div>
+        
+        <div class="mt-8 flex justify-center space-x-6">
+            <button id="retry-btn" onclick="retry()"
+                class="hidden px-8 py-3 text-xl action-button-base text-white">
+                Try Again! 🔄
+            </button>
+            <button id="finish-btn" onclick="finishLevel()"
+                class="hidden px-8 py-3 text-xl action-button-base text-white">
+                Next Level! 🚀
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // List of available shapes (Pentagon removed)
+        const shapes = [
+            { name: "Square", icons: ["🟦", "🟪"] },
+            { name: "Triangle", icons: ["🔺", "⟁"] },
+            { name: "Circle", icons: ["🔴", "🟢", "🔵"] },
+            { name: "Rectangle", icons: ["🟫", "🟨"] },
+            { name: "Star", icons: ["⭐", "🌟"] }
+        ];
+
+        let currentQuestion = 0;
+        let correct = 0;
+        let wrong = 0;
+        let questions = [];
+
+        // Helper to get a random item from an array
+        const randomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+        function generateRandomShape() {
+            let s = randomItem(shapes);
+            let icon = randomItem(s.icons);
+            return { icon, shape: s.name };
+        }
+
+        // Checks if a pattern of shape names repeats
+        function isPatternRepeated(pattern) {
+            const shapesArray = pattern.map(p => p.shape);
+            const n = shapesArray.length;
+
+            // Check for repeating unit lengths from 1 up to n/2
+            for (let size = 1; size <= Math.floor(n / 2); size++) {
+                let isMatch = true;
+                // Check if the sequence of shapes matches the base unit repeatedly
+                for (let i = 0; i < n; i++) {
+                    if (shapesArray[i] !== shapesArray[i % size]) {
+                        isMatch = false;
+                        break;
+                    }
+                }
+                if (isMatch) {
+                    return true; // Found a repeating pattern
+                }
+            }
+            return false; // No repeating pattern found
+        }
+
+        function generateQuestions() {
+            questions = [];
+            for (let i = 0; i < 5; i++) {
+                
+                // 50/50 split between 'missing shape' and 'is it repeating'
+                const questionType = Math.random() < 0.5 ? 'missing' : 'repeated';
+
+                if (questionType === 'missing') {
+                    // Missing Shape Questions must use a clearly Repeating Pattern
+                    let baseLength = Math.floor(Math.random() * 2) + 2; // Base unit length 2 or 3
+                    let basePattern = [];
+                    
+                    // 1. Generate the base repeating unit, ensuring shapes are unique within the base unit
+                    let usedShapes = new Set();
+                    while (basePattern.length < baseLength) {
+                        let newShape = randomItem(shapes);
+                        if (!usedShapes.has(newShape.name)) {
+                            // Re-generate a shape object to ensure it gets a random icon color
+                            basePattern.push(generateRandomShape());
+                            usedShapes.add(newShape.name);
+                        }
+                    }
+
+                    // 2. Generate the full pattern by repeating the base
+                    let fullPatternLength = Math.floor(Math.random() * 3) + 6; // Total length 6-8
+                    let pattern = [];
+                    while (pattern.length < fullPatternLength) {
+                        // Use a fresh copy from the base pattern
+                        pattern.push(basePattern[pattern.length % baseLength]);
+                    }
+
+                    // 3. Select a random index for the blank (avoiding the first element for a cleaner question)
+                    let blankIndex = Math.floor(Math.random() * (pattern.length - 1)) + 1; 
+
+                    let answerShape = pattern[blankIndex].shape;
+                    
+                    const blank = { icon: '❓', shape: 'BLANK' };
+                    let displayPattern = pattern.map((p, index) => index === blankIndex ? blank : p);
+
+                    questions.push({
+                        type: 'missing',
+                        pattern: displayPattern,
+                        answer: answerShape
+                    });
+
+                } else { // type === 'repeated' (Is this pattern repeating?)
+                    let pattern = [];
+                    let patternLength = Math.floor(Math.random() * 4) + 5; // length 5–8
+                    
+                    if (Math.random() < 0.6) { 
+                        // Generate a clear, repeating pattern (60% of the time)
+                        let baseLength = Math.floor(Math.random() * 2) + 2; // Base unit length 2 or 3
+                        let base = [];
+                        
+                        let usedShapes = new Set();
+                        while (base.length < baseLength) {
+                            let newShape = randomItem(shapes);
+                            if (!usedShapes.has(newShape.name)) {
+                                base.push(generateRandomShape());
+                                usedShapes.add(newShape.name);
+                            }
+                        }
+
+                        while (pattern.length < patternLength) {
+                            pattern.push(base[pattern.length % baseLength]);
+                        }
+                    } else { 
+                        // Generate a non-repeating sequence (40% of the time)
+                         for (let j = 0; j < patternLength; j++) {
+                            pattern.push(generateRandomShape());
+                        }
+                    }
+                    
+                    questions.push({
+                        type: 'repeated',
+                        pattern: pattern,
+                        // Use the existing checker to confirm the answer
+                        answer: isPatternRepeated(pattern)
+                    });
+                }
+            }
+        }
+
+        function loadQuestion() {
+            if (currentQuestion >= 5) {
+                showResult();
+                return;
+            }
+
+            const q = questions[currentQuestion];
+            document.getElementById("answers").innerHTML = '';
+            document.getElementById("feedback").className = '';
+            document.getElementById("feedback").innerHTML = '';
+
+            // Display the pattern, joining with space.
+            document.getElementById("pattern-display").innerHTML = q.pattern.map(p => p.icon).join('<span class="mx-1"></span>');
+
+            if (q.type === 'repeated') {
+                document.getElementById("question").innerHTML = `Quest ${currentQuestion+1}:<br>Is this pattern of 2D shapes REPEATING?`;
+                
+                // Buttons for Yes/No
+                document.getElementById("answers").innerHTML = `
+                    <button class='answer-btn' onclick='checkAnswerRepeated(true)'>Yes, it repeats!</button>
+                    <button class='answer-btn' onclick='checkAnswerRepeated(false)'>No, it's random.</button>
+                `;
+                document.getElementById("answers").classList.remove('md:grid-cols-3');
+                document.getElementById("answers").classList.add('md:grid-cols-2');
+                
+            } else { // type === 'missing'
+                document.getElementById("question").innerHTML = `Quest ${currentQuestion + 1}:<br>What shape is MISSING where the ❓ is?`;
+                
+                let correctShapeName = q.answer;
+                let correctShape = shapes.find(s => s.name === correctShapeName);
+                
+                // Ensure unique wrong choices, up to 2
+                let wrongChoices = shapes.filter(s => s.name !== correctShapeName).sort(() => Math.random() - 0.5).slice(0, 2);
+                let answers = [correctShape, ...wrongChoices].sort(() => Math.random() - 0.5);
+
+                let answerHTML = '';
+                answers.forEach(a => {
+                    answerHTML += `<button class='answer-btn' onclick=checkAnswerMissing("${a.name}")>${a.name}</button>`;
+                });
+                document.getElementById("answers").innerHTML = answerHTML;
+                document.getElementById("answers").classList.remove('md:grid-cols-2');
+                document.getElementById("answers").classList.add('md:grid-cols-3');
+            }
+        }
+
+        function disableButtons() {
+            document.querySelectorAll('.answer-btn').forEach(btn => btn.disabled = true);
+        }
+
+        function checkAnswerRepeated(ans) {
+            const q = questions[currentQuestion];
+            const feedbackEl = document.getElementById("feedback");
+            disableButtons();
+
+            if (ans === q.answer) {
+                correct++;
+                feedbackEl.innerHTML = '✔ Correct! Pattern identification success!';
+                feedbackEl.style.color = '#10B981'; // Green-600
+                feedbackEl.classList.add('feedback-correct');
+            } else {
+                wrong++;
+                feedbackEl.innerHTML = `✘ Wrong! The pattern ${q.answer ? 'DOES' : 'DOES NOT'} repeat.`;
+                feedbackEl.style.color = '#EF4444'; // Red-600
+                feedbackEl.classList.add('feedback-wrong');
+            }
+
+            setTimeout(()=>{
+                currentQuestion++;
+                loadQuestion();
+            },1500);
+        }
+
+        function checkAnswerMissing(ans) {
+            const correctShape = questions[currentQuestion].answer;
+            const feedbackEl = document.getElementById("feedback");
+            disableButtons();
+
+            if (ans === correctShape) {
+                correct++;
+                feedbackEl.innerHTML = '✔ Correct! You found the missing shape!';
+                feedbackEl.style.color = '#10B981'; // Green-600
+                feedbackEl.classList.add('feedback-correct');
+            } else {
+                wrong++;
+                feedbackEl.innerHTML = `✘ Wrong! The missing shape is a ${correctShape}.`;
+                feedbackEl.style.color = '#EF4444'; // Red-600
+                feedbackEl.classList.add('feedback-wrong');
+            }
+            
+            // Highlight the correct button temporarily
+            document.querySelectorAll('.answer-btn').forEach(btn => {
+                if (btn.textContent === correctShape) {
+                    btn.classList.add('correct-highlight');
+                }
+            });
+
+            setTimeout(()=>{
+                currentQuestion++;
+                loadQuestion();
+            },1500);
+        }
+
+        function showResult() {
+            document.getElementById("question").innerHTML = `Quiz Complete! You scored ${correct} out of 5.`;
+            document.getElementById("answers").innerHTML = '';
+            document.getElementById("pattern-display").innerHTML = '';
+            
+            document.getElementById("retry-btn").classList.add('hidden');
+            document.getElementById("finish-btn").classList.add('hidden');
+
+
+            if (wrong === 0) {
+                document.getElementById("feedback").innerHTML = '🎉 Level Cleared! All 5 Correct! 🎉';
+                document.getElementById("feedback").style.color = '#059669'; // Green-600
+                document.getElementById("finish-btn").classList.remove('hidden');
+            } else {
+                document.getElementById("feedback").innerHTML = `Keep practicing! You need ${5 - correct} more correct answers.`;
+                document.getElementById("feedback").style.color = '#D97706'; // Amber-600
+                document.getElementById("retry-btn").classList.remove('hidden');
+            }
+        }
+
+        function retry() {
+            currentQuestion = 0;
+            correct = 0;
+            wrong = 0;
+            document.getElementById("retry-btn").classList.add('hidden');
+            generateQuestions();
+            loadQuestion();
+        }
+
+        function finishLevel() {
+            // Use C7_Level5 for storage key
+            localStorage.setItem('C7_Level5','completed');
+            window.location.href = 'C7.html';
+        }
+
+        // Initial setup
+        generateQuestions();
+        loadQuestion();
+    </script>
+</body>
+</html>

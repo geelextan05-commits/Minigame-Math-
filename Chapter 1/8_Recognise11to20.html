@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Number Hop (11-20)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    body { font-family: 'Inter', sans-serif; background-color: #f0f9ff; }
+    .platform {
+        background-color: #3b82f6;
+        border: 4px solid #1d4ed8;
+        transition: all 0.2s;
+        cursor: pointer;
+        user-select: none;
+        font-size: 24px;
+        font-weight: 800;
+    }
+    .platform:hover:not(.correct):not(.wrong) {
+        transform: scale(1.1);
+        box-shadow: 0 6px 15px rgba(59, 130, 246, 0.5);
+    }
+    .correct { background-color: #10b981; border-color: #059669; color: white; transform: scale(1.1); }
+    .wrong { background-color: #ef4444; border-color: #dc2626; color: white; animation: shake 0.5s; }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-5px); }
+        40%, 80% { transform: translateX(5px); }
+    }
+</style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+<div id="game-container" class="w-full max-w-xl bg-white rounded-xl p-6 md:p-8 text-center shadow-2xl">
+    <h1 class="text-3xl font-extrabold text-blue-600 mb-4">🐸 Number Hop (11 to 20) 🐾</h1>
+    
+    <div id="progress" class="text-lg font-bold text-indigo-700 mb-3">
+        Correct: 0 / 5
+    </div>
+
+    <div id="question-box" class="text-2xl font-semibold mb-6 p-3 bg-yellow-100 rounded-lg text-yellow-800"></div>
+
+    <div id="platform-grid" class="grid grid-cols-4 gap-4 p-4 bg-blue-100 rounded-lg shadow-inner">
+        <!-- Platforms injected here -->
+    </div>
+
+    <div id="feedback-box" class="mt-8 h-8 text-xl font-bold text-gray-800">Ready to hop!</div>
+</div>
+
+<script>
+let correctNumber = 0;
+let gameActive = true;
+let correctCount = 0;   // Track correct answers
+const MAX_CORRECT = 5;
+
+const platformGrid = document.getElementById('platform-grid');
+const questionBox = document.getElementById('question-box');
+const feedbackBox = document.getElementById('feedback-box');
+const progress = document.getElementById('progress');
+
+const NUMBER_POOL = Array.from({ length: 10 }, (_, i) => i + 11); // 11-20
+
+const shuffle = (array) => {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+const updateProgress = () => {
+    progress.textContent = `Correct: ${correctCount} / ${MAX_CORRECT}`;
+}
+
+const finishLevel = () => {
+    feedbackBox.textContent = "🎉 LEVEL PASSED! Well done!";
+    feedbackBox.classList.add("text-green-600");
+
+    gameActive = false;
+
+    // Signal to main loader or parent page
+    window.parent.postMessage({ type: 'levelResult', success: true }, '*');
+}
+
+const setupGame = () => {
+    if (correctCount >= MAX_CORRECT) return finishLevel();
+
+    gameActive = true;
+    feedbackBox.textContent = '';
+
+    let choices = [];
+    let tempPool = [...NUMBER_POOL];
+    shuffle(tempPool);
+    choices = tempPool.slice(0, 4);
+
+    correctNumber = choices[Math.floor(Math.random() * 4)];
+    questionBox.innerHTML = `Hop on the platform with the number <b>${correctNumber}</b>!`;
+
+    renderPlatforms(choices);
+}
+
+const renderPlatforms = (numbers) => {
+    platformGrid.innerHTML = '';
+    numbers.forEach(num => {
+        const platform = document.createElement('div');
+        platform.className = 'platform w-full h-16 rounded-lg flex items-center justify-center text-white shadow-xl';
+        platform.textContent = num;
+        platform.dataset.number = num;
+        platform.addEventListener('click', handlePlatformClick);
+        platformGrid.appendChild(platform);
+    });
+}
+
+const handlePlatformClick = (event) => {
+    if (!gameActive) return;
+    gameActive = false;
+
+    const clickedNumber = parseInt(event.currentTarget.dataset.number);
+    const allPlatforms = document.querySelectorAll('.platform');
+
+    allPlatforms.forEach(p => {
+        p.removeEventListener('click', handlePlatformClick);
+        p.style.cursor = 'default';
+        if (parseInt(p.dataset.number) === correctNumber) {
+            p.classList.add('correct');
+        } else if (parseInt(p.dataset.number) === clickedNumber) {
+            p.classList.add('wrong');
+        }
+    });
+
+    if (clickedNumber === correctNumber) {
+        correctCount++;
+        updateProgress();
+        feedbackBox.textContent = '🥳 Correct hop!';
+        feedbackBox.classList.add('text-green-600');
+    } else {
+        feedbackBox.textContent = `❌ That was ${clickedNumber}, correct was ${correctNumber}.`;
+        feedbackBox.classList.add('text-red-600');
+    }
+
+    setTimeout(setupGame, 800); // Auto proceed to next question
+}
+
+// Initial setup
+setupGame();
+</script>
+</body>
+</html>

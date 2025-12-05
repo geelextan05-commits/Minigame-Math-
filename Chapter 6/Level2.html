@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chapter 6 – Level 2: Measure Length</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+    /* --- General Styles --- */
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(to bottom, #6ec6ff 0%, #e3f5ff 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    h1 {
+        margin-top: 30px;
+        font-size: 38px;
+        font-weight: 800;
+        color: #004d7a;
+        background: linear-gradient(45deg, #004d7a, #0096d2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 1px 1px 4px rgba(255, 255, 255, 0.9);
+    }
+
+    #instruction {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1a5a87;
+        margin-top: 10px;
+        padding: 8px 15px;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    /* --- FIXED DRAGGABLE RULER --- */
+    #ruler {
+        position: fixed;
+        top: 150px;
+        left: 100px; /* Starting point */
+        width: 800px;
+        cursor: grab;
+        user-select: none;
+        z-index: 100;
+        filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.3));
+    }
+
+    /* --- Object Grid Layout --- */
+    #objects {
+        margin-top: 200px; 
+        display: flex;
+        flex-wrap: wrap; 
+        justify-content: center;
+        gap: 40px; 
+        max-width: 1200px;
+        padding-bottom: 50px;
+    }
+
+    .item-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: white;
+        padding: 15px;
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        width: 280px; 
+        transition: 0.3s;
+    }
+
+    .item-container img {
+        width: 250px;
+        height: auto;
+        border: 2px solid #cfeaff;
+        border-radius: 10px;
+        background: #f7faff;
+        margin-bottom: 10px;
+    }
+
+    .item-container input {
+        margin-top: 10px;
+        padding: 8px 15px;
+        width: 100px;
+        font-size: 20px;
+        font-weight: 700;
+        border-radius: 10px;
+        border: 3px solid #93c5fd;
+        text-align: center;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .item-container input:focus {
+        outline: none;
+        border-color: #0096d2;
+        box-shadow: 0 0 0 3px rgba(0, 150, 210, 0.3);
+    }
+
+    #checkBtn {
+        margin-top: 40px;
+        padding: 15px 40px;
+        font-size: 22px;
+        font-weight: 800;
+        border: none;
+        border-radius: 15px;
+        background: #06d6a0;
+        color: white;
+        cursor: pointer;
+        box-shadow: 0 6px 0 #04a97f;
+        transition: 0.1s;
+    }
+    #checkBtn:active {
+        transform: translateY(6px);
+        box-shadow: 0 0 0 #04a97f;
+    }
+
+    #feedback {
+        margin-top: 30px;
+        padding: 15px 30px;
+        font-size: 24px;
+        font-weight: 800;
+        border-radius: 15px;
+        display: none;
+        text-align: center;
+    }
+
+    .correct {
+        border: 4px solid #06d6a0 !important;
+        background: #eefffb !important;
+        box-shadow: 0 0 10px rgba(6, 214, 160, 0.5);
+    }
+
+    .incorrect {
+        border: 4px solid #e63946 !important;
+        background: #ffeeee !important;
+    }
+</style>
+</head>
+<body>
+
+<h1>Level 2 – Measure Length</h1>
+<div id="instruction">Drag the ruler below the image to measure. Type the length (cm) in the box!</div>
+
+<img id="ruler" src="images/ruler.png" alt="Ruler"> 
+
+<div id="objects"></div>
+
+<button id="checkBtn">Check Answers</button>
+<div id="feedback"></div>
+
+<script>
+// --- OBJECTS AND CORRECT LENGTHS ---
+const items = [
+    { name: "Pencil", img: "images/pencil1.png", length: 5.9 },
+    { name: "Eraser", img: "images/eraser.png", length: 4.1 },
+    { name: "Phone", img: "images/phone.png", length: 4 },
+    { name: "Screw", img: "images/screw.png", length: 5.3 },
+    { name: "Key", img: "images/key.png", length: 5.9 }
+];
+
+const objectContainer = document.getElementById("objects");
+
+function loadObjects() {
+    items.forEach((obj, index) => {
+        const div = document.createElement("div");
+        div.className = "item-container";
+        div.id = "item" + index;
+
+        div.innerHTML = `
+            <img src="${obj.img}" alt="${obj.name}">
+            <input type="number" min="0" placeholder="cm" />
+        `;
+        objectContainer.appendChild(div);
+    });
+}
+
+// --- CHECK ANSWERS ---
+function checkAnswers() {
+    let correctCount = 0;
+    items.forEach((obj, index) => {
+        const container = document.getElementById("item" + index);
+        const input = container.querySelector("input");
+        
+        container.classList.remove("correct", "incorrect");
+        
+        const val = parseFloat(input.value); 
+        
+        if (isNaN(val) || input.value.trim() === "") {
+             container.classList.add("incorrect");
+             return; 
+        }
+        
+        if (val === obj.length) {
+            container.classList.add("correct");
+            correctCount++;
+        } else {
+            container.classList.add("incorrect");
+        }
+    });
+
+    const feedback = document.getElementById("feedback");
+    feedback.style.display = "block";
+    
+    if (correctCount === items.length) {
+        feedback.innerHTML = "🎉 Excellent! All lengths are correct! Unlocking the next level...";
+        
+        localStorage.setItem("C6_Level2", "completed");
+        
+        setTimeout(() => {
+            window.location.href = "C6.html";
+        }, 3000);
+    } else {
+        feedback.innerHTML = `You got ${correctCount} of ${items.length} correct. The red boxes need correction.`;
+        feedback.style.color = '#e63946';
+        feedback.style.background = '#ffeeee';
+    }
+}
+
+// --------------------------------------------------
+// --- FIXED DRAGGABLE RULER (NO OFFSET ANYMORE) ---
+// --------------------------------------------------
+const ruler = document.getElementById("ruler");
+let isDragging = false;
+let offsetX = 0;
+let offsetY = 0;
+
+ruler.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    ruler.style.cursor = "grabbing";
+
+    const rect = ruler.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+});
+
+document.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+
+    let newLeft = e.clientX - offsetX;
+    let newTop = e.clientY - offsetY;
+
+    ruler.style.left = `${newLeft}px`;
+    ruler.style.top = `${newTop}px`;
+});
+
+document.addEventListener("mouseup", () => {
+    isDragging = false;
+    ruler.style.cursor = "grab";
+});
+// --------------------------------------------------
+
+document.getElementById("checkBtn").onclick = checkAnswers;
+window.onload = loadObjects;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Line Up! Number Sorter</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body { font-family: 'Inter', sans-serif; background-color: #fefce8; }
+.game-container { max-width: 600px; background-color: #fff; border: 4px solid #facc15; }
+.number-box {
+    background-color: #fde047;
+    color: #b45309;
+    transition: all 0.2s;
+    cursor: grab;
+    user-select: none;
+    box-shadow: 0 4px 0 #d97706;
+    font-size: 32px;
+    font-weight: 800;
+}
+.number-box:active { cursor: grabbing; transform: translateY(-2px); box-shadow: 0 6px 0 #d97706; }
+.sort-slot {
+    min-height: 80px;
+    background-color: #fef9c3;
+    border: 3px dashed #facc15;
+    color: #ca8a04;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.filled {
+    background-color: #fde047;
+    border: 3px solid #d97706;
+    color: #b45309;
+}
+.correct { background-color: #10b981; border-color: #059669; color: white; }
+</style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+<div id="game-container" class="game-container w-full rounded-xl p-6 md:p-10 text-center shadow-2xl">
+    <h1 class="text-3xl font-extrabold text-amber-700 mb-4">🔢 Line Up! Number Sorter ➡️</h1>
+    <div id="question-box" class="text-2xl font-semibold mb-6 p-3 bg-blue-100 rounded-lg text-blue-800"></div>
+
+    <div id="sort-slots" class="flex justify-center space-x-4 mb-10">
+        <div class="sort-slot w-20 h-20 rounded-lg text-center" data-position="0"></div>
+        <div class="sort-slot w-20 h-20 rounded-lg text-center" data-position="1"></div>
+        <div class="sort-slot w-20 h-20 rounded-lg text-center" data-position="2"></div>
+    </div>
+
+    <div id="feedback-box" class="h-8 text-xl font-bold text-gray-800 mb-6">Drag the numbers to line them up!</div>
+
+    <div id="drag-bin-container" class="p-4 bg-amber-100 rounded-lg shadow-inner">
+        <h2 class="text-lg font-semibold text-amber-800 mb-3">Number Tiles</h2>
+        <div id="drag-bin" class="flex justify-center flex-wrap gap-4"></div>
+    </div>
+
+    <button id="check-button" class="mt-6 px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition duration-150">Check Order</button>
+    <button id="next-button" class="mt-6 px-6 py-3 bg-fuchsia-500 text-white font-bold rounded-lg shadow-md hover:bg-fuchsia-600 transition duration-150 ml-4" disabled>Next Lineup</button>
+</div>
+
+<script>
+let correctSequence = [];
+let currentArrangement = [null, null, null];
+let sortingOrder = 'ascending';
+let gameActive = true;
+let correctCount = 0;
+const maxCorrect = 5;
+
+const sortSlots = document.getElementById('sort-slots');
+const dragBin = document.getElementById('drag-bin');
+const questionBox = document.getElementById('question-box');
+const feedbackBox = document.getElementById('feedback-box');
+const checkButton = document.getElementById('check-button');
+const nextButton = document.getElementById('next-button');
+
+const generateNumbers = () => {
+    const numbers = [];
+    while (numbers.length < 3) {
+        const num = Math.floor(Math.random() * 79) + 21;
+        if (!numbers.includes(num)) numbers.push(num);
+    }
+    return numbers;
+}
+
+const setupGame = () => {
+    gameActive = true;
+    currentArrangement = [null, null, null];
+    feedbackBox.textContent = 'Drag the numbers to line them up!';
+    feedbackBox.classList.remove('text-green-600', 'text-red-600');
+    checkButton.disabled = false;
+    nextButton.disabled = true;
+
+    const numbers = generateNumbers();
+    sortingOrder = Math.random() > 0.5 ? 'ascending' : 'descending';
+    correctSequence = sortingOrder === 'ascending' ? [...numbers].sort((a,b)=>a-b) : [...numbers].sort((a,b)=>b-a);
+    questionBox.innerHTML = sortingOrder === 'ascending' ? 
+        'Line up the numbers in <b>ASCENDING</b> order (Smallest to Biggest)!' :
+        'Line up the numbers in <b>DESCENDING</b> order (Biggest to Smallest)!';
+
+    renderDragBin(numbers);
+    renderSlots();
+}
+
+const renderDragBin = (numbers) => {
+    dragBin.innerHTML = '';
+    numbers.forEach(num => {
+        const tile = document.createElement('div');
+        tile.className = 'number-box w-16 h-16 rounded-lg flex items-center justify-center';
+        tile.textContent = num;
+        tile.dataset.value = num;
+        tile.setAttribute('draggable', true);
+        tile.id = `drag-tile-${num}`;
+        tile.addEventListener('dragstart', drag);
+        dragBin.appendChild(tile);
+    });
+}
+
+const renderSlots = () => {
+    sortSlots.innerHTML = '';
+    for (let i = 0; i < 3; i++) {
+        const slot = document.createElement('div');
+        slot.className = `sort-slot w-20 h-20 rounded-lg text-center ${currentArrangement[i] !== null ? 'filled' : ''}`;
+        slot.dataset.position = i;
+        slot.textContent = currentArrangement[i] !== null ? currentArrangement[i] : '';
+        slot.addEventListener('dragover', allowDrop);
+        slot.addEventListener('drop', handleDrop);
+        sortSlots.appendChild(slot);
+    }
+}
+
+function drag(ev) { if(!gameActive) return; ev.dataTransfer.setData("text", ev.target.dataset.value); ev.dataTransfer.setData("id", ev.target.id); }
+function allowDrop(ev) { ev.preventDefault(); }
+
+function handleDrop(ev) {
+    ev.preventDefault(); if(!gameActive) return;
+    const droppedValue = parseInt(ev.dataTransfer.getData("text"));
+    const droppedId = ev.dataTransfer.getData("id");
+    const position = parseInt(ev.currentTarget.dataset.position);
+    if(currentArrangement[position] !== null) {
+        const oldNumber = currentArrangement[position];
+        document.getElementById(`drag-tile-${oldNumber}`).style.display = 'flex';
+    }
+    currentArrangement[position] = droppedValue;
+    document.getElementById(droppedId).style.display = 'none';
+    renderSlots();
+}
+
+const handleCheck = () => {
+    if (!gameActive) return;
+    if (currentArrangement.includes(null)) {
+        feedbackBox.textContent = '❌ Please place all three numbers first!';
+        feedbackBox.classList.add('text-red-600');
+        return;
+    }
+
+    checkButton.disabled = true;
+    gameActive = false;
+    const isCorrect = currentArrangement.every((val, index) => val === correctSequence[index]);
+
+    if (isCorrect) {
+        feedbackBox.textContent = '🥳 Fantastic! You lined them up perfectly!';
+        feedbackBox.classList.add('text-green-600');
+        document.querySelectorAll('.sort-slot').forEach(slot => slot.classList.add('correct'));
+        correctCount++;
+    } else {
+        feedbackBox.textContent = `❌ Try again! Correct order was ${correctSequence.join(' < ')}`;
+        feedbackBox.classList.add('text-red-600');
+        setTimeout(() => {
+            checkButton.disabled = false;
+            gameActive = true;
+            feedbackBox.textContent = 'Drag the numbers to line them up!';
+            feedbackBox.classList.remove('text-red-600');
+        }, 1500);
+    }
+
+    nextButton.disabled = false;
+
+    if (correctCount >= maxCorrect) {
+        feedbackBox.textContent = `🏆 Level Passed! 5 correct lineups.`;
+        window.parent.postMessage({ type:'levelResult', success:true }, '*');
+        nextButton.disabled = true;
+    }
+}
+
+checkButton.addEventListener('click', handleCheck);
+nextButton.addEventListener('click', () => {
+    document.querySelectorAll('.sort-slot').forEach(slot => slot.classList.remove('correct', 'filled'));
+    setupGame();
+});
+
+setupGame();
+</script>
+</body>
+</html>

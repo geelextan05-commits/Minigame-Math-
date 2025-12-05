@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Easy Subtraction: Candy Drop Level 9</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;800&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #f5f3ff; }
+    .game-card { border: 4px solid #8b5cf6; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    .jar { background-color: #ede9fe; border: 3px solid #a78bfa; border-radius: 1rem; padding: 1.5rem; }
+    .candy-button { transition: all 0.1s; box-shadow: 0 5px 0 0 #6d28d9; }
+    .candy-button:active { transform: translateY(2px); box-shadow: 0 3px 0 0 #6d28d9; }
+</style>
+</head>
+<body class="p-4 md:p-8 flex items-center justify-center min-h-screen bg-violet-50">
+
+<div id="app" class="game-card w-full max-w-lg p-6 md:p-10 text-center rounded-2xl bg-white">
+    <h1 class="text-3xl font-extrabold text-violet-700 mb-4">🍬 Candy Drop Level 9</h1>
+    <p class="text-gray-600 mb-6">Solve the subtraction to earn candies (Difference ≥ 0).</p>
+    
+    <div id="jar" class="jar mb-8">
+        <p class="text-xl font-semibold mb-2">Candy Jar Question:</p>
+        <p id="question-text" class="text-5xl font-black text-violet-700">?</p>
+    </div>
+
+    <div id="choices-container" class="grid grid-cols-3 gap-3"></div>
+
+    <div id="feedback" class="h-8 mt-6 text-lg font-bold"></div>
+    <div class="mt-4 text-lg">Score: <span id="score">0</span> / 5 (Candies Collected: <span id="candies">0</span>)</div>
+
+    <button id="start-button" onclick="startGame()" class="mt-6 px-8 py-3 bg-violet-600 text-white font-bold rounded-xl candy-button">Start Drop</button>
+</div>
+
+<script>
+let score = 0;
+let candiesCollected = 0;
+let correctAnswer = 0;
+const maxCorrect = 5;
+
+const updateDisplay = () => {
+    document.getElementById('score').textContent = score;
+    document.getElementById('candies').textContent = candiesCollected;
+};
+
+const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+const generateQuestion = () => {
+    const num1 = getRandomInt(10, 20);
+    const num2 = getRandomInt(1, num1 - 1);
+    correctAnswer = num1 - num2;
+
+    document.getElementById('question-text').textContent = `${num1} - ${num2}`;
+
+    const choices = [correctAnswer];
+    while (choices.length < 3) {
+        let choice = getRandomInt(correctAnswer - 3, correctAnswer + 3);
+        if (!choices.includes(choice) && choice >= 0 && choice <= 20) { 
+            choices.push(choice);
+        }
+    }
+    choices.sort(() => Math.random() - 0.5);
+
+    const choicesContainer = document.getElementById('choices-container');
+    choicesContainer.innerHTML = choices.map(choice => `
+        <button onclick="checkAnswer(${choice})" class="candy-button w-full bg-violet-500 text-white text-3xl font-bold py-4 rounded-xl hover:bg-violet-600">
+            ${choice}
+        </button>
+    `).join('');
+};
+
+const checkAnswer = (selectedAnswer) => {
+    const feedbackEl = document.getElementById('feedback');
+    const choicesContainer = document.getElementById('choices-container');
+    choicesContainer.style.pointerEvents = 'none';
+
+    if (selectedAnswer === correctAnswer) {
+        score++;
+        candiesCollected += getRandomInt(3, 7);
+        feedbackEl.className = 'text-green-600';
+        feedbackEl.textContent = 'Yes! Candy drop! 🍬';
+    } else {
+        feedbackEl.className = 'text-red-600';
+        feedbackEl.textContent = `No drop! The answer was ${correctAnswer}.`;
+        // Notify parent level failed
+        window.parent.postMessage({ type: "levelResult", success: false }, "*");
+        return;
+    }
+
+    updateDisplay();
+
+    setTimeout(() => {
+        feedbackEl.textContent = '';
+        choicesContainer.style.pointerEvents = 'auto';
+        if (score >= maxCorrect) {
+            // Notify parent level passed
+            window.parent.postMessage({ type: "levelResult", success: true }, "*");
+        } else {
+            generateQuestion();
+        }
+    }, 1000);
+};
+
+const startGame = () => {
+    score = 0;
+    candiesCollected = 0;
+    document.getElementById('start-button').classList.add('hidden');
+    document.getElementById('feedback').textContent = '';
+    updateDisplay();
+    generateQuestion();
+};
+
+window.startGame = startGame;
+window.checkAnswer = checkAnswer;
+</script>
+
+</body>
+</html>

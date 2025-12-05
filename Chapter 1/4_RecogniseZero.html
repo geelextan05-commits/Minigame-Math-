@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero Treasure Hunt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #fffbeb; }
+        .chest {
+            background-color: #f59e0b;
+            border: 4px solid #b45309;
+            box-shadow: 0 8px 15px rgba(180, 83, 9, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+        .chest:hover:not(.opened) {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 12px 20px rgba(180, 83, 9, 0.5);
+        }
+        .content-box {
+            background-color: #fef3c7;
+            border: 2px dashed #d97706;
+            min-height: 80px;
+        }
+        .correct { background-color: #10b981; color: white; border-color: #059669; }
+        .wrong { background-color: #ef4444; color: white; border-color: #dc2626; animation: shake 0.5s; }
+        .item { font-size: 24px; position: absolute; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div id="game-container" class="w-full max-w-2xl bg-white rounded-xl p-6 md:p-10 text-center shadow-2xl">
+        <h1 class="text-3xl font-extrabold text-amber-600 mb-4">👑 Zero Treasure Hunt 🗺️</h1>
+        <div id="question-box" class="text-2xl font-semibold mb-6 p-3 bg-blue-100 rounded-lg text-blue-800">Click the chest that holds **ZERO** treasures!</div>
+
+        <div id="chest-container" class="grid grid-cols-3 gap-6"></div>
+
+        <div id="feedback-box" class="mt-8 h-8 text-xl font-bold text-gray-800"></div>
+        <button id="next-button" class="mt-6 px-6 py-3 bg-indigo-500 text-white font-bold rounded-lg shadow-md hover:bg-indigo-600 transition duration-150" disabled>Next Hunt</button>
+        <div class="mt-4 text-lg">Score: <span id="score">0</span> / 5 | Misses: <span id="misses">0</span> / 5</div>
+    </div>
+
+    <script>
+        let correctIndex = 0;
+        let gameActive = true;
+        const chestContainer = document.getElementById('chest-container');
+        const feedbackBox = document.getElementById('feedback-box');
+        const nextButton = document.getElementById('next-button');
+        const scoreEl = document.getElementById('score');
+        const missesEl = document.getElementById('misses');
+        const TREASURES = ['💎', '💰', '🔑', '💍', '🌟'];
+
+        let score = 0;
+        let misses = 0;
+        const MAX_SCORE = 5;
+        const MAX_MISSES = 5;
+
+        const generateRandomContent = (count) => {
+            const contentBox = document.createElement('div');
+            contentBox.className = 'content-box w-full p-2 relative flex items-center justify-center';
+            contentBox.textContent = `Count: ${count}`;
+            for (let i = 0; i < count; i++) {
+                const item = document.createElement('span');
+                item.className = 'item';
+                item.textContent = TREASURES[Math.floor(Math.random() * TREASURES.length)];
+                item.style.top = `${Math.random() * 60 + 20}%`;
+                item.style.left = `${Math.random() * 60 + 20}%`;
+                contentBox.appendChild(item);
+            }
+            return contentBox;
+        }
+
+        const renderChests = (counts) => {
+            chestContainer.innerHTML = '';
+            counts.forEach((count, index) => {
+                const chestDiv = document.createElement('div');
+                chestDiv.className = 'chest rounded-xl p-3 flex flex-col items-center shadow-lg';
+                chestDiv.dataset.index = index;
+                chestDiv.dataset.count = count;
+
+                const chestIcon = document.createElement('div');
+                chestIcon.className = 'text-5xl mb-2';
+                chestIcon.textContent = '📦';
+
+                chestDiv.appendChild(chestIcon);
+                chestDiv.appendChild(generateRandomContent(count));
+                chestDiv.addEventListener('click', handleChestClick);
+                chestContainer.appendChild(chestDiv);
+            });
+        }
+
+        const setupGame = () => {
+            gameActive = true;
+            feedbackBox.textContent = '';
+            nextButton.disabled = true;
+
+            const counts = [0,0,0];
+            correctIndex = Math.floor(Math.random() * 3);
+
+            // Generate 2 other non-zero counts
+            let nonZeroCounts = [];
+            while(nonZeroCounts.length < 2) {
+                const rand = Math.floor(Math.random() * 8) + 1;
+                if(!nonZeroCounts.includes(rand)) nonZeroCounts.push(rand);
+            }
+
+            let nzIdx = 0;
+            for(let i=0;i<3;i++){
+                if(i !== correctIndex) counts[i] = nonZeroCounts[nzIdx++];
+            }
+
+            renderChests(counts);
+        }
+
+        const handleChestClick = (event) => {
+            if(!gameActive) return;
+            gameActive = false;
+
+            const clickedChest = event.currentTarget;
+            const clickedIndex = parseInt(clickedChest.dataset.index);
+            const clickedCount = parseInt(clickedChest.dataset.count);
+
+            document.querySelectorAll('.chest').forEach(chest => {
+                chest.removeEventListener('click', handleChestClick);
+                chest.classList.add('opened');
+                chest.style.cursor = 'default';
+            });
+
+            if(clickedIndex === correctIndex){
+                feedbackBox.textContent = '🎉 Excellent! That chest had 0 items!';
+                feedbackBox.classList.add('text-green-600');
+                clickedChest.classList.add('correct');
+                score++;
+            } else {
+                feedbackBox.textContent = `❌ That chest had ${clickedCount} items. The chest with 0 was the one!`;
+                feedbackBox.classList.add('text-red-600');
+                clickedChest.classList.add('wrong');
+                misses++;
+            }
+
+            scoreEl.textContent = score;
+            missesEl.textContent = misses;
+
+            // Check pass/fail conditions
+            if(score >= MAX_SCORE){
+                endGame(true);
+                return;
+            }
+            if(misses >= MAX_MISSES){
+                endGame(false);
+                return;
+            }
+
+            nextButton.disabled = false;
+        }
+
+        nextButton.addEventListener('click', () => {
+            setupGame();
+        });
+
+        const endGame = (success) => {
+            gameActive = false;
+            document.querySelectorAll('.chest').forEach(chest => chest.removeEventListener('click', handleChestClick));
+            nextButton.disabled = true;
+            feedbackBox.textContent = success ? '🎉 Level Passed!' : '❌ Level Failed!';
+            targetScore = success ? '✔' : '❌';
+
+            // Send result to parent loader
+            window.parent.postMessage({type:'levelResult', success: success}, '*');
+        }
+
+        setupGame();
+    </script>
+</body>
+</html>

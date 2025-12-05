@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Level 10: Number Quiz</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    body { 
+        font-family: 'Inter', sans-serif; 
+        background: linear-gradient(135deg, #fef9c3, #fde68a); 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        min-height: 100vh; 
+        padding: 10px;
+    }
+    .game-container { 
+        max-width: 600px; 
+        background-color: #fffaf0; 
+        border-radius: 20px; 
+        padding: 30px; 
+        text-align: center; 
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        position: relative;
+    }
+    .question-text { 
+        font-size: 2rem; 
+        font-weight: bold; 
+        color: #d97706; 
+        margin-bottom: 20px;
+    }
+    .choices-container { 
+        display: flex; 
+        justify-content: center; 
+        flex-wrap: wrap; 
+        gap: 15px;
+    }
+    .choice-button { 
+        padding: 15px 25px; 
+        font-size: 20px; 
+        font-weight: bold; 
+        border-radius: 15px; 
+        cursor: pointer; 
+        background-color: #fbbf24; 
+        color: #1f2937; 
+        transition: all 0.2s; 
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .choice-button:hover { transform: translateY(-3px) scale(1.05); }
+    .correct { background-color: #10b981 !important; color: white; transform: scale(1.1); }
+    .wrong { background-color: #ef4444 !important; color: white; animation: shake 0.5s; }
+    @keyframes shake {
+        0%,100%{transform: translateX(0);}
+        20%,60%{transform: translateX(-5px);}
+        40%,80%{transform: translateX(5px);}
+    }
+    .feedback-box { 
+        margin-top: 20px; 
+        font-size: 1.5rem; 
+        font-weight: bold; 
+        height: 40px; 
+        transition: all 0.3s;
+    }
+    .progress-bar {
+        height: 20px;
+        width: 100%;
+        background-color: #fde68a;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    .progress-fill {
+        height: 100%;
+        width: 0%;
+        background-color: #10b981;
+        transition: width 0.5s ease-in-out;
+    }
+    /* Confetti animation */
+    .confetti {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background-color: #f59e0b;
+        top: 0;
+        left: 50%;
+        opacity: 0.8;
+        animation: fall 2s linear infinite;
+        border-radius: 50%;
+    }
+    @keyframes fall {
+        0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(400px) rotate(360deg); opacity: 0; }
+    }
+</style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1 class="text-3xl font-bold text-orange-600 mb-4">🎯 Level 10: Number Quiz</h1>
+    
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+    </div>
+
+    <div id="question-text" class="question-text">Question goes here</div>
+    <div id="choices-container" class="choices-container"></div>
+    <div id="feedback-box" class="feedback-box text-gray-800"></div>
+</div>
+
+<script>
+let correctCount = 0;
+const maxCorrect = 5;
+let currentAnswer = 0;
+
+const questionText = document.getElementById('question-text');
+const choicesContainer = document.getElementById('choices-container');
+const feedbackBox = document.getElementById('feedback-box');
+const progressFill = document.getElementById('progress-fill');
+
+const NUMBER_POOL = Array.from({length: 10}, (_, i) => i+11);
+
+const shuffle = (array) => {
+    for (let i = array.length -1; i>0; i--) {
+        const j = Math.floor(Math.random() * (i+1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+const updateProgressBar = () => {
+    const percent = (correctCount/maxCorrect)*100;
+    progressFill.style.width = percent + '%';
+}
+
+const generateQuestion = () => {
+    if(correctCount >= maxCorrect){
+        feedbackBox.textContent = "🏆 Level Passed! Great job!";
+        feedbackBox.classList.add('text-green-600');
+        createConfetti();
+        // Send success message to main controller
+        window.parent.postMessage({ type: 'levelResult', success: true }, '*');
+        return;
+    }
+
+    const num1 = NUMBER_POOL[Math.floor(Math.random()*NUMBER_POOL.length)];
+    const num2 = Math.floor(Math.random()*10)+1;
+    currentAnswer = num1 + num2;
+
+    questionText.innerHTML = `What is <b>${num1} + ${num2}</b>?`;
+    
+    let choices = new Set([currentAnswer]);
+    while(choices.size<4){
+        choices.add(currentAnswer + Math.floor(Math.random()*5)-2);
+    }
+
+    const shuffledChoices = Array.from(choices).sort(()=>Math.random()-0.5);
+    choicesContainer.innerHTML = '';
+    shuffledChoices.forEach(c=>{
+        const btn = document.createElement('button');
+        btn.className = 'choice-button';
+        btn.textContent = c;
+        btn.dataset.value = c;
+        btn.addEventListener('click', handleChoiceClick);
+        choicesContainer.appendChild(btn);
+    });
+
+    feedbackBox.textContent = '';
+}
+
+const handleChoiceClick = (event) => {
+    const clickedValue = parseInt(event.currentTarget.dataset.value);
+    document.querySelectorAll('.choice-button').forEach(btn=>btn.disabled=true);
+
+    if(clickedValue===currentAnswer){
+        event.currentTarget.classList.add('correct');
+        feedbackBox.textContent = `✅ Correct! (${correctCount+1}/${maxCorrect})`;
+        feedbackBox.classList.add('text-green-600');
+        correctCount++;
+        updateProgressBar();
+    } else{
+        event.currentTarget.classList.add('wrong');
+        feedbackBox.textContent = `❌ Wrong! Correct: ${currentAnswer}`;
+        feedbackBox.classList.add('text-red-600');
+    }
+
+    setTimeout(generateQuestion, 1000);
+}
+
+const createConfetti = () => {
+    for(let i=0;i<30;i++){
+        const confetti = document.createElement('div');
+        confetti.className='confetti';
+        confetti.style.left = Math.random()*100+'%';
+        confetti.style.backgroundColor = `hsl(${Math.random()*360},70%,60%)`;
+        document.querySelector('.game-container').appendChild(confetti);
+        setTimeout(()=>confetti.remove(),2000);
+    }
+}
+
+// Start first question
+generateQuestion();
+</script>
+</body>
+</html>

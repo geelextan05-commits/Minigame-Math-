@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Explorer: Addition & Subtraction</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f9ff;
+        }
+        .container-card {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                        0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+        .choice-button {
+            transition: all 0.2s ease-in-out;
+            transform: scale(1);
+        }
+        .choice-button:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1),
+                        0 2px 4px -2px rgba(0,0,0,0.06);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="game-container" class="container-card w-full max-w-lg bg-white rounded-3xl p-6 md:p-10 text-center">
+
+        <h1 class="text-4xl font-bold text-blue-600 mb-2 flex items-center justify-center">
+            <span class="mr-2">🚀</span> Math Explorer
+        </h1>
+        <p class="text-gray-500 mb-6 text-lg">Let's practice adding and taking away!</p>
+
+        <!-- Scoreboard -->
+        <div class="bg-yellow-100 p-3 rounded-xl mb-6 flex justify-around items-center border-2 border-yellow-400">
+            <div class="text-xl font-semibold text-gray-700">
+                Score: <span id="score-display" class="text-green-600 text-3xl ml-2">0</span>
+            </div>
+            <div class="text-xl font-semibold text-gray-700">
+                Max Num: <span class="text-pink-600 text-3xl ml-2">10</span>
+            </div>
+        </div>
+
+        <!-- Question -->
+        <div class="mb-8">
+            <p id="question-display" class="text-6xl font-extrabold text-gray-800 tracking-wide bg-gray-50 p-4 rounded-xl inline-block shadow-inner">
+                ? + ?
+            </p>
+        </div>
+
+        <!-- Feedback -->
+        <div id="feedback-message" class="h-8 mb-6 text-2xl font-bold"></div>
+
+        <!-- Answer Choices -->
+        <div id="choices-container" class="grid grid-cols-3 gap-4"></div>
+
+    </div>
+
+    <script>
+        /* ---------------------------
+           LEVEL SYSTEM (Connected to Main Page)
+        --------------------------- */
+        const REQUIRED_SCORE = 5;
+
+        function checkLevelPassed() {
+            if (score >= REQUIRED_SCORE) {
+                feedbackMessage.textContent = "🎉 Level Passed!";
+                feedbackMessage.className = "h-8 mb-6 text-2xl font-bold text-green-600";
+
+                // Tell main page this level is complete
+                window.parent.postMessage(
+                    { type: "levelResult", success: true },
+                    "*"
+                );
+            }
+        }
+
+        /* ---------------------------
+           GAME LOGIC (Original Code)
+        --------------------------- */
+
+        const MAX_NUMBER = 10;
+
+        const scoreDisplay = document.getElementById('score-display');
+        const questionDisplay = document.getElementById('question-display');
+        const choicesContainer = document.getElementById('choices-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+
+        let score = 0;
+        let currentAnswer = 0;
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateChoices(correctAnswer) {
+            const choices = new Set([correctAnswer]);
+            let attempts = 0;
+
+            while (choices.size < 3 && attempts < 10) {
+                let wrongAnswer;
+                if (attempts % 2 === 0) {
+                    wrongAnswer = correctAnswer +
+                        (getRandomInt(0, 1) * 2 - 1) * getRandomInt(1, 2);
+                } else {
+                    wrongAnswer = getRandomInt(0, MAX_NUMBER);
+                }
+
+                if (wrongAnswer >= 0 && wrongAnswer !== correctAnswer) {
+                    choices.add(wrongAnswer);
+                }
+                attempts++;
+            }
+
+            let arr = Array.from(choices).slice(0, 3);
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function generateNewQuestion() {
+            let num1, num2, operation, result;
+
+            if (Math.random() < 0.5) {
+                operation = '+';
+                num1 = getRandomInt(0, MAX_NUMBER);
+                num2 = getRandomInt(0, MAX_NUMBER - num1);
+                result = num1 + num2;
+            } else {
+                operation = '-';
+                num1 = getRandomInt(1, MAX_NUMBER);
+                num2 = getRandomInt(0, num1);
+                result = num1 - num2;
+            }
+
+            currentAnswer = result;
+            questionDisplay.textContent = `${num1} ${operation} ${num2} = ?`;
+            feedbackMessage.textContent = '';
+
+            const choices = generateChoices(result);
+            renderChoices(choices);
+        }
+
+        function renderChoices(choices) {
+            choicesContainer.innerHTML = '';
+            choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.textContent = choice;
+                btn.className =
+                    'choice-button bg-pink-500 text-white p-4 rounded-xl text-3xl font-bold hover:bg-pink-600 shadow-lg';
+                btn.onclick = () => checkAnswer(choice, btn);
+                choicesContainer.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedAnswer, buttonElement) {
+            Array.from(choicesContainer.children).forEach(btn => btn.disabled = true);
+
+            if (selectedAnswer === currentAnswer) {
+                score++;
+                scoreDisplay.textContent = score;
+
+                buttonElement.className =
+                    'choice-button bg-green-500 text-white p-4 rounded-xl text-3xl font-bold shadow-lg';
+                feedbackMessage.textContent = 'Correct! 🎉';
+                feedbackMessage.className =
+                    'h-8 mb-6 text-2xl font-bold text-green-600';
+
+                checkLevelPassed();
+
+                if (score < REQUIRED_SCORE) {
+                    setTimeout(generateNewQuestion, 1200);
+                }
+
+            } else {
+                buttonElement.className =
+                    'choice-button bg-red-500 text-white p-4 rounded-xl text-3xl font-bold shadow-lg';
+                feedbackMessage.textContent = 'Oops! Try again 🤔';
+                feedbackMessage.className =
+                    'h-8 mb-6 text-2xl font-bold text-red-600';
+
+                Array.from(choicesContainer.children).forEach(btn => {
+                    if (parseInt(btn.textContent) === currentAnswer) {
+                        btn.style.backgroundColor = '#3b82f6';
+                        btn.textContent = `${btn.textContent} (Correct)`;
+                    }
+                });
+
+                setTimeout(generateNewQuestion, 2500);
+            }
+        }
+
+        window.onload = generateNewQuestion;
+    </script>
+</body>
+</html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 7 - Help Mr. Square!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 1. THE WORLD BACKGROUND --- */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Fredoka', sans-serif; /* Soft, rounded font */
+            background-color: #87CEEB; /* Sky Blue */
+            /* A playful landscape gradient */
+            background-image: 
+                radial-gradient(circle at 10% 20%, white 10%, transparent 12%), /* Fake cloud */
+                radial-gradient(circle at 90% 10%, white 15%, transparent 17%), /* Fake cloud */
+                linear-gradient(to bottom, #87CEEB 0%, #E0F7FA 60%, #8bc34a 60%, #689f38 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 80px;
+            overflow-x: hidden;
+        }
+
+        /* --- 2. MR. SQUARE CHARACTER --- */
+        .mascot-container {
+            margin-top: 30px;
+            text-align: center;
+            position: relative;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .mr-square {
+            display: inline-block;
+            width: 100px;
+            height: 100px;
+            background: #ff4757;
+            border: 4px solid #2f3542;
+            border-radius: 15px;
+            box-shadow: 8px 8px 0px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .mr-square::before {
+            content: '';
+            position: absolute;
+            top: 30px;
+            left: 20px;
+            width: 15px;
+            height: 15px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 35px 0 0 white;
+        }
+        
+        .mr-square::after {
+            content: '';
+            position: absolute;
+            top: 35px;
+            left: 25px;
+            width: 6px;
+            height: 6px;
+            background: black;
+            border-radius: 50%;
+            box-shadow: 35px 0 0 black;
+        }
+
+        .smile {
+            position: absolute;
+            bottom: 25px;
+            left: 35px;
+            width: 30px;
+            height: 15px;
+            border-bottom: 4px solid white;
+            border-radius: 0 0 20px 20px;
+        }
+
+        .bubble {
+            background: #fff;
+            padding: 15px 25px;
+            border-radius: 20px;
+            position: absolute;
+            top: 20px;
+            left: 120px;
+            width: 200px;
+            text-align: left;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            font-size: 1rem;
+            color: #2f3542;
+            font-weight: 600;
+        }
+        .bubble::after {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 20px;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            border-right: 15px solid #fff;
+        }
+
+        /* --- 3. MAIN TITLE --- */
+        h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            color: #fff;
+            text-shadow: 4px 4px 0px #2f3542;
+            margin: 20px 0 40px 0;
+            text-align: center;
+            letter-spacing: 2px;
+            transform: rotate(-2deg);
+        }
+
+        /* --- 4. GRID LAYOUT --- */
+        #container {
+            width: 90%;
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 30px;
+            padding: 20px;
+        }
+
+        /* --- 5. SECTION HEADERS (CLOUDS) --- */
+        .section-title {
+            grid-column: 1 / -1;
+            text-align: center;
+            background: #fff;
+            color: #2f3542;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 40px 0 20px 0;
+            border: 4px solid #2f3542;
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.1);
+            display: inline-block;
+            justify-self: center;
+            position: relative;
+        }
+        .section-title::before { content: '⭐'; margin-right: 10px; }
+        .section-title::after { content: '⭐'; margin-left: 10px; }
+
+        /* --- 6. THE CARDS (GAME BLOCKS) --- */
+        .card {
+            background-color: #ffcc00;
+            border: 4px solid #fff;
+            border-radius: 20px;
+            padding: 25px 15px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.15);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 180px;
+        }
+
+        #L1 { background: #FF9FF3; border-color: #ffcdf9; }
+        #L2 { background: #54a0ff; border-color: #aed6ff; color: white; }
+        #L3 { background: #5f27cd; border-color: #9b72ea; color: white; }
+        #L4 { background: #ff9f43; border-color: #ffdbb5; }
+        #L5 { background: #ee5253; border-color: #ffb8b8; color: white; }
+        #L6 { background: #1dd1a1; border-color: #a3ffe6; }
+        #L7 { background: #2e86de; border-color: #8dcaff; color: white; }
+        #L8 { background: linear-gradient(135deg, #feca57, #ff9f43); border-color: #fff; }
+
+        .card:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 0 rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .card:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+        }
+
+        .card .icon {
+            font-size: 3.5rem;
+            display: block;
+            margin-bottom: 15px;
+            filter: drop-shadow(2px 4px 0px rgba(0,0,0,0.1));
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .card:hover .icon {
+            transform: scale(1.3) rotate(10deg);
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+        .small-label {
+            display: block;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            opacity: 0.9;
+            font-weight: 600;
+        }
+
+        /* --- 7. LOCKED STATE --- */
+        .locked {
+            background: #dcdde1 !important;
+            border-color: #bdc3c7 !important;
+            color: #7f8fa6 !important;
+            cursor: not-allowed;
+            pointer-events: none;
+            box-shadow: 0 6px 0 #95a5a6 !important;
+            opacity: 0.8;
+        }
+        .locked .icon {
+            filter: grayscale(100%) opacity(0.5);
+        }
+        .locked::after {
+            content: '🔒';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.5rem;
+            opacity: 0.6;
+        }
+
+        /* --- 8. ANIMATIONS --- */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 2rem; margin-bottom: 20px; }
+            .bubble { display: none; }
+            .mascot-container { margin-bottom: 10px; }
+            #container { gap: 20px; }
+        }
+
+        /* --- 9. BACK BUTTON --- */
+        .back-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2f3542;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+            z-index: 999999; /* Make sure it's on top */
+        }
+        .back-btn:hover {
+            transform: scale(1.05);
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div class="mascot-container">
+        <div class="mr-square">
+            <div class="smile"></div>
+        </div>
+        <div class="bubble">
+            Hello friend! Can you help me find my shape friends?
+        </div>
+    </div>
+
+    <h1>Mr. Square's Adventure</h1>
+
+    <div id="container">
+        <div class="section-title">The 3D World</div>
+
+        <div class="card" id="L1" onclick="openLevel('Level1.html')">
+            <span class="icon">🧊</span>
+            <div class="card-title">Level 1</div>
+            <span class="small-label">Recognize 3D Shapes!</span>
+        </div>
+
+        <div class="card locked" id="L2">
+            <span class="icon">🚂</span>
+            <div class="card-title">Level 2</div>
+            <span class="small-label">3D Shapes Patterns</span>
+        </div>
+
+        <div class="card locked" id="L3">
+            <span class="icon">🏰</span>
+            <div class="card-title">Level 3</div>
+            <span class="small-label">Let's Build!</span>
+        </div>
+
+        <div class="section-title">The 2D Planet</div>
+
+        <div class="card locked" id="L4">
+            <span class="icon">🍕</span>
+            <div class="card-title">Level 4</div>
+            <span class="small-label">2D Shapes</span>
+        </div>
+
+        <div class="card locked" id="L5">
+            <span class="icon">🚦</span>
+            <div class="card-title">Level 5</div>
+            <span class="small-label">Shape Train</span>
+        </div>
+
+        <div class="card locked" id="L6">
+            <span class="icon">🧩</span>
+            <div class="card-title">Level 6</div>
+            <span class="small-label">Puzzle Time</span>
+        </div>
+        
+        <div class="section-title">Big Challenge!</div>
+
+        <div class="card locked" id="L7">
+            <span class="icon">🏆</span>
+            <div class="card-title">Level 7</div>
+            <span class="small-label">Super Smart Fun!</span>
+        </div>
+    </div>
+
+    <!-- BACK BUTTON -->
+    <div class="back-btn" onclick="goBack()">⬅ Return to Main Menu</div>
+
+    <script>
+        function openLevel(file) {
+            window.location.href = file;
+        }
+
+        function unlock(id) {
+            const el = document.getElementById(id);
+            el.classList.remove("locked");
+            el.onclick = () => openLevel(id.replace("L", "Level") + ".html");
+        }
+
+        function checkProgress() {
+            if (localStorage.getItem("C7_Level1") === "completed") unlock("L2");
+            if (localStorage.getItem("C7_Level2") === "completed") unlock("L3");
+            if (localStorage.getItem("C7_Level3") === "completed") unlock("L4");
+            if (localStorage.getItem("C7_Level4") === "completed") unlock("L5");
+            if (localStorage.getItem("C7_Level5") === "completed") unlock("L6");
+            if (localStorage.getItem("C7_Level6") === "completed") unlock("L7");
+
+            const l1 = document.getElementById('L1');
+            l1.onclick = () => openLevel('Level1.html');
+        }
+
+        function goBack() {
+            window.location.href = "../index.html";
+        }
+
+        window.onload = checkProgress;
+    </script>
+
+</body>
+</html>

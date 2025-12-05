@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Level 2 - Which Fraction Is Bigger?</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+    /* 1. Global & Theme Styles */
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: #e8f9ff; /* Light blue, watery background */
+        text-align: center;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 32px;
+        color: #0077cc; /* Deep blue water color */
+        font-weight: 800;
+        margin-bottom: 30px;
+    }
+
+    #questionBox {
+        margin-top: 25px;
+        padding: 30px;
+        background: white;
+        border-radius: 25px;
+        width: 90%;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+    
+    #prompt {
+        font-size: 20px;
+        color: #4c698d;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+
+    /* 2. Bar (Tank) Styles */
+    .fractionPair {
+        display: flex;
+        flex-direction: column;
+        gap: 20px; /* Space between the two tanks */
+    }
+
+    .fractionItem {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .fractionText {
+        font-size: 24px;
+        font-weight: 700;
+        color: #0077cc;
+        margin-bottom: 5px;
+    }
+
+    .barContainer {
+        width: 90%; /* Relative to questionBox */
+        max-width: 350px; /* Fixed size for easy comparison */
+        height: 45px;
+        background: #d0e8f2; /* Light tank color */
+        border: 3px solid #0077cc;
+        border-radius: 10px;
+        margin: 0 auto;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .barFill {
+        height: 100%;
+        background: #4cc9f0; /* Bright blue water fill */
+        transition: width 0.5s ease-out; /* Smooth fill effect */
+    }
+
+    /* 3. Button Styles */
+    button.option {
+        width: 90%;
+        padding: 18px;
+        margin: 15px auto;
+        font-size: 24px;
+        border-radius: 25px;
+        border: none;
+        background: #ffb347; /* Orange/Yellow for action button */
+        color: #264653;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.2s;
+        box-shadow: 0 4px 0 #cc8e38;
+    }
+    button.option:hover {
+        background: #cc8e38;
+        box-shadow: 0 6px 0 #996e2b;
+        transform: translateY(-2px);
+    }
+    button.option:active {
+        box-shadow: 0 2px 0 #cc8e38;
+        transform: translateY(2px);
+    }
+
+    #feedback {
+        height: 50px;
+        font-size: 30px;
+        font-weight: 800;
+        margin-top: 20px;
+    }
+</style>
+</head>
+<body>
+
+<h1>💧 Level 2 – Filling the Tanks</h1>
+
+<div id="questionBox">
+    <div id="prompt">Which tank is filled with the **most water**?</div>
+    <div id="bars"></div>
+    <div id="feedback"></div>
+    <div id="options"></div>
+</div>
+
+<script>
+let questions = [];
+let current = 0;
+const BAR_WIDTH = 350; // Fixed width for consistent visual comparison
+
+// Generate 5 fraction comparison questions
+function generateQuestions() {
+    for (let i = 0; i < 5; i++) {
+        // Simple denominators for early comparison
+        let d1 = [2,3,4,5][Math.floor(Math.random()*4)];
+        let d2 = [2,3,4,5][Math.floor(Math.random()*4)];
+        let n1 = Math.floor(Math.random()*d1)+1;
+        let n2 = Math.floor(Math.random()*d2)+1;
+        
+        // Ensure fractions are not exactly equal (to promote comparison)
+        while (Math.abs((n1/d1) - (n2/d2)) < 0.001) {
+             d2 = [2,3,4,5][Math.floor(Math.random()*4)];
+             n2 = Math.floor(Math.random()*d2)+1;
+        }
+
+        questions.push({
+            leftN: n1,
+            leftD: d1,
+            rightN: n2,
+            rightD: d2
+        });
+    }
+}
+
+function drawFractionBars(q) {
+    // Calculate the pixel width for the fill based on the fraction value
+    let leftFillWidth = (q.leftN / q.leftD) * BAR_WIDTH;
+    let rightFillWidth = (q.rightN / q.rightD) * BAR_WIDTH;
+
+    let html = `
+        <div class="fractionPair">
+            <div class="fractionItem">
+                <div class="fractionText">Top Tank: 💧 ${q.leftN}/${q.leftD}</div>
+                <div class="barContainer">
+                    <div class="barFill" style="width:${leftFillWidth}px"></div>
+                </div>
+            </div>
+
+            <div class="fractionItem">
+                <div class="fractionText">Bottom Tank: 💧 ${q.rightN}/${q.rightD}</div>
+                <div class="barContainer">
+                    <div class="barFill" style="width:${rightFillWidth}px"></div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById("bars").innerHTML = html;
+}
+
+function loadQuestion() {
+    let q = questions[current];
+    drawFractionBars(q);
+
+    let leftValue = q.leftN / q.leftD;
+    let rightValue = q.rightN / q.rightD;
+    
+    document.getElementById("prompt").innerHTML = `Which tank is filled with the **most water**?`;
+
+    let correct = "equal";
+    if (leftValue > rightValue) correct = "left";
+    if (leftValue < rightValue) correct = "right";
+    
+    // Default options (assuming not equal)
+    let html = `
+        <button class="option" onclick="checkAnswer('left','${correct}')">The Top Tank (${q.leftN}/${q.leftD})</button>
+        <button class="option" onclick="checkAnswer('right','${correct}')">The Bottom Tank (${q.rightN}/${q.rightD})</button>
+    `;
+    
+    // Check for exact equivalence (if we want to include the 'equal' option)
+    if (Math.abs(leftValue - rightValue) < 0.001) { 
+        correct = "equal";
+        html = `
+            <button class="option" onclick="checkAnswer('left','${correct}')">The Top Tank (${q.leftN}/${q.leftD})</button>
+            <button class="option" onclick="checkAnswer('equal','${correct}')">They are EQUAL</button>
+            <button class="option" onclick="checkAnswer('right','${correct}')">The Bottom Tank (${q.rightN}/${q.rightD})</button>
+        `;
+    }
+
+
+    document.getElementById("options").innerHTML = html;
+}
+
+function checkAnswer(ans, correct) {
+    let fb = document.getElementById("feedback");
+
+    if (ans === correct) {
+        fb.style.color = "#2a9d8f"; 
+        fb.innerHTML = "🌊 YES! That tank is the fullest! ✔";
+    } else {
+        fb.style.color = "#e76f51"; 
+        fb.innerHTML = "💧 Not quite! Look carefully at which bar is longer. ✖";
+    }
+
+    setTimeout(() => {
+        fb.innerHTML = "";
+        current++;
+        if (current >= 5) finish();
+        else loadQuestion();
+    }, 1200);
+}
+
+function finish() {
+    localStorage.setItem("C3_Level2", "completed");
+    alert("Level 2 Completed! You are great at comparing sizes.\nLevel 3 is now unlocked.");
+    window.location.href = "C3.html";
+}
+
+// initialize
+generateQuestions();
+loadQuestion();
+</script>
+
+</body>
+</html>

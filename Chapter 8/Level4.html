@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 8 – Level 4: Smart Run</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+    margin: 0;
+    padding: 30px 20px;
+    text-align: center;
+    min-height: 100vh;
+}
+h1 { 
+    font-size: 44px; 
+    color: #1B5E20;
+    font-weight: 900; 
+    margin-bottom: 20px; 
+    text-shadow: 2px 2px 0 #A5D6A7;
+}
+#infoPanel {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 30px;
+    background: #4CAF50;
+    padding: 10px 20px;
+    border-radius: 10px;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+#scoreBoard, #timer { 
+    font-size: 22px; 
+    font-weight: 800; 
+    padding: 5px 0;
+}
+#timer { color: #FFEB3B; }
+#question { 
+    font-size: 30px; 
+    font-weight: 800;
+    color: #388E3C;
+    margin-bottom: 25px;
+    padding: 10px;
+    background: #DCEDC8;
+    border-radius: 10px;
+}
+#pictograph {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto 30px;
+    padding: 15px;
+    background: white;
+    border: 3px solid #81C784;
+    border-radius: 10px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+}
+.fruit-row {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 90%;
+    padding: 5px 0;
+    border-bottom: 1px dashed #E0E0E0;
+}
+.fruit-row:last-child { border-bottom: none; }
+.fruit-row span.icon {
+    font-size: 35px;
+    margin-right: 15px;
+}
+.fruit-row span.symbols {
+    font-size: 35px;
+    letter-spacing: 5px;
+}
+#options {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+button.option {
+    font-size: 30px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.1s;
+    background: #FF9800;
+    color: white;
+    font-weight: 900;
+    box-shadow: 0 5px 0 #F57C00;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+button.option:hover { 
+    transform: scale(1.1); 
+    box-shadow: 0 8px 0 #F57C00; 
+}
+button.option:active {
+    transform: translateY(5px); 
+    box-shadow: 0 0 0 #F57C00;
+}
+#resultMessage { 
+    font-size: 28px; 
+    font-weight: 900; 
+    margin-top: 15px; 
+}
+</style>
+</head>
+<body>
+
+<h1>🏃 Chapter 8 – Smart Run</h1>
+<p id="instruction">Click the correct option based on the pictograph!</p>
+
+<div id="infoPanel">
+    <div id="scoreBoard">Score: 0 / 5</div>
+    <div id="timer">Time left: 60s</div>
+</div>
+
+<div id="question">Question appears here</div>
+<div id="pictograph"></div>
+<div id="options"></div>
+<p id="resultMessage"></p>
+
+<script>
+// --- QUESTIONS SETUP ---
+const questions = [
+    {data: {"🍎":3,"🍌":5,"🍇":2}, type:"most"},
+    {data: {"🍍":2,"🍓":4,"🍉":1}, type:"least"},
+    {data: {"🍎":4,"🍌":3,"🍇":5}, type:"count", targetFruit:"🍎"},
+    {data: {"🍓":1,"🍍":3,"🍇":2}, type:"count", targetFruit:"🍍"},
+    {data: {"🍎":3,"🍌":4,"🍉":2}, type:"count", targetFruit:"🍌"}
+];
+
+let currentQ = 0;
+let score = 0;
+let timeLeft = 60;
+const totalQuestions = questions.length;
+
+const questionEl = document.getElementById('question');
+const pictographEl = document.getElementById('pictograph');
+const optionsEl = document.getElementById('options');
+const resultEl = document.getElementById('resultMessage');
+const scoreEl = document.getElementById('scoreBoard');
+const timerEl = document.getElementById('timer');
+
+let timerInterval;
+
+// --- TIMER ---
+function startTimer() {
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        timerEl.innerText = `Time left: ${timeLeft}s`;
+        if (timeLeft <= 10) timerEl.style.color = '#D84315';
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            endGame(false);
+        }
+    }, 1000);
+}
+
+// --- LOAD QUESTION ---
+function loadQuestion(){
+    if (timeLeft <= 0 || currentQ >= totalQuestions) return;
+
+    const q = questions[currentQ];
+    
+    pictographEl.innerHTML = '';
+    optionsEl.innerHTML = '';
+    resultEl.innerText = '';
+
+    // Show pictograph with label separated by |
+    for(const fruit of Object.keys(q.data)){
+        const row = document.createElement('div');
+        row.className = 'fruit-row';
+
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'icon';
+        iconSpan.innerText = fruit + " |"; // separator
+
+        const symbolsSpan = document.createElement('span');
+        symbolsSpan.className = 'symbols';
+        symbolsSpan.innerText = fruit.repeat(q.data[fruit]);
+
+        row.appendChild(iconSpan);
+        row.appendChild(symbolsSpan);
+        pictographEl.appendChild(row);
+    }
+
+    // Determine question and options
+    let answer;
+    let options;
+
+    if(q.type === "most") {
+        questionEl.innerText = "Which fruit has the MOST symbols?";
+        answer = Object.keys(q.data).reduce((a,b)=> q.data[a]>=q.data[b]?a:b);
+        options = Object.keys(q.data);
+    } else if(q.type === "least") {
+        questionEl.innerText = "Which fruit has the LEAST symbols?";
+        answer = Object.keys(q.data).reduce((a,b)=> q.data[a]<=q.data[b]?a:b);
+        options = Object.keys(q.data);
+    } else if(q.type === "count") {
+        questionEl.innerText = `How many ${q.targetFruit} are there?`;
+        answer = q.data[q.targetFruit].toString();
+        options = [q.data[q.targetFruit]-1, q.data[q.targetFruit], q.data[q.targetFruit]+1].map(String)
+                     .filter(n => parseInt(n) >= 0);
+    }
+
+    options.sort(()=>Math.random()-0.5);
+
+    options.forEach(opt=>{
+        const btn = document.createElement('button');
+        btn.className = 'option';
+        btn.innerText = q.type === "count" ? opt : opt;
+        btn.dataset.answer = opt;
+
+        btn.addEventListener('click', ()=>{
+            Array.from(optionsEl.querySelectorAll('.option')).forEach(b => b.disabled = true);
+
+            let isCorrect = (q.type === "count" ? opt === answer : opt === answer);
+
+            if(isCorrect){
+                score++;
+                resultEl.style.color = "#2E7D32";
+                resultEl.innerText = "✅ Correct!";
+                btn.style.backgroundColor = '#66BB6A';
+                btn.style.boxShadow = '0 5px 0 #388E3C';
+            } else {
+                resultEl.style.color = "#D84315";
+                resultEl.innerText = `❌ Wrong! Correct: ${answer}`;
+                btn.style.backgroundColor = '#EF5350';
+                btn.style.boxShadow = '0 5px 0 #D32F2F';
+            }
+
+            scoreEl.innerText = `Score: ${score} / ${totalQuestions}`;
+            currentQ++;
+            if(currentQ < totalQuestions){
+                setTimeout(loadQuestion, 1200);
+            } else {
+                clearInterval(timerInterval);
+                setTimeout(() => endGame(true), 1200);
+            }
+        });
+        optionsEl.appendChild(btn);
+    });
+}
+
+// --- END GAME ---
+function endGame(completed){
+    clearInterval(timerInterval);
+    if (completed && score === totalQuestions) {
+        questionEl.innerText = "🌟 PERFECT SCORE! LEVEL 4 COMPLETED! 🏆";
+        resultEl.style.color = "#FF9800";
+        localStorage.setItem('C8_Level4', 'completed');
+    } else if (completed) {
+        questionEl.innerText = "🎉 Level Completed! Good effort!";
+        resultEl.style.color = "#388E3C";
+    } else {
+        questionEl.innerText = "⏱️ Time's Up! Game Over!";
+        resultEl.style.color = "#D84315";
+    }
+    pictographEl.innerHTML = '';
+    optionsEl.innerHTML = '';
+    scoreEl.innerText = `Final Score: ${score} / ${totalQuestions}`;
+    timerEl.innerText = `Time: ${60 - timeLeft}s`;
+    setTimeout(()=>{ window.location.href = "C8.html"; }, 2000);
+}
+
+// --- START ---
+window.onload = () => {
+    startTimer();
+    loadQuestion();
+};
+</script>
+
+</body>
+</html>

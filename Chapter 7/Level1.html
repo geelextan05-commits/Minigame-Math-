@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 7 - Level 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 1. SHARED THEME STYLES --- */
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #87CEEB;
+            /* The same playful landscape as the main menu */
+            background-image: 
+                radial-gradient(circle at 10% 20%, white 10%, transparent 12%),
+                radial-gradient(circle at 90% 10%, white 15%, transparent 17%),
+                linear-gradient(to bottom, #87CEEB 0%, #E0F7FA 60%, #8bc34a 60%, #689f38 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* --- 2. MR. SQUARE MASCOT (CSS ONLY) --- */
+        .mr-square-mini {
+            width: 80px;
+            height: 80px;
+            background: #ff4757;
+            border: 4px solid #2f3542;
+            border-radius: 12px;
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.2);
+            position: relative;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+        .mr-square-mini::before { /* Eyes */
+            content: ''; position: absolute; top: 25px; left: 15px; width: 12px; height: 12px;
+            background: white; border-radius: 50%; box-shadow: 28px 0 0 white;
+        }
+        .mr-square-mini::after { /* Pupils */
+            content: ''; position: absolute; top: 28px; left: 18px; width: 5px; height: 5px;
+            background: black; border-radius: 50%; box-shadow: 28px 0 0 black;
+        }
+        .smile { /* Smile */
+            position: absolute; bottom: 20px; left: 28px; width: 20px; height: 10px;
+            border-bottom: 3px solid white; border-radius: 0 0 15px 15px;
+        }
+
+        /* --- 3. SPEECH BUBBLE (The Question) --- */
+        .speech-bubble {
+            background: white;
+            border: 4px solid #2f3542;
+            border-radius: 20px;
+            padding: 20px;
+            position: relative;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+        .speech-bubble::after {
+            content: ''; position: absolute; left: -20px; top: 30px;
+            border-top: 15px solid transparent; border-bottom: 15px solid transparent;
+            border-right: 20px solid #2f3542;
+        }
+        .speech-bubble::before { /* Inner white triangle to cover border */
+            content: ''; position: absolute; left: -14px; top: 30px;
+            border-top: 15px solid transparent; border-bottom: 15px solid transparent;
+            border-right: 20px solid white; z-index: 1;
+        }
+
+        /* --- 4. GAME BOARD STYLES --- */
+        .game-board {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 30px;
+            border: 6px solid #fff;
+            box-shadow: 0 10px 0 rgba(0,0,0,0.1);
+            padding: 20px;
+            max-width: 700px;
+            width: 100%;
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* The big box showing the icon */
+        #shape-display {
+            background-color: #f1f2f6;
+            border: 4px dashed #bdc3c7;
+            border-radius: 25px;
+            width: 100%;
+            height: 180px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            font-size: 6rem;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s;
+        }
+
+        /* --- 5. ANSWER BUTTONS (Game Blocks) --- */
+        .answer-btn {
+            background-color: #ffa502; /* Orange default */
+            color: white;
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            padding: 15px;
+            border: 4px solid white;
+            border-radius: 15px;
+            box-shadow: 0 6px 0px #e67e22, 0 10px 10px rgba(0,0,0,0.1);
+            transition: all 0.1s;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .answer-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 0px #e67e22, 0 15px 15px rgba(0,0,0,0.1);
+            background-color: #ffb142;
+        }
+        .answer-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0px #e67e22;
+        }
+        .answer-btn:disabled {
+            cursor: default;
+            opacity: 0.7;
+        }
+
+        /* Correct/Wrong States */
+        .btn-correct {
+            background-color: #2ed573 !important;
+            box-shadow: 0 6px 0px #218c74 !important;
+        }
+        .btn-wrong {
+            background-color: #ff4757 !important;
+            box-shadow: 0 6px 0px #b33939 !important;
+            opacity: 0.5;
+        }
+
+        /* --- 6. ACTION BUTTONS (Next/Retry) --- */
+        .action-btn {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            padding: 12px 30px;
+            border-radius: 50px;
+            border: 4px solid white;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-retry {
+            background: #ff6b6b; color: white;
+            box-shadow: 0 5px 0 #c0392b;
+        }
+        .btn-next {
+            background: #1dd1a1; color: white;
+            box-shadow: 0 5px 0 #10ac84;
+        }
+        .action-btn:hover { transform: scale(1.05); }
+
+        /* Animations */
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-20px);}
+            60% {transform: translateY(-10px);}
+        }
+    </style>
+</head>
+
+<body>
+
+    <a href="C7.html" class="absolute top-5 left-5 bg-white text-gray-700 font-bold py-2 px-4 rounded-full border-b-4 border-gray-300 hover:border-gray-400 active:border-0 active:mt-1">
+        ⬅ Back
+    </a>
+
+    <div class="mt-12 mb-4 text-center">
+        <h1 class="text-4xl md:text-5xl font-bold text-white drop-shadow-md tracking-wide" style="-webkit-text-stroke: 2px #2f3542;">
+            Level 1
+        </h1>
+    </div>
+
+    <div class="flex flex-row items-start justify-center w-full max-w-2xl px-4">
+        
+        <div class="mr-square-mini hidden md:block">
+            <div class="smile"></div>
+        </div>
+
+        <div class="speech-bubble">
+            <div id="question" class="text-xl md:text-2xl font-bold text-[#2f3542]">
+                Loading...
+            </div>
+        </div>
+    </div>
+
+    <div class="game-board" id="question-box">
+        
+        <div id="shape-display">
+            </div>
+        
+        <div id="answers" class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mt-2">
+            </div>
+        
+        <div id="feedback" class="mt-6 text-2xl font-bold min-h-[2rem] text-center"></div>
+        
+        <div class="mt-6 flex justify-center space-x-4">
+            <button id="retry-btn" onclick="retry()" class="action-btn btn-retry hidden">
+                ↺ Try Again
+            </button>
+            <button id="finish-btn" onclick="finishLevel()" class="action-btn btn-next hidden">
+                Next Level ➡
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        const shapes = [
+            { name: "Cube", icons: ["🧊", "🎲"] },
+            { name: "Cuboid", icons: ["📘","📕","📗"] },
+            { name: "Sphere", icons: ["⚽", "🔵", "🏀"] },
+            { name: "Cylinder", icons: ["🥫", "🛢","🛢️"] },
+            { name: "Cone", icons: ["🍦", "𓉴"] },
+            { name: "Pyramid", icons: ["⛰️", "🛕"] }
+        ];
+
+        let currentQuestion = 0;
+        let correct = 0;
+        let wrong = 0;
+        let questionSet = [];
+
+        function generateQuestions() {
+            questionSet = [];
+            const uniqueShapes = [...shapes].sort(() => Math.random() - 0.5);
+            questionSet = uniqueShapes.slice(0, 5);
+        }
+
+        function loadQuestion() {
+            if (currentQuestion >= 5) {
+                showResult();
+                return;
+            }
+
+            const q = questionSet[currentQuestion];
+            document.getElementById("question").innerHTML = `Question ${currentQuestion + 1}: What shape is this?`;
+            
+            // Pick random icon
+            const randomIcon = q.icons[Math.floor(Math.random() * q.icons.length)];
+            const displayEl = document.getElementById("shape-display");
+            displayEl.innerHTML = randomIcon;
+            
+            // Re-trigger animation
+            displayEl.style.animation = 'none';
+            displayEl.offsetHeight; /* trigger reflow */
+            displayEl.style.animation = 'popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            
+            document.getElementById("feedback").innerHTML = '';
+
+            let wrongChoices = shapes.filter(s => s !== q).sort(() => Math.random() - 0.5).slice(0, 2);
+            let answers = [q, ...wrongChoices].sort(() => Math.random() - 0.5);
+
+            let answerHTML = "";
+            answers.forEach(a => {
+                // Modified only the class names in the string to match new UI styles
+                answerHTML += `<button class='answer-btn' onclick='checkAnswer("${a.name}", this)'>${a.name}</button>`;
+            });
+            document.getElementById("answers").innerHTML = answerHTML;
+        }
+
+        // Updated checkAnswer to accept 'btnElement' so we can style the specific clicked button
+        function checkAnswer(ans, btnElement) {
+            const correctShape = questionSet[currentQuestion].name;
+            const feedbackEl = document.getElementById("feedback");
+
+            // Disable all buttons
+            const buttons = document.querySelectorAll('.answer-btn');
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (ans === correctShape) {
+                correct++;
+                feedbackEl.innerHTML = "⭐ Correct! Good job!";
+                feedbackEl.style.color = '#2ed573';
+                // Style the clicked button green
+                if(btnElement) btnElement.classList.add('btn-correct');
+                // Make the icon bounce
+                document.getElementById("shape-display").style.animation = "bounce 0.6s";
+            } else {
+                wrong++;
+                feedbackEl.innerHTML = `Oh no! That was a <b>${correctShape}</b>.`;
+                feedbackEl.style.color = '#ff4757';
+                // Style the clicked button red
+                if(btnElement) btnElement.classList.add('btn-wrong');
+                
+                // Highlight the correct one
+                buttons.forEach(btn => {
+                    if (btn.textContent === correctShape) {
+                        btn.classList.add('btn-correct');
+                    }
+                });
+            }
+
+            setTimeout(() => {
+                currentQuestion++;
+                loadQuestion();
+            }, 1800); 
+        }
+
+        function showResult() {
+            document.getElementById("question").innerHTML = "Adventure Complete!";
+            document.getElementById("answers").innerHTML = "";
+            
+            // Show a Trophy or Sad face based on result
+            if (wrong === 0) {
+                 document.getElementById("shape-display").innerHTML = "🏆";
+            } else {
+                 document.getElementById("shape-display").innerHTML = "💪";
+            }
+
+            document.getElementById("retry-btn").classList.add('hidden');
+            document.getElementById("finish-btn").classList.add('hidden');
+
+            const feedbackEl = document.getElementById("feedback");
+
+            if (wrong === 0) {
+                feedbackEl.innerHTML = `Perfect Score!<br>You got ${correct} out of 5!`;
+                feedbackEl.style.color = '#2f3542';
+                document.getElementById("finish-btn").classList.remove('hidden');
+            } else {
+                feedbackEl.innerHTML = `You got ${correct} right.<br>Let's try again for a Perfect Score!`;
+                feedbackEl.style.color = '#2f3542';
+                document.getElementById("retry-btn").classList.remove('hidden');
+            }
+        }
+
+        function retry() {
+            currentQuestion = 0;
+            correct = 0;
+            wrong = 0;
+            document.getElementById("retry-btn").classList.add('hidden');
+            generateQuestions();
+            loadQuestion();
+        }
+
+        function finishLevel() {
+            localStorage.setItem("C7_Level1", "completed");
+            window.location.href = "C7.html";
+        }
+
+        // Initial setup
+        generateQuestions();
+        loadQuestion();
+    </script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Addition: Race to the Finish</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #fffbeb; }
+        .game-card { border: 4px solid #f59e0b; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .question-gate { background-color: #fcd34d; border: 3px solid #f59e0b; border-radius: 1rem; padding: 1.5rem; }
+        .choice-button { transition: all 0.1s; box-shadow: 0 4px 0 0 #b45309; }
+        .choice-button:active { transform: translateY(2px); box-shadow: 0 2px 0 0 #b45309; }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex items-center justify-center min-h-screen">
+
+<div id="app" class="game-card w-full max-w-lg p-6 md:p-10 text-center rounded-2xl bg-white">
+    <h1 class="text-3xl font-extrabold text-yellow-700 mb-4">🏁 Race to the Finish</h1>
+    <p class="text-gray-600 mb-6">Answer quickly! Clear the gate before the time runs out (Sum ≤ 20).</p>
+
+    <div id="game-area">
+        <div id="question-gate" class="question-gate mb-8">
+            <p class="text-xl font-semibold mb-2">Next Gate Challenge:</p>
+            <p id="question-text" class="text-5xl font-black text-yellow-800">?</p>
+        </div>
+
+        <div id="choices-container" class="grid grid-cols-2 gap-4"></div>
+        <div id="feedback" class="h-8 mt-6 text-lg font-bold"></div>
+    </div>
+
+    <div class="mt-4 text-lg">Score: <span id="score">0</span> / 5</div>
+    <button id="start-button" class="mt-6 px-8 py-3 bg-yellow-600 text-white font-bold rounded-xl choice-button">Start Race</button>
+</div>
+
+<script>
+    const REQUIRED_SCORE = 5;
+    let score = 0;
+    let correctAnswer = 0;
+
+    const scoreEl = document.querySelector('#score');
+    const questionTextEl = document.getElementById('question-text');
+    const choicesContainer = document.getElementById('choices-container');
+    const feedbackEl = document.getElementById('feedback');
+    const startBtn = document.getElementById('start-button');
+
+    const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+    function notifyLevelComplete() {
+        window.parent.postMessage({ type: "levelResult", success: true }, "*");
+    }
+
+    function generateChoices(correctAnswer) {
+        const choices = new Set([correctAnswer]);
+        while (choices.size < 4) {
+            let choice = getRandomInt(Math.max(1, correctAnswer - 3), Math.min(20, correctAnswer + 3));
+            choices.add(choice);
+        }
+        return Array.from(choices).sort(() => Math.random() - 0.5);
+    }
+
+    function generateQuestion() {
+        const num1 = getRandomInt(1, 10);
+        let num2 = getRandomInt(1, 10);
+        while (num1 + num2 > 20) num2 = getRandomInt(1, 10);
+        correctAnswer = num1 + num2;
+
+        questionTextEl.textContent = `${num1} + ${num2}`;
+        feedbackEl.textContent = '';
+
+        const choices = generateChoices(correctAnswer);
+        renderChoices(choices);
+    }
+
+    function renderChoices(choices) {
+        choicesContainer.innerHTML = '';
+        choices.forEach(choice => {
+            const btn = document.createElement('button');
+            btn.textContent = choice;
+            btn.className = 'choice-button w-full bg-yellow-500 text-white text-3xl font-bold py-4 rounded-lg hover:bg-yellow-600';
+            btn.onclick = () => checkAnswer(choice, btn);
+            choicesContainer.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selectedAnswer, btnEl) {
+        Array.from(choicesContainer.children).forEach(b => b.disabled = true);
+
+        if (selectedAnswer === correctAnswer) {
+            score++;
+            scoreEl.textContent = score;
+            btnEl.className = 'choice-button w-full bg-green-600 text-white text-3xl font-bold py-4 rounded-lg';
+            feedbackEl.textContent = 'Correct! 🎉';
+            feedbackEl.className = 'h-8 mt-6 text-lg font-bold text-green-600';
+
+            if (score >= REQUIRED_SCORE) {
+                feedbackEl.textContent = '🎉 Level Completed!';
+                notifyLevelComplete();
+            } else {
+                setTimeout(generateQuestion, 1200);
+            }
+        } else {
+            btnEl.className = 'choice-button w-full bg-red-500 text-white text-3xl font-bold py-4 rounded-lg';
+            feedbackEl.textContent = `Oops! The correct answer was ${correctAnswer}`;
+            feedbackEl.className = 'h-8 mt-6 text-lg font-bold text-red-600';
+
+            Array.from(choicesContainer.children).forEach(b => {
+                if (parseInt(b.textContent) === correctAnswer) {
+                    b.style.backgroundColor = '#3b82f6';
+                    b.textContent = `${b.textContent} ✅`;
+                }
+            });
+
+            setTimeout(generateQuestion, 2500);
+        }
+    }
+
+    startBtn.onclick = () => {
+        score = 0;
+        scoreEl.textContent = score;
+        startBtn.style.display = 'none';
+        generateQuestion();
+    };
+</script>
+</body>
+</html>

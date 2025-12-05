@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Count to 100 Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f0f9ff; }
+        .game-container {
+            max-width: 600px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .number-box {
+            transition: all 0.2s;
+            cursor: pointer;
+            user-select: none;
+            border: 3px solid #6366f1;
+            font-weight: 700;
+        }
+        .number-box:hover:not(.disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(99, 102, 241, 0.5);
+        }
+        .correct { background-color: #10b981; color: white; border-color: #059669; }
+        .wrong { background-color: #ef4444; color: white; border-color: #dc2626; animation: shake 0.5s; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div id="game-container" class="game-container w-full bg-white rounded-xl p-6 md:p-10 text-center">
+        <h1 class="text-3xl font-extrabold text-indigo-700 mb-4">Count to 100 Explorer</h1>
+        <p class="text-gray-600 mb-6">Click the numbers in sequential order to count up to 100!</p>
+
+        <div class="mb-4 flex justify-between items-center text-lg font-medium">
+            <span class="text-gray-600">Target: <strong id="target-number" class="text-indigo-700">1</strong></span>
+            <span class="text-red-600">Mistakes Left: <strong id="mistakes-left">3</strong></span>
+        </div>
+
+        <div id="grid" class="grid grid-cols-5 gap-3">
+            </div>
+
+        <div id="message-box" class="mt-8 h-8 text-xl font-semibold text-gray-800">Ready!</div>
+        <button id="reset-button" class="mt-6 px-6 py-3 bg-blue-500 text-white font-bold rounded-lg shadow-md hover:bg-blue-600 transition duration-150">Restart Level</button>
+        <!-- Skip Level Button -->
+<button id="skip-button" class="mt-3 px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition duration-150">Skip Level</button>
+
+    </div>
+
+    <script>
+        const GRID_SIZE = 25; 
+        const MAX_MISTAKES = 3; // Nazeem's failure condition: only 3 mistakes allowed
+        let currentNumber = 1;
+        let mistakesLeft = MAX_MISTAKES;
+        let numbers = [];
+        let gameActive = false;
+        
+        // --- DOM Elements ---
+        const gridElement = document.getElementById('grid');
+        const messageBox = document.getElementById('message-box');
+        const resetButton = document.getElementById('reset-button');
+        const mistakesLeftEl = document.getElementById('mistakes-left');
+        const targetNumberEl = document.getElementById('target-number');
+
+        // Function to shuffle an array
+        const shuffle = (array) => {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        const setupGame = () => {
+            currentNumber = 1;
+            mistakesLeft = MAX_MISTAKES;
+            gameActive = true;
+            numbers = Array.from({ length: GRID_SIZE }, (_, i) => i + 1);
+            shuffle(numbers);
+            renderGrid();
+            updateGrid(); // Set initial message and mistake count
+            resetButton.textContent = "Restart Level";
+        }
+
+        const renderGrid = () => {
+            gridElement.innerHTML = '';
+            numbers.forEach(num => {
+                const box = document.createElement('div');
+                box.className = `number-box p-3 rounded-lg flex items-center justify-center text-lg bg-indigo-100 text-indigo-800 shadow-sm`;
+                box.textContent = num;
+                box.dataset.number = num;
+                box.addEventListener('click', handleNumberClick);
+                gridElement.appendChild(box);
+            });
+        }
+
+        // Send failure message to the parent and stop the game
+        const gameOverFailure = () => {
+            gameActive = false;
+            messageBox.innerHTML = "<span class='text-red-600'>❌ Level Failed! Max mistakes reached.</span>";
+            // Inform the parent manager of failure
+            window.parent.postMessage({ type: "levelResult", success: false }, "*");
+            updateGrid(); // Disable clicks
+        }
+        
+        // Send success message to the parent and stop the game
+        const gameOverSuccess = () => {
+            gameActive = false;
+            messageBox.innerHTML = "<span class='text-green-600'>🎉 Success! You counted all the way to 100!</span>";
+            // Inform the parent manager of success
+            window.parent.postMessage({ type: "levelResult", success: true }, "*");
+            updateGrid(); // Disable clicks
+            resetButton.textContent = "Play Again";
+        }
+
+        const updateGrid = () => {
+            // Check for phase change (if currentNumber exceeds the highest number on the grid)
+            if (currentNumber > numbers[numbers.length - 1]) {
+                if (currentNumber > 100) {
+                    gameOverSuccess();
+                    return;
+                }
+                // Load the next range of numbers (e.g., 26-50)
+                const newStart = currentNumber;
+                const newEnd = Math.min(100, newStart + GRID_SIZE - 1);
+                numbers = Array.from({ length: newEnd - newStart + 1 }, (_, i) => newStart + i);
+                shuffle(numbers);
+                renderGrid();
+            }
+
+            // Update display messages and stats
+            targetNumberEl.textContent = currentNumber;
+            mistakesLeftEl.textContent = mistakesLeft;
+            
+            if (gameActive) {
+                messageBox.textContent = `Click the number ${currentNumber}`;
+            }
+
+            // Visually update boxes
+            const allBoxes = gridElement.querySelectorAll('.number-box');
+            allBoxes.forEach(box => {
+                const num = parseInt(box.dataset.number);
+                box.classList.remove('wrong'); // Remove shake animation on update
+
+                if (num < currentNumber) {
+                    // Successfully clicked numbers fade out
+                    box.classList.add('correct', 'disabled');
+                    box.style.opacity = '0.3';
+                    box.removeEventListener('click', handleNumberClick);
+                } else if (!gameActive) {
+                    // If game is over (fail/success), disable remaining boxes
+                    box.classList.add('disabled');
+                    box.style.opacity = '0.7';
+                    box.removeEventListener('click', handleNumberClick);
+                } else {
+                    // Ensure active box state is clean
+                    box.classList.remove('correct', 'disabled');
+                    box.style.opacity = '1';
+                    box.addEventListener('click', handleNumberClick); // Re-add listener if removed by previous state
+                }
+            });
+        }
+
+        const handleNumberClick = (event) => {
+            if (!gameActive) return;
+
+            const clickedNumber = parseInt(event.target.dataset.number);
+            const box = event.target;
+
+            if (clickedNumber === currentNumber) {
+                // Correct click
+                box.classList.add('correct');
+                currentNumber++;
+                updateGrid();
+            } else if (clickedNumber > currentNumber) {
+                // Wrong click (too fast)
+                if (mistakesLeft > 1) {
+                    // Deduct a mistake, provide feedback, and let them continue
+                    mistakesLeft--;
+                    box.classList.add('wrong');
+                    messageBox.textContent = `❌ Oops! I need ${currentNumber}. ${mistakesLeft} mistakes left.`;
+                    updateGrid(); // Update mistake counter
+
+                    setTimeout(() => {
+                        box.classList.remove('wrong');
+                        messageBox.textContent = `Click the number ${currentNumber}`;
+                    }, 700);
+                } else {
+                    // Last mistake: Game Over!
+                    mistakesLeft = 0;
+                    box.classList.add('wrong');
+                    gameOverFailure();
+                }
+            }
+        }
+
+        resetButton.addEventListener('click', setupGame);
+
+        const skipButton = document.getElementById('skip-button');
+
+skipButton.addEventListener('click', () => {
+    gameActive = false;
+    messageBox.innerHTML = "<span class='text-green-600'>⏩ Level Skipped!</span>";
+    
+    // Notify parent as success so the sequence can continue
+    window.parent.postMessage({ type: "levelResult", success: true }, "*");
+    
+    // Disable all remaining boxes
+    updateGrid();
+
+    // Change reset button to allow replay if wanted
+    resetButton.textContent = "Play Again";
+});
+
+        // Initial load
+        setupGame();
+    </script>
+</body>
+</html>

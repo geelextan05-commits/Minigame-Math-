@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 6 – Level 4: Weigh and Compare Mass</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* --- General Body & Background --- */
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #FFC107, #FFEB3B); /* Warm yellow/orange gradient */
+    text-align: center;
+    padding: 20px 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+}
+
+h1 {
+    font-size: 38px;
+    font-weight: 900;
+    color: #E65100;
+    margin-bottom: 5px;
+    text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.8);
+}
+
+#progress {
+    font-size: 20px;
+    color: #6D4C41;
+    font-weight: 600;
+    margin-bottom: 30px;
+}
+
+/* --- Scale Visualization --- */
+#scaleContainer {
+    width: 600px;
+    height: 250px;
+    /* FIX: Increased margin to move scale down and clear the heading */
+    margin: 60px 0 50px; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+/* The horizontal beam that tilts */
+#scaleBeam {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    width: 100%;
+    height: 50px;
+    background: #4E342E;
+    border-radius: 5px;
+    position: relative;
+    z-index: 10;
+    transition: transform 1s ease-in-out; 
+}
+
+/* The central fulcrum (support) */
+#fulcrum {
+    width: 0;
+    height: 150px;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 150px solid #795548;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+}
+
+.pan {
+    width: 180px;
+    height: 180px;
+    background: #CFD8DC;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 5px;
+    margin-top: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    border: 3px dashed #78909C; 
+    transition: background 0.2s, border-color 0.2s; /* Added border-color transition */
+    font-weight: 700;
+    color: #37474F;
+    position: relative;
+    overflow: hidden; 
+}
+
+/* New CSS for Dragging Feedback */
+.pan.drag-over {
+    background: #FFECB3; /* Lighter background when item is dragged over */
+    border-color: #FFB300; /* Bright orange border */
+}
+
+/* Tilt States (Applied via JS to #scaleBeam) */
+.tilt-right { 
+    transform: rotate(5deg); 
+}
+.tilt-left { 
+    transform: rotate(-5deg); 
+}
+
+/* --- Object Area and Item Styling --- */
+#objectsArea {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+}
+
+.draggable-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.draggable-item img {
+    width: 100px;
+    height: auto;
+    cursor: grab;
+}
+
+.mass-display {
+    font-size: 16px;
+    font-weight: 600;
+    color: #E65100;
+    margin-top: 5px;
+}
+
+/* --- Feedback & Complete --- */
+#resultMessage {
+    font-size: 26px;
+    font-weight: 800;
+    margin-top: 25px;
+    padding: 10px 20px;
+    border-radius: 10px;
+}
+
+#completeBox {
+    font-size: 30px;
+    color: #2E7D32;
+    font-weight: bold;
+    margin-top: 40px;
+    display: none;
+    padding: 15px;
+    background: #E8F5E9;
+    border-radius: 15px;
+}
+</style>
+</head>
+<body>
+
+<h1>⚖️ Level 4 – Weigh and Compare Mass</h1>
+<p id="progress"></p>
+
+<div id="scaleContainer">
+    <div id="scaleBeam">
+        <div class="pan" id="lightPan">Light Item</div>
+        <div class="pan" id="heavyPan">Heavy Item</div>
+    </div>
+    <div id="fulcrum"></div>
+</div>
+
+<div id="objectsArea"></div>
+<p id="resultMessage"></p>
+<div id="completeBox">🎉 Excellent! Level Complete! Returning to main page... 🎉</div>
+
+<script>
+// --- QUESTIONS DATA ---
+const questions = [
+    { left: "images/screw.png", massLeft: "5g", right: "images/key.png", massRight: "20g", heavy: "right" },
+    { left: "images/elp.png", massLeft: "800g", right: "images/chic.png", massRight: "150g", heavy: "left" },
+    { left: "images/smart.png", massLeft: "150g", right: "images/laptop.png", massRight: "2kg", heavy: "right" },
+    { left: "images/eraser.png", massLeft: "50g", right: "images/pencil.png", massRight: "10g", heavy: "left" },
+    { left: "images/chair.png", massLeft: "5kg", right: "images/table.png", massRight: "10kg", heavy: "right" }
+];
+
+let current = 0;
+let placed = { leftObj: null, rightObj: null };
+
+const scaleBeam = document.getElementById("scaleBeam");
+const resultMessage = document.getElementById("resultMessage");
+const lightPan = document.getElementById("lightPan");
+const heavyPan = document.getElementById("heavyPan");
+
+function loadQuestion() {
+    const q = questions[current];
+    document.getElementById("progress").innerText = `Question ${current+1} of ${questions.length}`;
+    document.getElementById("resultMessage").innerText = "";
+
+    const objectsArea = document.getElementById("objectsArea");
+    objectsArea.innerHTML = `
+        <div id="leftObjContainer" class="draggable-item">
+            <img id="leftObj" src="${q.left}" draggable="true">
+            <span class="mass-display">${q.massLeft}</span>
+        </div>
+        <div id="rightObjContainer" class="draggable-item">
+            <img id="rightObj" src="${q.right}" draggable="true">
+            <span class="mass-display">${q.massRight}</span>
+        </div>
+    `;
+
+    // Reset pans
+    lightPan.innerHTML = "Light Item";
+    heavyPan.innerHTML = "Heavy Item";
+    scaleBeam.classList.remove('tilt-left', 'tilt-right');
+    placed = { leftObj: null, rightObj: null };
+
+    // Add drag events to the actual images
+    document.getElementById("leftObj").addEventListener("dragstart", drag);
+    document.getElementById("rightObj").addEventListener("dragstart", drag);
+}
+
+let draggedId = null;
+
+function drag(e) {
+    draggedId = e.target.id;
+    // Use the container's ID for placement, as that includes the mass display
+    e.dataTransfer.setData("text/plain", e.target.parentElement.id); 
+}
+
+// --- Drag and Drop Logic (Added DragOver/DragLeave for smooth visual feedback) ---
+[lightPan, heavyPan].forEach(pan => {
+    pan.addEventListener("dragover", e => e.preventDefault());
+    
+    // Smooth Feedback: Highlight pan when item is dragged into it
+    pan.addEventListener("dragenter", e => {
+        e.preventDefault();
+        // Only apply feedback if the pan is empty
+        if (pan.children.length === 1 && pan.children[0].textContent.includes('Item')) {
+            pan.classList.add('drag-over');
+        }
+    });
+
+    // Smooth Feedback: Remove highlight when item leaves
+    pan.addEventListener("dragleave", () => {
+        pan.classList.remove('drag-over');
+    });
+
+    pan.addEventListener("drop", e => {
+        e.preventDefault();
+        pan.classList.remove('drag-over'); // Remove highlight on drop
+
+        const draggedContainerId = e.dataTransfer.getData("text/plain");
+        const draggedContainer = document.getElementById(draggedContainerId);
+        
+        if (!draggedContainer) return;
+
+        // Check if pan is already filled by checking if the innerHTML is NOT the placeholder text
+        if (!pan.textContent.includes('Item')) return;
+        
+        // Clear the pan text and append the container
+        pan.innerHTML = '';
+        pan.appendChild(draggedContainer);
+        draggedContainer.querySelector('img').draggable = false;
+        
+        // Record placement
+        const containerItem = (draggedContainerId === "leftObjContainer") ? "leftObj" : "rightObj";
+        const choice = (pan.id === "heavyPan") ? "heavy" : "light";
+        placed[containerItem] = choice;
+
+        // Check if both objects are placed (containers are no longer in objectsArea)
+        if (placed.leftObj && placed.rightObj) {
+            checkAnswer();
+        }
+    });
+});
+// ---------------------------------------------------------------------------------
+
+function checkAnswer() {
+    const q = questions[current];
+    let correct = true;
+
+    const correctSides = (q.heavy === "left")
+        ? { leftObj: "heavy", rightObj: "light" } 
+        : { leftObj: "light", rightObj: "heavy" };
+
+    if (placed.leftObj !== correctSides.leftObj || placed.rightObj !== correctSides.rightObj) {
+        correct = false;
+    }
+
+    if (correct) {
+        resultMessage.style.color = "green";
+        resultMessage.innerHTML = "Correct! You compared their mass accurately.";
+        scaleBeam.classList.add(q.heavy === "left" ? 'tilt-left' : 'tilt-right');
+        
+        setTimeout(() => {
+            current++;
+            if (current < questions.length) {
+                loadQuestion();
+            } else {
+                document.getElementById("completeBox").style.display = "block";
+                localStorage.setItem("C6_Level4", "completed");
+                setTimeout(() => {
+                    window.location.href = "C6.html";
+                }, 2000);
+            }
+        }, 1500);
+
+    } else {
+        resultMessage.style.color = "red";
+        resultMessage.innerHTML = "Incorrect. The heavier item is on the wrong side. Try again!";
+        
+        // Tilt the scale to show the correct side is heavier
+        scaleBeam.classList.add(q.heavy === "left" ? 'tilt-left' : 'tilt-right');
+        
+        // Reset the question after showing feedback
+        setTimeout(() => {
+            loadQuestion();
+        }, 2000);
+    }
+}
+
+// Initialize
+window.onload = loadQuestion;
+</script>
+
+</body>
+</html>

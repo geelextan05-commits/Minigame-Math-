@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 3 – Fractions</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* 1. Global & Background (Cosmic Theme) */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1f084a 0%, #3a1c71 100%);
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-top: 40px;
+            font-size: 38px;
+            font-weight: 800;
+            color: #ff9f1c;
+            text-shadow: 0 0 10px #ff9f1c, 0 0 20px #ff6b6b;
+            letter-spacing: 1.5px;
+        }
+
+        /* 2. Container Styling */
+        .level-container {
+            width: 90%;
+            max-width: 500px;
+            margin: 40px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 3. Level Button Base */
+        .level {
+            padding: 20px 25px;
+            font-size: 22px;
+            font-weight: 600;
+            border-radius: 15px;
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        /* 4. Unlocked level style - Bright Orange/Gold */
+        .unlocked {
+            background: #ff9f1c;
+            box-shadow: 0 6px 0 #cc7e14;
+        }
+
+        .unlocked:hover {
+            transform: translateY(-3px) scale(1.01);
+            background: #ffb44a;
+            box-shadow: 0 9px 0 #cc7e14;
+        }
+
+        .unlocked:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #cc7e14;
+        }
+
+        /* 5. Locked level style - Darker Purple */
+        .locked {
+            background: #5a3c9e;
+            cursor: not-allowed;
+            box-shadow: 0 6px 0 #422a75;
+            opacity: 0.7;
+        }
+
+        .locked:hover {
+            transform: none;
+            box-shadow: 0 6px 0 #422a75;
+        }
+
+        /* 6. Reset Button Styling */
+        #resetBtn {
+            margin-top: 30px;
+            padding: 12px 25px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            background: #e63946;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #a82a35;
+            transition: 0.2s;
+        }
+
+        #resetBtn:hover {
+            background: #cc2e3d;
+        }
+
+        #resetBtn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #a82a35;
+        }
+
+        /* 7. Back to Main Button */
+        #backToMainBtn {
+            margin-top: 20px;
+            padding: 12px 25px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            background: #FF6F00;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #cc5500;
+            transition: 0.2s;
+        }
+
+        #backToMainBtn:hover {
+            background: #e65c00;
+        }
+
+        #backToMainBtn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #cc5500;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>🌌 Chapter 3 – Fractions</h1>
+    </header>
+
+    <!-- BACK TO MAIN BUTTON -->
+    <button id="backToMainBtn">⬅️ Back to Main Menu</button>
+
+    <div class="level-container">
+        <button id="lvl1" class="level">Level 1 – Basic Fractions</button>
+        <button id="lvl2" class="level locked">Level 2 – Recognise Fractions</button>
+        <button id="lvl3" class="level locked">Level 3 – Fraction Builder</button>
+        <button id="lvl4" class="level locked">Level 4 – Fraction Solve</button>
+        <button id="lvl5" class="level locked">Level 5 – Smart Run</button>
+    </div>
+
+    <button id="resetBtn">Reset Progress</button>
+
+    <script>
+        // --- BACK TO MAIN MENU ---
+        document.getElementById('backToMainBtn').addEventListener('click', () => {
+            window.location.href = "../index.html"; // Adjust path to your main page
+        });
+
+        const EMOJIS = {
+            locked: "🔒",
+            unlocked: "✨",
+            completed: "✅"
+        };
+
+        function loadProgress() {
+            let allCompleted = true;
+
+            for (let i = 1; i <= 5; i++) {
+                const levelId = "C3_Level" + i;
+                const status = localStorage.getItem(levelId);
+
+                const isUnlocked = (i === 1 || localStorage.getItem("C3_Level" + (i - 1)) === "completed");
+
+                if (isUnlocked) {
+                    unlockLevel(i, status === "completed");
+                    if (status !== "completed") allCompleted = false;
+                } else {
+                    lockLevel(i);
+                    allCompleted = false;
+                }
+            }
+
+            if (allCompleted) {
+                document.querySelector('h1').innerHTML += ' 🌟';
+            }
+        }
+
+        function unlockLevel(level, isCompleted) {
+            let btn = document.getElementById("lvl" + level);
+            btn.classList.remove("locked");
+            btn.classList.add("unlocked");
+            btn.onclick = function () { startLevel(level); };
+
+            const icon = isCompleted ? EMOJIS.completed : EMOJIS.unlocked;
+            btn.innerHTML = `${icon} ${btn.innerHTML}`;
+
+            if (isCompleted) {
+                btn.style.background = "#00b4d8";
+                btn.style.boxShadow = "0 6px 0 #007799";
+            }
+        }
+
+        function lockLevel(level) {
+            let btn = document.getElementById("lvl" + level);
+            btn.classList.remove("unlocked");
+            btn.classList.add("locked");
+            btn.onclick = null;
+
+            btn.innerHTML = `${EMOJIS.locked} ${btn.innerHTML}`;
+        }
+
+        function startLevel(level) {
+            window.location.href = `Level${level}.html`;
+        }
+
+        document.getElementById("resetBtn").addEventListener("click", () => {
+            if (confirm("Are you sure you want to reset all progress for Chapter 3 - Fractions?")) {
+                for (let i = 1; i <= 5; i++) {
+                    localStorage.removeItem("C3_Level" + i);
+                }
+                alert("Progress reset! Level 1 is now unlocked.");
+                window.location.reload();
+            }
+        });
+
+        loadProgress();
+    </script>
+
+</body>
+
+</html>

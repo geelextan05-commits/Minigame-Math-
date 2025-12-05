@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Level 10: Number Race Sequencer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #fef3c7, #fde68a); display:flex; justify-content:center; align-items:center; min-height:100vh; }
+.game-container { max-width: 700px; height: 250px; background: linear-gradient(to right, #fef3c7, #fcd34d); border:5px solid #d97706; position:relative; overflow-x:scroll; overflow-y:hidden; white-space:nowrap; scroll-behavior: smooth; border-radius:20px; }
+.number-box { display:inline-flex; align-items:center; justify-content:center; min-width:60px; height:60px; background-color:#f59e0b; color:white; font-size:24px; font-weight:700; border-radius:12px; margin:0 10px; box-shadow:0 4px 0 #b45309; cursor:pointer; user-select:none; transition: all 0.2s; }
+.number-box:hover { transform: scale(1.1); }
+.number-box.correct { background-color:#10b981; box-shadow:0 4px 0 #059669; pointer-events:none; }
+.number-box.wrong { animation: shake 0.3s; }
+@keyframes shake { 0%{ transform: translateX(0); } 25%{ transform: translateX(-5px); } 50%{ transform: translateX(5px); } 75%{ transform: translateX(-5px); } 100%{ transform: translateX(0); } }
+.feedback-box { margin-top: 20px; font-size: 1.3rem; font-weight:bold; height:40px; transition:all 0.3s; }
+.progress-bar { width:100%; height:20px; background:#fde68a; border-radius:10px; margin-top:10px; overflow:hidden; }
+.progress-fill { height:100%; width:0%; background:#10b981; transition:width 0.5s ease-in-out; }
+.confetti { position:absolute; width:10px; height:10px; border-radius:50%; animation: fall 2s linear infinite; }
+@keyframes fall { 0%{transform:translateY(0) rotate(0deg); opacity:1;} 100%{transform:translateY(300px) rotate(360deg); opacity:0;} }
+</style>
+</head>
+<body>
+<div class="w-full max-w-xl text-center">
+<h1 class="text-3xl font-extrabold text-amber-700 mb-4">⏱️ Number Race Sequencer</h1>
+<p class="text-gray-700 mb-4">Click numbers in <b>ascending order</b> starting from <span id="start-number" class="font-bold text-amber-700">?</span></p>
+
+<div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+<div id="game-container" class="game-container rounded-xl shadow-2xl mt-2"></div>
+
+<div id="feedback-box" class="feedback-box text-gray-800">Ready to race!</div>
+
+<div class="mt-4">
+<button id="start-btn" class="px-6 py-3 bg-blue-500 text-white font-bold rounded-lg shadow-md hover:bg-blue-600 transition duration-150">Start Level</button>
+</div>
+</div>
+
+<script>
+const container = document.getElementById('game-container');
+const feedbackBox = document.getElementById('feedback-box');
+const startNumberDisplay = document.getElementById('start-number');
+const startBtn = document.getElementById('start-btn');
+const progressFill = document.getElementById('progress-fill');
+
+let currentTarget = 0;
+let correctClicks = 0;
+const totalNeeded = 5;
+
+function generateLevel(){
+    container.innerHTML = '';
+    correctClicks = 0;
+    feedbackBox.textContent = "Click numbers in order!";
+    progressFill.style.width = '0%';
+
+    const startNum = Math.floor(Math.random()*76)+21; // 21-96
+    currentTarget = startNum;
+    startNumberDisplay.textContent = startNum;
+
+    const targetSequence = [];
+    for(let i=0;i<totalNeeded;i++) targetSequence.push(startNum+i);
+
+    const numbers = [...targetSequence];
+    while(numbers.length<20){
+        let n=Math.floor(Math.random()*80)+21;
+        if(!numbers.includes(n)) numbers.push(n);
+    }
+
+    numbers.sort(() => Math.random()-0.5);
+
+    numbers.forEach(num=>{
+        const box=document.createElement('div');
+        box.className='number-box';
+        box.textContent=num;
+        box.dataset.number=num;
+        box.addEventListener('click', handleClick);
+        container.appendChild(box);
+    });
+}
+
+function handleClick(e){
+    const clicked=parseInt(e.target.dataset.number);
+    if(clicked===currentTarget){
+        e.target.classList.add('correct');
+        correctClicks++;
+        currentTarget++;
+        progressFill.style.width = (correctClicks/totalNeeded*100)+'%';
+        feedbackBox.textContent=`✅ Correct! Next: ${currentTarget}`;
+
+        const rect = e.target.getBoundingClientRect();
+        container.scrollLeft += rect.left - container.getBoundingClientRect().left - 20;
+
+        if(correctClicks>=totalNeeded){
+            feedbackBox.textContent="🏆 Level Passed!";
+            document.querySelectorAll('.number-box').forEach(b=>b.style.pointerEvents='none');
+            createConfetti();
+            window.parent.postMessage({ type:'levelResult', success:true }, '*');
+        }
+    } else{
+        feedbackBox.textContent=`❌ Wrong! Need ${currentTarget}`;
+        e.target.classList.add('wrong');
+        setTimeout(()=>e.target.classList.remove('wrong'),300);
+    }
+}
+
+function createConfetti(){
+    for(let i=0;i<40;i++){
+        const confetti=document.createElement('div');
+        confetti.className='confetti';
+        confetti.style.left=Math.random()*100+'%';
+        confetti.style.backgroundColor=`hsl(${Math.random()*360},70%,60%)`;
+        document.querySelector('.game-container').appendChild(confetti);
+        setTimeout(()=>confetti.remove(),2000);
+    }
+}
+
+startBtn.addEventListener('click', generateLevel);
+</script>
+</body>
+</html>
