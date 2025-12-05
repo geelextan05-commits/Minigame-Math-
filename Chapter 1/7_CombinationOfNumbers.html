@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Puzzle Combiner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f5f3ff; }
+        .game-container { max-width: 700px; background-color: #fff; border: 4px solid #6d28d9; }
+        .puzzle-piece {
+            background-color: #a78bfa;
+            color: white;
+            transition: all 0.2s;
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            font-size: 32px;
+            font-weight: 800;
+        }
+        .puzzle-piece:active { cursor: grabbing; transform: scale(1.05); }
+        .target-slot {
+            background-color: #e5e7eb;
+            border: 3px dashed #6d28d9;
+            min-height: 60px;
+            font-size: 24px;
+            color: #4c1d95;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .completed {
+            background-color: #4ade80;
+            border-color: #16a34a;
+            color: white;
+        }
+        .correct-piece {
+            background-color: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div id="game-container" class="game-container w-full rounded-xl p-6 md:p-10 text-center shadow-2xl">
+        
+        <h1 class="text-3xl font-extrabold text-violet-700 mb-4">🧩 Number Puzzle Combiner</h1>
+        <p class="text-gray-600 mb-6">Drag the number pieces to complete the addition combination!</p>
+
+        <!-- LEVEL PASSED SCREEN -->
+        <div id="level-passed" class="hidden text-center">
+            <h2 class="text-3xl font-extrabold text-green-600 mb-4">🎉 Level Passed!</h2>
+        </div>
+
+        <!-- PUZZLE AREA -->
+        <div id="puzzle-area" class="flex justify-center items-center space-x-4 mb-10">
+            <div id="num1" class="puzzle-piece w-16 h-16 rounded-lg flex items-center justify-center">?</div>
+            <div class="text-4xl font-bold text-violet-800">+</div>
+            <div id="num2" class="target-slot w-16 h-16 rounded-lg">?</div>
+            <div class="text-4xl font-bold text-violet-800">=</div>
+            <div id="target-sum" class="puzzle-piece w-16 h-16 rounded-lg flex items-center justify-center">?</div>
+        </div>
+
+        <div id="feedback-box" class="h-8 text-xl font-bold text-gray-800 mb-6">
+            Drag a tile from the bin below!
+        </div>
+
+        <div id="drag-bin-container" class="p-4 bg-violet-100 rounded-lg shadow-inner">
+            <h2 class="text-lg font-semibold text-violet-800 mb-3">Number Bin (Drag Me!)</h2>
+            <div id="drag-bin" class="flex justify-center flex-wrap gap-4"></div>
+        </div>
+
+        <button id="next-button" class="mt-6 px-6 py-3 bg-fuchsia-500 text-white font-bold rounded-lg shadow-md hover:bg-fuchsia-600 transition duration-150">
+            Next Puzzle
+        </button>
+
+    </div>
+
+    <script>
+        let currentProblem = { num1: 0, num2: 0, sum: 0 };
+        let gameActive = true;
+
+        // LEVEL PASS COUNTERS
+        let correctCount = 0;
+        const maxCorrect = 5;
+
+        const num1Element = document.getElementById('num1');
+        const num2Slot = document.getElementById('num2');
+        const targetSumElement = document.getElementById('target-sum');
+        const dragBin = document.getElementById('drag-bin');
+        const feedbackBox = document.getElementById('feedback-box');
+        const nextButton = document.getElementById('next-button');
+
+       function showLevelPassed() {
+    // Hide puzzle area
+    document.getElementById('puzzle-area').classList.add('hidden');
+    document.getElementById('drag-bin-container').classList.add('hidden');
+    nextButton.classList.add('hidden');
+    feedbackBox.classList.add('hidden');
+
+    // Show success screen
+    const passScreen = document.getElementById('level-passed');
+    passScreen.innerHTML = `
+        <h2 class="text-3xl font-extrabold text-green-600 mb-4">🎉 Level Passed!</h2>
+    `;
+    passScreen.classList.remove('hidden');
+
+    // 🔥 SAME AS LEVEL 6 — notify parent to continue
+    try {
+        window.parent.postMessage({ type: 'levelResult', success: true }, '*');
+    } catch (err) {
+        console.warn('postMessage failed', err);
+    }
+}
+
+        const generateProblem = () => {
+            nextButton.disabled = true;
+
+            const sum = Math.floor(Math.random() * 6) + 5;
+            const num1 = Math.floor(Math.random() * (sum - 1)) + 1;
+            const num2 = sum - num1;
+
+            const missingIndex = Math.random() > 0.5 ? 1 : 0;
+            let missingValue;
+
+            num1Element.textContent = num1;
+            num2Slot.textContent = num2;
+            targetSumElement.textContent = sum;
+
+            if (missingIndex === 0) {
+                missingValue = num1;
+                num1Element.textContent = "?";
+                num1Element.dataset.missing = missingValue;
+
+                num1Element.classList.replace("puzzle-piece", "target-slot");
+                num1Element.addEventListener("dragover", allowDrop);
+                num1Element.addEventListener("drop", handleDrop);
+            } else if (missingIndex === 1) {
+                missingValue = num2;
+                num2Slot.textContent = "?";
+                num2Slot.dataset.missing = missingValue;
+
+                num2Slot.addEventListener("dragover", allowDrop);
+                num2Slot.addEventListener("drop", handleDrop);
+            } else {
+                missingValue = sum;
+                targetSumElement.textContent = "?";
+                targetSumElement.dataset.missing = missingValue;
+
+                targetSumElement.classList.replace("puzzle-piece", "target-slot");
+                targetSumElement.addEventListener("dragover", allowDrop);
+                targetSumElement.addEventListener("drop", handleDrop);
+            }
+
+            let choices = new Set([missingValue]);
+            while (choices.size < 4) {
+                choices.add(Math.floor(Math.random() * 10) + 1);
+            }
+
+            renderDragBin([...choices]);
+
+            feedbackBox.textContent = "Drag the correct number to the ? slot.";
+            gameActive = true;
+        };
+
+        const renderDragBin = (choices) => {
+            dragBin.innerHTML = "";
+            choices.forEach(value => {
+                const tile = document.createElement("div");
+                tile.className = "puzzle-piece w-14 h-14 rounded-full flex items-center justify-center bg-fuchsia-500";
+                tile.textContent = value;
+                tile.dataset.value = value;
+                tile.setAttribute("draggable", true);
+                tile.addEventListener("dragstart", drag);
+                dragBin.appendChild(tile);
+            });
+        };
+
+        function drag(ev) {
+            if (!gameActive) return;
+            ev.dataTransfer.setData("value", ev.target.dataset.value);
+            ev.dataTransfer.setData("element", ev.target.id);
+        }
+
+        function allowDrop(ev) { ev.preventDefault(); }
+
+        function handleDrop(ev) {
+            ev.preventDefault();
+            if (!gameActive) return;
+
+            const droppedValue = parseInt(ev.dataTransfer.getData("value"));
+            const target = ev.currentTarget;
+            const missing = parseInt(target.dataset.missing);
+
+            if (droppedValue === missing) {
+                // CORRECT ANSWER
+                gameActive = false;
+                nextButton.disabled = false;
+                feedbackBox.textContent = "✅ Perfect!";
+
+                target.textContent = droppedValue;
+                target.classList.add("completed");
+
+                correctCount++;
+
+                if (correctCount >= maxCorrect) {
+                    showLevelPassed();
+                    return;
+                }
+
+            } else {
+                // WRONG ANSWER
+                feedbackBox.textContent = "❌ Try again!";
+            }
+        }
+
+        nextButton.addEventListener("click", generateProblem);
+
+        generateProblem();
+    </script>
+</body>
+</html>

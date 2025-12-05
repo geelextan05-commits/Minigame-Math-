@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monster Scale Comparator (More or Less)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body { font-family: 'Inter', sans-serif; background-color: #f0fdfa; }
+.monster-card {
+    background-color: #ecfdf5;
+    border: 4px solid #10b981;
+    transition: all 0.3s;
+    cursor: pointer;
+    position: relative;
+}
+.monster-card:hover:not(.locked) {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 10px 20px rgba(16, 185, 129, 0.4);
+}
+.candy-pile {
+    min-height: 100px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+.candy-icon {
+    font-size: 20px;
+    line-height: 1;
+}
+</style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+<div id="game-container" class="w-full max-w-2xl bg-white rounded-xl p-6 md:p-8 text-center shadow-2xl">
+    <h1 class="text-3xl font-extrabold text-teal-600 mb-4">👾 Monster Scale Comparator 🍬</h1>
+    <div id="question-box" class="text-2xl font-semibold mb-6 p-3 bg-amber-100 rounded-lg text-amber-800"></div>
+
+    <div id="monster-container" class="flex justify-around space-x-6">
+        <div id="monster-left" class="monster-card flex-1 rounded-xl p-4 shadow-xl" data-index="0">
+            <div class="text-5xl mb-2">👹</div>
+            <div class="text-lg font-bold text-teal-800 mb-2">Monster A</div>
+            <div id="candies-left" class="candy-pile"></div>
+            <div id="count-left" class="mt-2 text-xl font-bold text-gray-700">?</div>
+        </div>
+        <div id="monster-right" class="monster-card flex-1 rounded-xl p-4 shadow-xl" data-index="1">
+            <div class="text-5xl mb-2">🤖</div>
+            <div class="text-lg font-bold text-teal-800 mb-2">Monster B</div>
+            <div id="candies-right" class="candy-pile"></div>
+            <div id="count-right" class="mt-2 text-xl font-bold text-gray-700">?</div>
+        </div>
+    </div>
+
+    <div id="feedback-box" class="mt-8 h-8 text-xl font-bold text-gray-800"></div>
+    <button id="next-button" class="mt-6 px-6 py-3 bg-indigo-500 text-white font-bold rounded-lg shadow-md hover:bg-indigo-600 transition duration-150" disabled>Next Round</button>
+</div>
+
+<script>
+let correctMonsterIndex = 0;
+let questionType = '';
+let gameActive = true;
+let correctCount = 0;
+const maxCorrect = 5;
+
+const questionBox = document.getElementById('question-box');
+const feedbackBox = document.getElementById('feedback-box');
+const nextButton = document.getElementById('next-button');
+const monsterLeft = document.getElementById('monster-left');
+const monsterRight = document.getElementById('monster-right');
+const CANDY_EMOJIS = ['🍭', '🍬', '🍫'];
+
+const generateCandies = (count, element) => {
+    element.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+        const candy = document.createElement('span');
+        candy.className = 'candy-icon';
+        candy.textContent = CANDY_EMOJIS[Math.floor(Math.random() * CANDY_EMOJIS.length)];
+        element.appendChild(candy);
+    }
+    document.getElementById(`count-${element.id.split('-')[1]}`).textContent = '?';
+}
+
+const setupGame = () => {
+    gameActive = true;
+    feedbackBox.textContent = 'Click to choose the correct monster!';
+    feedbackBox.classList.remove('text-green-600', 'text-red-600');
+    nextButton.disabled = true;
+
+    let count1, count2;
+    do {
+        count1 = Math.floor(Math.random() * 21) + 10;
+        count2 = Math.floor(Math.random() * 21) + 10;
+    } while (count1 === count2);
+
+    const counts = [count1, count2];
+    questionType = Math.random() > 0.5 ? 'more' : 'less';
+    correctMonsterIndex = questionType === 'more' ? (count1 > count2 ? 0 : 1) : (count1 < count2 ? 0 : 1);
+    questionBox.innerHTML = `Which monster has <b>${questionType.toUpperCase()}</b> 🍬 Candies?`;
+
+    monsterLeft.dataset.count = counts[0];
+    monsterRight.dataset.count = counts[1];
+
+    monsterLeft.classList.remove('locked');
+    monsterRight.classList.remove('locked');
+    monsterLeft.style.borderColor = '#10b981';
+    monsterRight.style.borderColor = '#10b981';
+
+    generateCandies(counts[0], document.getElementById('candies-left'));
+    generateCandies(counts[1], document.getElementById('candies-right'));
+
+    monsterLeft.addEventListener('click', handleMonsterClick);
+    monsterRight.addEventListener('click', handleMonsterClick);
+}
+
+const handleMonsterClick = (event) => {
+    if (!gameActive) return;
+    gameActive = false;
+
+    const clickedMonster = event.currentTarget;
+    const clickedIndex = parseInt(clickedMonster.dataset.index);
+    const count1 = parseInt(monsterLeft.dataset.count);
+    const count2 = parseInt(monsterRight.dataset.count);
+
+    document.getElementById('count-left').textContent = `${count1} candies`;
+    document.getElementById('count-right').textContent = `${count2} candies`;
+
+    [monsterLeft, monsterRight].forEach(monster => {
+        monster.removeEventListener('click', handleMonsterClick);
+        monster.classList.add('locked');
+        monster.style.cursor = 'default';
+        monster.style.backgroundColor = parseInt(monster.dataset.index) === correctMonsterIndex ? '#d1fae5' : '#fee2e2';
+        monster.style.borderColor = parseInt(monster.dataset.index) === correctMonsterIndex ? '#10b981' : '#ef4444';
+    });
+
+    if (clickedIndex === correctMonsterIndex) {
+        feedbackBox.textContent = `🥳 Correct! ${clickedMonster.querySelector('.text-lg').textContent} had ${clickedMonster.dataset.count} candies.`;
+        feedbackBox.classList.add('text-green-600');
+        correctCount++;
+    } else {
+        const correctCountVal = correctMonsterIndex === 0 ? count1 : count2;
+        feedbackBox.textContent = `❌ Nope! The monster with ${questionType} candies had ${correctCountVal}.`;
+        feedbackBox.classList.add('text-red-600');
+    }
+
+    if (correctCount >= maxCorrect) {
+        feedbackBox.textContent = `🏆 Level Passed! 5 correct answers.`;
+        window.parent.postMessage({ type: 'levelResult', success: true }, '*');
+        nextButton.disabled = true;
+    } else {
+        nextButton.disabled = false;
+    }
+}
+
+nextButton.addEventListener('click', setupGame);
+
+setupGame();
+</script>
+</body>
+</html>
